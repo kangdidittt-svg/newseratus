@@ -13,7 +13,9 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  LineChart,
+  Line
 } from 'recharts';
 import {
   DollarSign,
@@ -23,7 +25,14 @@ import {
   AlertCircle,
   PauseCircle,
   Plus,
-  TrendingUp
+  TrendingUp,
+  Calendar,
+  FileText,
+  Edit,
+  Trash2,
+  Eye,
+  Download,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -44,6 +53,10 @@ interface Project {
   status: string;
   priority: string;
   updatedAt: string;
+  budget?: number;
+  deadline?: string;
+  progress?: number;
+  description?: string;
 }
 
 interface ProjectsByStatus {
@@ -59,6 +72,265 @@ interface MonthlyEarning {
 
 const COLORS = ['#10B981', '#F59E0B', '#EF4444', '#6B7280'];
 
+// Add Project Form Component
+function AddProjectForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [formData, setFormData] = useState({
+    title: '',
+    client: '',
+    description: '',
+    budget: '',
+    deadline: '',
+    status: 'active',
+    priority: 'medium'
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...formData,
+          budget: formData.budget ? parseFloat(formData.budget) : 0
+        }),
+      });
+
+      if (response.ok) {
+        onSuccess();
+        onClose();
+      } else {
+        console.error('Failed to create project');
+      }
+    } catch (error) {
+      console.error('Error creating project:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Project Title</label>
+        <input
+          type="text"
+          required
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
+        <input
+          type="text"
+          required
+          value={formData.client}
+          onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Budget</label>
+          <input
+            type="number"
+            value={formData.budget}
+            onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+          <input
+            type="date"
+            value={formData.deadline}
+            onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="active">Active</option>
+            <option value="on-hold">On Hold</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+          <select
+            value={formData.priority}
+            onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+      <div className="flex gap-3 pt-4">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+        >
+          {isSubmitting ? 'Creating...' : 'Create Project'}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// Monthly Report Component
+function MonthlyReportComponent() {
+  const currentDate = new Date();
+  const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
+  const currentYear = currentDate.getFullYear();
+
+  const mockData = {
+    totalEarnings: 8500,
+    totalProjects: 12,
+    completedProjects: 9,
+    activeProjects: 3,
+    totalHours: 180,
+    avgHourlyRate: 47
+  };
+
+  const monthlyData = [
+    { month: 'Jan', earnings: 5200, projects: 8 },
+    { month: 'Feb', earnings: 6800, projects: 10 },
+    { month: 'Mar', earnings: 7200, projects: 11 },
+    { month: 'Apr', earnings: 8500, projects: 12 },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <h3 className="text-xl font-bold text-gray-900">{currentMonth} {currentYear} Report</h3>
+        <p className="text-gray-600">Your freelance performance summary</p>
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-green-50 p-4 rounded-lg">
+          <div className="flex items-center">
+            <DollarSign className="h-8 w-8 text-green-600" />
+            <div className="ml-3">
+              <p className="text-sm text-green-600">Total Earnings</p>
+              <p className="text-xl font-bold text-green-900">${mockData.totalEarnings.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="flex items-center">
+            <FolderOpen className="h-8 w-8 text-blue-600" />
+            <div className="ml-3">
+              <p className="text-sm text-blue-600">Total Projects</p>
+              <p className="text-xl font-bold text-blue-900">{mockData.totalProjects}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-purple-50 p-4 rounded-lg">
+          <div className="flex items-center">
+            <CheckCircle className="h-8 w-8 text-purple-600" />
+            <div className="ml-3">
+              <p className="text-sm text-purple-600">Completed</p>
+              <p className="text-xl font-bold text-purple-900">{mockData.completedProjects}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-orange-50 p-4 rounded-lg">
+          <div className="flex items-center">
+            <Clock className="h-8 w-8 text-orange-600" />
+            <div className="ml-3">
+              <p className="text-sm text-orange-600">Total Hours</p>
+              <p className="text-xl font-bold text-orange-900">{mockData.totalHours}h</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Monthly Trend Chart */}
+      <div className="bg-white p-6 rounded-lg border">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">Monthly Earnings Trend</h4>
+        <ResponsiveContainer width="100%" height={250}>
+          <LineChart data={monthlyData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip formatter={(value) => [`$${value}`, 'Earnings']} />
+            <Line type="monotone" dataKey="earnings" stroke="#10B981" strokeWidth={3} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Summary */}
+      <div className="bg-gray-50 p-6 rounded-lg">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">Monthly Summary</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h5 className="font-medium text-gray-800 mb-2">Key Achievements</h5>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• Completed {mockData.completedProjects} projects successfully</li>
+              <li>• Earned ${mockData.totalEarnings.toLocaleString()} in total revenue</li>
+              <li>• Maintained {mockData.activeProjects} active projects</li>
+              <li>• Worked {mockData.totalHours} hours total</li>
+            </ul>
+          </div>
+          <div>
+            <h5 className="font-medium text-gray-800 mb-2">Performance Metrics</h5>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• Average hourly rate: ${mockData.avgHourlyRate}</li>
+              <li>• Project completion rate: {Math.round((mockData.completedProjects / mockData.totalProjects) * 100)}%</li>
+              <li>• Average project value: ${Math.round(mockData.totalEarnings / mockData.totalProjects)}</li>
+              <li>• Hours per project: {Math.round(mockData.totalHours / mockData.totalProjects)}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Export Button */}
+      <div className="text-center">
+        <button className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2 mx-auto transition-colors">
+          <Download className="h-4 w-4" />
+          Export Report
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -68,6 +340,9 @@ export default function DashboardPage() {
   const [monthlyEarnings, setMonthlyEarnings] = useState<MonthlyEarning[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAddProject, setShowAddProject] = useState(false);
+  const [showMonthlyReport, setShowMonthlyReport] = useState(false);
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -83,18 +358,24 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('/api/dashboard/stats', {
-        credentials: 'include',
-      });
+      const [statsResponse, projectsResponse] = await Promise.all([
+        fetch('/api/dashboard/stats', { credentials: 'include' }),
+        fetch('/api/projects', { credentials: 'include' })
+      ]);
 
-      if (response.ok) {
-        const data = await response.json();
+      if (statsResponse.ok) {
+        const data = await statsResponse.json();
         setStats(data.stats);
         setRecentProjects(data.recentProjects);
         setProjectsByStatus(data.projectsByStatus);
         setMonthlyEarnings(data.monthlyEarnings);
       } else {
         setError('Failed to fetch dashboard data');
+      }
+
+      if (projectsResponse.ok) {
+        const projectsData = await projectsResponse.json();
+        setAllProjects(projectsData.projects || []);
       }
     } catch (error) {
       console.error('Dashboard data fetch error:', error);
@@ -175,13 +456,22 @@ export default function DashboardPage() {
               <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
               <p className="text-gray-600">Welcome back, {user?.username}!</p>
             </div>
-            <Link
-              href="/projects/new"
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              New Project
-            </Link>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowAddProject(true)}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                New Project
+              </button>
+              <button
+                onClick={() => setShowMonthlyReport(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2 transition-colors"
+              >
+                <Calendar className="h-4 w-4" />
+                Monthly Report
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -270,12 +560,12 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Recent Projects</h3>
-              <Link
-                href="/projects"
+              <button
+                onClick={() => setShowAddProject(true)}
                 className="text-indigo-600 hover:text-indigo-500 text-sm font-medium"
               >
-                View all
-              </Link>
+                Add Project
+              </button>
             </div>
             <div className="space-y-4">
               {recentProjects.length > 0 ? (
@@ -303,13 +593,118 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Current Projects List */}
+        <div className="bg-white rounded-lg shadow mb-8">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">Current Projects</h3>
+              <button
+                onClick={() => setShowAddProject(true)}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2 text-sm transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Add Project
+              </button>
+            </div>
+          </div>
+          <div className="p-6">
+            {allProjects.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {allProjects.slice(0, 6).map((project) => (
+                  <div key={project._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 mb-1">{project.title}</h4>
+                        <p className="text-sm text-gray-600">{project.client}</p>
+                      </div>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        project.status === 'active' ? 'bg-green-100 text-green-800' :
+                        project.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                        project.status === 'on-hold' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {project.status}
+                      </span>
+                    </div>
+                    {project.budget && (
+                      <div className="flex items-center text-sm text-gray-600 mb-2">
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        ${project.budget.toLocaleString()}
+                      </div>
+                    )}
+                    {project.deadline && (
+                      <div className="flex items-center text-sm text-gray-600 mb-3">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        {formatDate(project.deadline)}
+                      </div>
+                    )}
+                    {project.progress !== undefined && (
+                      <div className="mb-3">
+                        <div className="flex justify-between text-sm text-gray-600 mb-1">
+                          <span>Progress</span>
+                          <span>{project.progress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+                            style={{ width: `${project.progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <button className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm flex items-center justify-center gap-1 transition-colors">
+                        <Eye className="h-4 w-4" />
+                        View
+                      </button>
+                      <button className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-2 rounded text-sm flex items-center justify-center gap-1 transition-colors">
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FolderOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h4 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h4>
+                <p className="text-gray-600 mb-4">Get started by creating your first project</p>
+                <button
+                  onClick={() => setShowAddProject(true)}
+                  className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 flex items-center gap-2 mx-auto transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create First Project
+                </button>
+              </div>
+            )}
+            {allProjects.length > 6 && (
+              <div className="text-center mt-6">
+                <button className="text-indigo-600 hover:text-indigo-500 font-medium">
+                  View All Projects ({allProjects.length})
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Monthly Earnings Chart */}
         {monthlyEarnings.length > 0 && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Monthly Earnings
-            </h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Monthly Earnings
+              </h3>
+              <button
+                onClick={() => setShowMonthlyReport(true)}
+                className="text-indigo-600 hover:text-indigo-500 text-sm font-medium flex items-center gap-1"
+              >
+                <FileText className="h-4 w-4" />
+                View Full Report
+              </button>
+            </div>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyEarnings}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -325,6 +720,46 @@ export default function DashboardPage() {
                 <Bar dataKey="earnings" fill="#10B981" />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Add Project Modal */}
+        {showAddProject && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Add New Project</h2>
+                  <button
+                    onClick={() => setShowAddProject(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                <AddProjectForm onClose={() => setShowAddProject(false)} onSuccess={fetchDashboardData} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Monthly Report Modal */}
+        {showMonthlyReport && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Monthly Report</h2>
+                  <button
+                    onClick={() => setShowMonthlyReport(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                <MonthlyReportComponent />
+              </div>
+            </div>
           </div>
         )}
       </div>

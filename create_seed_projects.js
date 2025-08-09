@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
 const uri = process.env.MONGODB_URI;
-const dbName = 'freelance-trackers';
+const dbName = 'freelance-trackers'; // Use the database name from MONGODB_URI
 
 // Sample project data
 const seedProjects = [
@@ -21,7 +21,7 @@ const seedProjects = [
     hourlyRate: 75,
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-01-20'),
-    userId: "user123" // You may need to adjust this based on your user system
+    userId: "6896367b1ca7a546acd009e2" // demo user ID
   },
   {
     title: "Mobile App Development",
@@ -36,7 +36,7 @@ const seedProjects = [
     hourlyRate: 80,
     createdAt: new Date('2024-01-05'),
     updatedAt: new Date('2024-01-18'),
-    userId: "user123"
+    userId: "6896367b1ca7a546acd009e2"
   },
   {
     title: "Brand Identity Design",
@@ -51,7 +51,7 @@ const seedProjects = [
     hourlyRate: 65,
     createdAt: new Date('2023-12-15'),
     updatedAt: new Date('2024-01-15'),
-    userId: "user123"
+    userId: "6896367b1ca7a546acd009e2"
   },
   {
     title: "Database Migration",
@@ -66,7 +66,7 @@ const seedProjects = [
     hourlyRate: 85,
     createdAt: new Date('2024-01-08'),
     updatedAt: new Date('2024-01-22'),
-    userId: "user123"
+    userId: "6896367b1ca7a546acd009e2"
   },
   {
     title: "SEO Optimization",
@@ -81,7 +81,7 @@ const seedProjects = [
     hourlyRate: 60,
     createdAt: new Date('2024-01-12'),
     updatedAt: new Date('2024-01-19'),
-    userId: "user123"
+    userId: "6896367b1ca7a546acd009e2"
   },
   {
     title: "API Development",
@@ -96,7 +96,7 @@ const seedProjects = [
     hourlyRate: 90,
     createdAt: new Date('2024-01-03'),
     updatedAt: new Date('2024-01-21'),
-    userId: "user123"
+    userId: "6896367b1ca7a546acd009e2"
   },
   {
     title: "WordPress Theme Customization",
@@ -111,7 +111,7 @@ const seedProjects = [
     hourlyRate: 70,
     createdAt: new Date('2023-12-20'),
     updatedAt: new Date('2024-01-10'),
-    userId: "user123"
+    userId: "6896367b1ca7a546acd009e2"
   },
   {
     title: "UI/UX Design System",
@@ -126,7 +126,7 @@ const seedProjects = [
     hourlyRate: 75,
     createdAt: new Date('2024-01-07'),
     updatedAt: new Date('2024-01-17'),
-    userId: "user123"
+    userId: "6896367b1ca7a546acd009e2"
   },
   {
     title: "DevOps Infrastructure Setup",
@@ -141,7 +141,7 @@ const seedProjects = [
     hourlyRate: 95,
     createdAt: new Date('2024-01-02'),
     updatedAt: new Date('2024-01-23'),
-    userId: "user123"
+    userId: "6896367b1ca7a546acd009e2"
   },
   {
     title: "Content Management System",
@@ -156,7 +156,7 @@ const seedProjects = [
     hourlyRate: 70,
     createdAt: new Date('2023-12-10'),
     updatedAt: new Date('2024-01-05'),
-    userId: "user123"
+    userId: "6896367b1ca7a546acd009e2"
   }
 ];
 
@@ -218,8 +218,6 @@ async function createSeedProjects() {
 }
 
 // Run the seed function
-if (require.main === module) {
-  createSeedProjects();
-}
+createSeedProjects();
 
 export { createSeedProjects, seedProjects };

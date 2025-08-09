@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Project from '@/models/Project';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
+import mongoose from 'mongoose';
 
 interface ProjectFilter {
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   status?: string;
   category?: string;
   priority?: string;
@@ -24,7 +25,8 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     const skip = (page - 1) * limit;
 
     // Build filter
-    const filter: ProjectFilter = { userId: request.user?.userId || '' };
+    const userObjectId = new mongoose.Types.ObjectId(request.user?.userId);
+    const filter: ProjectFilter = { userId: userObjectId };
     if (status) filter.status = status;
     if (category) filter.category = category;
     if (priority) filter.priority = priority;
@@ -76,9 +78,10 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     }
 
     // Create project
+    const userObjectId = new mongoose.Types.ObjectId(request.user?.userId);
     const project = new Project({
       ...projectData,
-      userId: request.user?.userId
+      userId: userObjectId
     });
 
     await project.save();

@@ -5,6 +5,14 @@ export interface IUser extends Document {
   email?: string;
   password: string;
   role: 'admin' | 'user';
+  avatar?: string;
+  notifications?: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
+  language?: string;
+  timezone?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +42,32 @@ const UserSchema: Schema = new Schema(
       type: String,
       enum: ['admin', 'user'],
       default: 'user'
+    },
+    avatar: {
+      type: String,
+      default: '/api/placeholder/150/150'
+    },
+    notifications: {
+      email: {
+        type: Boolean,
+        default: true
+      },
+      push: {
+        type: Boolean,
+        default: true
+      },
+      sms: {
+        type: Boolean,
+        default: false
+      }
+    },
+    language: {
+      type: String,
+      default: 'en'
+    },
+    timezone: {
+      type: String,
+      default: 'America/New_York'
     }
   },
   {

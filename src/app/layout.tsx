@@ -6,11 +6,15 @@ import { AuthProvider } from '@/contexts/AuthContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Seratus Studio - Project Management',
-  description: 'Professional project management and tracking system',
-  keywords: 'project management, freelance, tracking, dashboard',
+  title: 'Seratus Studio - Freelance Project Tracker',
+  description: 'Modern, futuristic dashboard for tracking freelance projects with beautiful animations',
+  keywords: 'freelance, project management, dashboard, tracking, modern UI',
   authors: [{ name: 'Seratus Studio' }],
-  viewport: 'width=device-width, initial-scale=1',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -19,10 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} antialiased bg-gray-50 min-h-screen`}>
+    <html lang="en" className="dark">
+      <body className={`${inter.className} antialiased min-h-screen relative`}>
         <AuthProvider>
-          <div id="root">{children}</div>
+          <div id="root" className="relative z-10">{children}</div>
         </AuthProvider>
       </body>
     </html>

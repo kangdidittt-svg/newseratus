@@ -56,33 +56,42 @@ const EdinburghClock = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const getBackgroundGradient = () => {
+  const getBackgroundStyle = () => {
     switch (time.period) {
       case 'morning':
-        return 'from-blue-50 via-indigo-50 to-purple-50';
+        return {
+          background: 'linear-gradient(135deg, var(--neuro-bg), var(--neuro-bg-light))',
+          color: 'var(--neuro-text-primary)'
+        };
       case 'afternoon':
-        return 'from-gray-50 via-blue-50 to-indigo-50';
+        return {
+          background: 'linear-gradient(135deg, var(--neuro-bg-secondary), var(--neuro-bg))',
+          color: 'var(--neuro-text-primary)'
+        };
       case 'evening':
-        return 'from-purple-100 via-indigo-100 to-blue-100';
+        return {
+          background: 'linear-gradient(135deg, var(--neuro-bg-dark), var(--neuro-bg-secondary))',
+          color: 'var(--neuro-text-primary)'
+        };
       case 'night':
-        return 'from-gray-800 via-gray-900 to-black';
+        return {
+          background: 'linear-gradient(135deg, #2d3748, #1a202c)',
+          color: 'var(--neuro-text-light)'
+        };
       default:
-        return 'from-gray-50 to-blue-50';
+        return {
+          background: 'linear-gradient(135deg, var(--neuro-bg), var(--neuro-bg-light))',
+          color: 'var(--neuro-text-primary)'
+        };
     }
   };
 
-  const getTextColor = () => {
+  const getTextColorClass = () => {
     switch (time.period) {
-      case 'morning':
-        return 'text-gray-800';
-      case 'afternoon':
-        return 'text-gray-800';
-      case 'evening':
-        return 'text-gray-700';
       case 'night':
         return 'text-gray-100';
       default:
-        return 'text-gray-800';
+        return '';
     }
   };
 
@@ -199,20 +208,26 @@ const EdinburghClock = () => {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.6 }}
-      className={`relative overflow-hidden rounded-xl shadow-sm border border-gray-200 bg-gradient-to-br ${getBackgroundGradient()} w-full max-w-sm mx-auto`}
-      style={{ minHeight: 'fit-content' }}
+      className={`relative overflow-hidden w-full max-w-full mx-auto`}
+      style={{ 
+        minHeight: 'fit-content',
+        borderRadius: 'var(--neuro-radius-lg)',
+        boxShadow: 'var(--neuro-shadow-outset)',
+        border: '1px solid var(--neuro-border)',
+        ...getBackgroundStyle()
+      }}
     >
       {/* Background Elements */}
       <BackgroundElements />
       
       {/* Clock Container */}
-      <div className="relative z-10 p-4 sm:p-6">
+      <div className="relative z-10 p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <h3 className={`text-base sm:text-lg font-semibold ${getTextColor()}`}>Edinburgh Time</h3>
+          <h3 className={`text-base sm:text-lg font-semibold ${getTextColorClass()}`} style={{ color: getBackgroundStyle().color }}>Edinburgh Time</h3>
           <div className="flex items-center space-x-1 sm:space-x-2">
             {getPeriodIcon()}
-            <span className={`text-xs sm:text-sm font-medium ${getTextColor()} capitalize`}>
+            <span className={`text-xs sm:text-sm font-medium ${getTextColorClass()} capitalize`} style={{ color: getBackgroundStyle().color }}>
               {time.period}
             </span>
           </div>
@@ -293,12 +308,12 @@ const EdinburghClock = () => {
         
         {/* Digital Time Display */}
         <div className="text-center mt-3 sm:mt-4">
-          <div className={`text-xl sm:text-2xl font-bold ${getTextColor()}`}>
+          <div className={`text-xl sm:text-2xl font-bold ${getTextColorClass()}`} style={{ color: getBackgroundStyle().color }}>
             {time.hours.toString().padStart(2, '0')}:
             {time.minutes.toString().padStart(2, '0')}:
             {time.seconds.toString().padStart(2, '0')}
           </div>
-          <div className={`text-xs sm:text-sm ${getTextColor()} opacity-80 mt-1`}>
+          <div className={`text-xs sm:text-sm ${getTextColorClass()} opacity-80 mt-1`} style={{ color: getBackgroundStyle().color }}>
             {new Date().toLocaleDateString('en-GB', { 
               timeZone: 'Europe/London',
               weekday: 'long',

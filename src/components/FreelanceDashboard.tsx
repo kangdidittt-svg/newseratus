@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   DollarSign,
   FolderOpen,
@@ -12,6 +12,7 @@ import {
   Plus
 } from 'lucide-react';
 import EdinburghClock from './EdinburghClock';
+import RobotAssistant from './RobotAssistant';
 
 interface DashboardStats {
   totalProjects: number;
@@ -37,17 +38,98 @@ interface Project {
 
 interface FreelanceDashboardProps {
   onNavigate?: (tab: string) => void;
+  showModal?: boolean;
+  onModalClose?: () => void;
 }
 
-export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardProps) {
+export default function FreelanceDashboard({ onNavigate, showModal = false, onModalClose }: FreelanceDashboardProps) {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+  
+
+  const [formData, setFormData] = useState({
+    title: '',
+    client: '',
+    description: '',
+    budget: '',
+    deadline: '',
+    status: 'active',
+    priority: 'medium',
+    category: 'web-development'
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // Removed useEffect dependency on showModal to prevent conflicts
+
+  const closeModal = () => {
+    setShowAddProjectModal(false);
+    setNewProject({
+      title: '',
+      client: '',
+      description: '',
+      budget: '',
+      priority: 'Medium',
+      category: 'Web Development',
+      deadline: ''
+    });
+  };
+
+  const handleAddProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...formData,
+          budget: formData.budget ? parseFloat(formData.budget) : 0
+        }),
+      });
+
+      if (response.ok) {
+        // Reset form
+        setFormData({
+          title: '',
+          client: '',
+          description: '',
+          budget: '',
+          deadline: '',
+          status: 'active',
+          priority: 'medium',
+          category: 'web-development'
+        });
+        closeModal();
+        // Refresh dashboard data
+        fetchDashboardData();
+      } else {
+        console.error('Failed to create project');
+      }
+    } catch (error) {
+      console.error('Error creating project:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -214,18 +296,31 @@ export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardPro
         </motion.div>
         </div>
         
-        {/* Edinburgh Clock */}
+        {/* Robot Assistant */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="neuro-card p-4 flex items-center justify-center"
+          className="p-4 flex items-center justify-center"
+          style={{
+            background: 'transparent',
+            borderRadius: '16px',
+            backdropFilter: 'blur(10px)'
+          }}
         >
-          <EdinburghClock />
+          <RobotAssistant 
+            projects={recentProjects} 
+            onReminder={(type) => {
+              // Handle different reminder types
+              if (type === 'project') {
+                onNavigate?.('projects');
+              }
+            }}
+          />
         </motion.div>
       </div>
 
-      {/* Recent Projects and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Recent Projects and Edinburgh Clock */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         {/* Recent Projects */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -300,71 +395,187 @@ export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardPro
           </div>
         </motion.div>
 
-        {/* Quick Actions */}
+        {/* Edinburgh Clock */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.6 }}
-          className="neuro-card p-6"
+          className="neuro-card p-0 relative flex items-center justify-center h-full"
+          style={{
+            background: 'linear-gradient(135deg, var(--neuro-bg-primary), var(--neuro-bg-secondary))',
+            overflow: 'hidden',
+            minHeight: '100%'
+          }}
         >
-          <h2 className="text-xl font-semibold font-inter mb-6" style={{ color: 'var(--neuro-text-primary)' }}>
-            Quick Actions
-          </h2>
-          
-          <div className="space-y-4">
-            <button
-              onClick={() => onNavigate?.('add-project')}
-              className="w-full neuro-button-orange p-4 flex items-center justify-center space-x-2 hover:neuro-button-hover transition-all duration-200"
-            >
-              <Plus className="w-5 h-5" />
-              <span className="font-inter">Add New Project</span>
-            </button>
-            
-            <button
-              onClick={() => onNavigate?.('projects')}
-              className="w-full neuro-button p-4 flex items-center justify-center space-x-2 hover:neuro-button-hover transition-all duration-200"
-            >
-              <FolderOpen className="w-5 h-5" />
-              <span className="font-inter">Manage Projects</span>
-            </button>
-            
-            <button
-              onClick={() => onNavigate?.('monthly-report')}
-              className="w-full neuro-button p-4 flex items-center justify-center space-x-2 hover:neuro-button-hover transition-all duration-200"
-            >
-              <TrendingUp className="w-5 h-5" />
-              <span className="font-inter">View Reports</span>
-            </button>
-          </div>
+          <EdinburghClock />
 
-          {/* Summary Stats */}
-          <div className="mt-6 pt-6" style={{ borderTop: '1px solid var(--neuro-border)' }}>
-            <h3 className="text-sm font-semibold font-inter mb-4" style={{ color: 'var(--neuro-text-primary)' }}>
-              Quick Stats
-            </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>Completed</span>
-                <span className="text-sm font-semibold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>
-                  {stats?.completedProjects || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>On Hold</span>
-                <span className="text-sm font-semibold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>
-                  {stats?.onHoldProjects || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>Avg. Rate</span>
-                <span className="text-sm font-semibold font-inter" style={{ color: 'var(--neuro-orange)' }}>
-                  ${stats?.averageHourlyRate?.toFixed(2) || '0.00'}/h
-                </span>
-              </div>
-            </div>
-          </div>
+          {/* Add Project Form Modal */}
+           <div 
+             className={`fixed inset-0 z-50 ${showAddProjectModal ? 'block' : 'hidden'}`}
+             style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+             onClick={closeModal}
+           >
+             <div className="flex items-center justify-center min-h-screen p-4" onClick={(e) => e.stopPropagation()}>
+               <div
+                 className="bg-white rounded-lg shadow-2xl border border-gray-200 p-6 max-h-[80vh] overflow-y-auto w-full max-w-md"
+                 onClick={(e) => e.stopPropagation()}
+               >
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-800">
+                    Add New Project
+                  </h3>
+                  <button
+                    onClick={closeModal}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <form onSubmit={handleAddProject} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Project Title *
+                      </label>
+                      <input
+                        type="text"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter project title"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Client Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="client"
+                        value={formData.client}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter client name"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">
+                      Description
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      placeholder="Describe your project..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Budget ($)
+                      </label>
+                      <input
+                        type="number"
+                        name="budget"
+                        value={formData.budget}
+                        onChange={handleInputChange}
+                        min="0"
+                        step="0.01"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="0.00"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Priority
+                      </label>
+                      <select
+                        name="priority"
+                        value={formData.priority}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Category
+                      </label>
+                      <select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="web-development">Web Development</option>
+                        <option value="mobile-app">Mobile App</option>
+                        <option value="design">Design</option>
+                        <option value="consulting">Consulting</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Deadline
+                      </label>
+                      <input
+                        type="date"
+                        name="deadline"
+                        value={formData.deadline}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate?.('add-project')}
+                      className="neuro-button-orange px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add New Project</span>
+                    </button>
+                  </div>
+                </form>
+               </div>
+             </div>
+           </div>
+
+
         </motion.div>
       </div>
+
+
     </div>
   );
 }

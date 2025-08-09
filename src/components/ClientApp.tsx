@@ -37,6 +37,7 @@ export default function ClientApp() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   // Removed mobile menu state - sidebar will always be visible
 
   useEffect(() => {
@@ -210,6 +211,13 @@ export default function ClientApp() {
   //   }
   // };
 
+  const handleNavigation = (tab: string) => {
+    setActiveTab(tab);
+    if (tab !== 'add-project') {
+      setShowAddProjectModal(false);
+    }
+  };
+
   const renderContent = () => {
     const pageVariants = {
       initial: {
@@ -246,7 +254,11 @@ export default function ClientApp() {
             variants={pageVariants}
             transition={pageTransition}
           >
-            <FreelanceDashboard onNavigate={setActiveTab} />
+            <FreelanceDashboard 
+              onNavigate={handleNavigation} 
+              showModal={showAddProjectModal}
+              onModalClose={() => setShowAddProjectModal(false)}
+            />
           </motion.div>
         );
       case 'projects':
@@ -262,21 +274,7 @@ export default function ClientApp() {
             <ProjectList />
           </motion.div>
         );
-      case 'add-project':
-        return (
-          <motion.div
-            key="add-project"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <AddProject
-              onProjectAdded={() => setActiveTab('projects')}
-            />
-          </motion.div>
-        );
+
       case 'monthly-report':
         return (
           <motion.div
@@ -301,6 +299,22 @@ export default function ClientApp() {
             transition={pageTransition}
           >
             <Settings />
+          </motion.div>
+        );
+      case 'add-project':
+        return (
+          <motion.div
+            key="add-project"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            <AddProject onProjectAdded={() => {
+              setActiveTab('dashboard');
+              setShowAddProjectModal(false);
+            }} />
           </motion.div>
         );
       default:
@@ -372,7 +386,7 @@ export default function ClientApp() {
       {/* Sidebar - Fixed position */}
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleNavigation}
       />
 
       {/* Main Content */}

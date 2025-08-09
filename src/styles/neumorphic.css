@@ -25,6 +25,8 @@
   --neuro-error-light: rgba(245, 101, 101, 0.1);
   --neuro-info: #4299e1;
   --neuro-info-light: rgba(66, 153, 225, 0.1);
+  --neuro-blue: #4299e1;
+  --neuro-blue-light: rgba(66, 153, 225, 0.1);
   --neuro-bg-secondary: #e8e8eb;
   --neuro-orange-light: rgba(255, 140, 66, 0.1);
   
@@ -251,4 +253,43 @@
     box-shadow: 6px 6px 12px var(--neuro-shadow-dark), -6px -6px 12px var(--neuro-shadow-light);
     transform: translateY(-1px);
   }
+}
+
+/* Robot Assistant Styles */
+.neuro-button-small {
+  background: var(--neuro-bg);
+  border: none;
+  box-shadow: var(--neuro-shadow-outset);
+  transition: var(--neuro-transition-fast);
+  color: var(--neuro-text-secondary);
+}
+
+.neuro-button-small:hover {
+  box-shadow: var(--neuro-shadow-hover);
+  color: var(--neuro-text-primary);
+}
+
+.neuro-button-small:active {
+  box-shadow: var(--neuro-shadow-pressed);
+  transform: translateY(1px);
+}
+
+/* Robot Assistant Animation Keyframes */
+@keyframes robot-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes robot-bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+  60% { transform: translateY(-3px); }
+}
+
+.robot-pulse {
+  animation: robot-pulse 2s infinite;
+}
+
+.robot-bounce {
+  animation: robot-bounce 2s infinite;
 }

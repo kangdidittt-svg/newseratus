@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -27,7 +27,7 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
 
   const userName = user?.username || 'Teman';
 
-  const motivationalMessages = [
+  const motivationalMessages = useMemo(() => [
     `Semangat ${userName}! Kamu bisa menyelesaikan proyek ini! 💪`,
     `Tetap fokus dan produktif ${userName}! ⚡`,
     `${userName} sudah bekerja keras hari ini! 🌟`,
@@ -36,7 +36,7 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     `Progress kecil tetap progress ${userName}! 🚀`,
     `Konsistensi adalah kunci sukses ${userName}! 🔑`,
     `${userName} lebih kuat dari yang kamu kira! 💎`
-  ];
+  ], [userName]);
 
   const getProjectStats = useCallback(() => {
     const activeProjects = projects.filter(p => p.status === 'active').length;

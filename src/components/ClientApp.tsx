@@ -25,7 +25,6 @@ export default function ClientApp() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   // Removed mobile menu state - sidebar will always be visible
 
   const initializeApp = useCallback(async () => {
@@ -175,9 +174,6 @@ export default function ClientApp() {
 
   const handleNavigation = (tab: string) => {
     setActiveTab(tab);
-    if (tab !== 'add-project') {
-      setShowAddProjectModal(false);
-    }
   };
 
   const renderContent = () => {
@@ -218,8 +214,6 @@ export default function ClientApp() {
           >
             <FreelanceDashboard 
               onNavigate={handleNavigation} 
-              showModal={showAddProjectModal}
-              onModalClose={() => setShowAddProjectModal(false)}
             />
           </motion.div>
         );
@@ -275,7 +269,6 @@ export default function ClientApp() {
           >
             <AddProject onProjectAdded={() => {
               setActiveTab('dashboard');
-              setShowAddProjectModal(false);
             }} />
           </motion.div>
         );

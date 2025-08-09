@@ -46,7 +46,8 @@ export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardPro
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
-  
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',

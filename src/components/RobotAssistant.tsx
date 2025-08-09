@@ -82,6 +82,21 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     return reminders;
   }, [userName, getProjectStats]);
 
+  const showRandomReminder = useCallback(() => {
+    const projectReminders = getProjectReminders();
+    const allMessages = [...motivationalMessages, ...projectReminders];
+    const randomMessage = allMessages[Math.floor(Math.random() * allMessages.length)];
+    setCurrentMessage(randomMessage);
+    setIsActive(true);
+    
+    setTimeout(() => setIsActive(false), 3000);
+    
+    // Trigger reminder callback
+    const reminderTypes: ('break' | 'water' | 'project')[] = ['break', 'water', 'project'];
+    const randomType = reminderTypes[Math.floor(Math.random() * reminderTypes.length)];
+    onReminder(randomType);
+  }, [getProjectReminders, motivationalMessages, onReminder]);
+
   const performAutoAction = useCallback(() => {
     setAutoActionCounter(prev => prev + 1);
     setIsActive(true);
@@ -123,26 +138,10 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     return () => clearInterval(interval);
   }, [lastInteraction, showRandomReminder]);
 
-  const showRandomReminder = useCallback(() => {
-    const projectReminders = getProjectReminders();
-    const allMessages = [...motivationalMessages, ...projectReminders];
-    const randomMessage = allMessages[Math.floor(Math.random() * allMessages.length)];
-    setCurrentMessage(randomMessage);
-    setShowNotification(true);
-    
-    setTimeout(() => {
-      setShowNotification(false);
-    }, 5000); // Show for 5 seconds
-  }, [getProjectReminders, motivationalMessages]);
-
   const handleRobotClick = () => {
     setIsActive(true);
     showRandomReminder();
     setLastInteraction(Date.now());
-    
-    const reminderTypes = ['break', 'water', 'project'] as const;
-    const randomType = reminderTypes[Math.floor(Math.random() * reminderTypes.length)];
-    onReminder(randomType);
     
     setTimeout(() => setIsActive(false), 2000);
   };

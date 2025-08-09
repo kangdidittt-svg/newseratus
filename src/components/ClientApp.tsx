@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
@@ -17,19 +17,7 @@ interface User {
   avatar?: string;
 }
 
-interface Project {
-  id: string;
-  title: string;
-  client: string;
-  status: 'active' | 'completed' | 'pending' | 'on-hold';
-  priority: 'low' | 'medium' | 'high';
-  budget: number;
-  deadline: string;
-  progress: number;
-  description: string;
-  category: string;
-  createdAt: string;
-}
+
 
 export default function ClientApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -40,15 +28,7 @@ export default function ClientApp() {
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   // Removed mobile menu state - sidebar will always be visible
 
-  useEffect(() => {
-    // Initialize user data and projects
-    const init = async () => {
-      await initializeApp();
-    };
-    init();
-  }, [initializeApp]);
-
-  const initializeApp = async () => {
+  const initializeApp = useCallback(async () => {
     try {
       setError(null);
       // Simulate API calls
@@ -62,7 +42,15 @@ export default function ClientApp() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Initialize user data and projects
+    const init = async () => {
+      await initializeApp();
+    };
+    init();
+  }, [initializeApp]);
 
   const fetchUserData = async () => {
     try {
@@ -89,7 +77,6 @@ export default function ClientApp() {
         credentials: 'include'
       });
       if (response.ok) {
-        const data = await response.json();
         // Projects data processing removed as not used in UI
       }
     } catch (error) {

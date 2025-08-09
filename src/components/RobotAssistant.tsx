@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -38,20 +38,20 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     `${userName} lebih kuat dari yang kamu kira! 💎`
   ];
 
-  const getProjectStats = () => {
-    const activeProjects = projects.filter(p => p.status === 'active' || p.status === 'in-progress').length;
+  const getProjectStats = useCallback(() => {
+    const activeProjects = projects.filter(p => p.status === 'active').length;
     const completedProjects = projects.filter(p => p.status === 'completed').length;
     const onHoldProjects = projects.filter(p => p.status === 'on-hold').length;
     
-    // Projects created in last 7 days
+    // Projects created in the last 7 days
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     const newProjects = projects.filter(p => new Date(p.createdAt) > weekAgo).length;
     
     return { activeProjects, completedProjects, onHoldProjects, newProjects };
-  };
+  }, [projects]);
 
-  const getProjectReminders = () => {
+  const getProjectReminders = useCallback(() => {
     const stats = getProjectStats();
     const reminders = [];
     
@@ -80,7 +80,7 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     );
     
     return reminders;
-  };
+  }, [userName, getProjectStats]);
 
   // Auto action every 15-25 seconds (slower)
   useEffect(() => {
@@ -111,7 +111,7 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     return () => clearInterval(interval);
   }, [lastInteraction, showRandomReminder]);
 
-  const performAutoAction = () => {
+  const performAutoAction = useCallback(() => {
     setAutoActionCounter(prev => prev + 1);
     setIsActive(true);
     
@@ -121,9 +121,9 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     }
     
     setTimeout(() => setIsActive(false), 2000);
-  };
+  }, [autoActionCounter, showRandomReminder]);
 
-  const showRandomReminder = () => {
+  const showRandomReminder = useCallback(() => {
     const projectReminders = getProjectReminders();
     const allMessages = [...motivationalMessages, ...projectReminders];
     const randomMessage = allMessages[Math.floor(Math.random() * allMessages.length)];
@@ -133,7 +133,7 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     setTimeout(() => {
       setShowNotification(false);
     }, 5000); // Show for 5 seconds
-  };
+  }, [getProjectReminders, motivationalMessages]);
 
   const handleRobotClick = () => {
     setIsActive(true);

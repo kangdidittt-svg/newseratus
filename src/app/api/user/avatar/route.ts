@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
@@ -39,7 +39,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'avatars');
     try {
       await mkdir(uploadsDir, { recursive: true });
-    } catch (error) {
+    } catch {
       // Directory might already exist
     }
 
@@ -69,11 +69,11 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       },
       { status: 200 }
     );
-  } catch (error) {
-    console.error('Avatar upload error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+      console.error('Avatar upload error:', error);
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
   }
 });

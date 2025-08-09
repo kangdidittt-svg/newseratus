@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import {
   User,
   Camera,
@@ -113,6 +114,13 @@ export default function Settings() {
         const data = await response.json();
         setSettings(data.settings);
         setSaveMessage('Settings saved successfully!');
+        
+        // Dispatch custom event to notify other components about profile update
+        if (data.settings?.profile?.avatar) {
+          window.dispatchEvent(new CustomEvent('profileUpdated', {
+            detail: { avatarUrl: data.settings.profile.avatar }
+          }));
+        }
       } else {
         setSaveMessage('Error saving settings. Please try again.');
       }
@@ -284,6 +292,11 @@ export default function Settings() {
           updateSettings('profile', 'avatar', data.avatarUrl);
           setSaveMessage('Avatar updated successfully!');
           setTimeout(() => setSaveMessage(''), 3000);
+          
+          // Dispatch custom event to notify other components
+          window.dispatchEvent(new CustomEvent('profileUpdated', {
+            detail: { avatarUrl: data.avatarUrl }
+          }));
         } else {
           // Revert to original avatar on error
           loadSettings();
@@ -308,12 +321,15 @@ export default function Settings() {
       {/* Avatar Section */}
       <div className="flex flex-col items-center space-y-4">
         <div className="relative">
-          <img
-            src={settings.profile.avatar}
+          <Image
+            src={settings.profile.avatar || '/api/placeholder/150/150'}
             alt="Profile"
-            className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+            width={128}
+            height={128}
+            className="w-32 h-32 rounded-full object-cover border-4 shadow-lg"
+            style={{ borderColor: 'var(--neuro-bg)' }}
           />
-          <label className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition-colors cursor-pointer">
+          <label className="absolute bottom-0 right-0 neuro-button-orange p-2 rounded-full cursor-pointer">
             <Camera className="h-4 w-4" />
             <input
               type="file"
@@ -324,8 +340,8 @@ export default function Settings() {
           </label>
         </div>
         <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900">Profile Photo</h3>
-          <p className="text-sm text-gray-600">Click the camera icon to change your profile photo</p>
+          <h3 className="text-lg font-semibold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Profile Photo</h3>
+          <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>Click the camera icon to change your profile photo</p>
         </div>
       </div>
 
@@ -342,8 +358,8 @@ export default function Settings() {
 
       {/* Notification Settings */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Bell className="h-5 w-5 mr-2" />
+        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
+          <Bell className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
           Notifications
         </h3>
         <div className="space-y-4">
@@ -352,10 +368,10 @@ export default function Settings() {
             { key: 'push', label: 'Push Notifications', description: 'Receive push notifications in browser' },
             { key: 'sms', label: 'SMS Notifications', description: 'Receive notifications via SMS' }
           ].map(({ key, label, description }) => (
-            <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div key={key} className="flex items-center justify-between p-4 neuro-card rounded-lg">
               <div>
-                <p className="font-medium text-gray-900">{label}</p>
-                <p className="text-sm text-gray-600">{description}</p>
+                <p className="font-medium font-inter" style={{ color: 'var(--neuro-text-primary)' }}>{label}</p>
+                <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>{description}</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -364,7 +380,7 @@ export default function Settings() {
                   onChange={(e) => updateNestedSettings('preferences', 'notifications', key, e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <div className="w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all" style={{ backgroundColor: 'var(--neuro-bg-secondary)' }}></div>
               </label>
             </div>
           ))}
@@ -374,13 +390,13 @@ export default function Settings() {
       {/* Language & Timezone */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
             Language
           </label>
           <select
             value={settings.preferences.language}
             onChange={(e) => updateSettings('preferences', 'language', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="neuro-select w-full"
           >
             <option value="en">English</option>
             <option value="es">Spanish</option>
@@ -391,13 +407,13 @@ export default function Settings() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
             Timezone
           </label>
           <select
             value={settings.preferences.timezone}
             onChange={(e) => updateSettings('preferences', 'timezone', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="neuro-select w-full"
           >
             <option value="America/New_York">Eastern Time (ET)</option>
             <option value="America/Chicago">Central Time (CT)</option>
@@ -419,27 +435,27 @@ export default function Settings() {
       className="space-y-6"
     >
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Key className="h-5 w-5 mr-2" />
+        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
+          <Key className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
           Change Password
         </h3>
         
         {/* Password Change Messages */}
         {passwordChangeMessage && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-700 font-medium">{passwordChangeMessage}</p>
+          <div className="mb-4 p-4 neuro-card" style={{ backgroundColor: 'var(--neuro-success-bg)', borderColor: 'var(--neuro-success)' }}>
+            <p className="font-inter font-medium" style={{ color: 'var(--neuro-success)' }}>{passwordChangeMessage}</p>
           </div>
         )}
 
         {passwordChangeError && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700 font-medium">{passwordChangeError}</p>
+          <div className="mb-4 p-4 neuro-card" style={{ backgroundColor: 'var(--neuro-error-bg)', borderColor: 'var(--neuro-error)' }}>
+            <p className="font-inter font-medium" style={{ color: 'var(--neuro-error)' }}>{passwordChangeError}</p>
           </div>
         )}
         
         <form onSubmit={handlePasswordChange} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
               Current Password
             </label>
             <div className="relative">
@@ -447,21 +463,24 @@ export default function Settings() {
                 type={showCurrentPassword ? 'text' : 'password'}
                 value={passwordData.currentPassword}
                 onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus-ring"
+                className="neuro-input w-full pr-12"
                 placeholder="Enter your current password"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-3 transition-colors duration-200" 
+                style={{ color: 'var(--neuro-text-secondary)' }}
+                onMouseEnter={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-orange)'}
+                onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-text-secondary)'}
               >
                 {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
               New Password
             </label>
             <div className="relative">
@@ -469,7 +488,7 @@ export default function Settings() {
                 type={showNewPassword ? 'text' : 'password'}
                 value={passwordData.newPassword}
                 onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus-ring"
+                className="neuro-input w-full pr-12"
                 placeholder="Enter your new password (min. 6 characters)"
                 minLength={6}
                 required
@@ -477,14 +496,17 @@ export default function Settings() {
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-3 transition-colors duration-200" 
+                style={{ color: 'var(--neuro-text-secondary)' }}
+                onMouseEnter={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-orange)'}
+                onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-text-secondary)'}
               >
                 {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
               Confirm New Password
             </label>
             <div className="relative">
@@ -492,14 +514,17 @@ export default function Settings() {
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={passwordData.confirmPassword}
                 onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus-ring"
+                className="neuro-input w-full pr-12"
                 placeholder="Confirm your new password"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-3 transition-colors duration-200" 
+                style={{ color: 'var(--neuro-text-secondary)' }}
+                onMouseEnter={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-orange)'}
+                onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-text-secondary)'}
               >
                 {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
@@ -508,15 +533,15 @@ export default function Settings() {
           <button 
             type="submit"
             disabled={isChangingPassword}
-            className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 btn-animate focus-ring ${
+            className={`neuro-button-orange font-inter ${
               isChangingPassword
-                ? 'bg-gray-500 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700'
-            } text-white`}
+                ? 'opacity-50 cursor-not-allowed'
+                : ''
+            }`}
           >
             {isChangingPassword ? (
               <>
-                <div className="loading-spinner inline-block mr-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="loading-spinner inline-block mr-2 w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--neuro-orange)', borderTopColor: 'transparent' }}></div>
                 Updating Password...
               </>
             ) : (
@@ -527,17 +552,17 @@ export default function Settings() {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Shield className="h-5 w-5 mr-2" />
+        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
+          <Shield className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
           Two-Factor Authentication
         </h3>
-        <div className="bg-gray-50 p-6 rounded-lg">
+        <div className="neuro-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900">Enable 2FA</p>
-              <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
+              <p className="font-medium font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Enable 2FA</p>
+              <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>Add an extra layer of security to your account</p>
             </div>
-            <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+            <button className="neuro-button-orange font-inter">
               Enable
             </button>
           </div>
@@ -554,18 +579,18 @@ export default function Settings() {
       className="space-y-8"
     >
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Trash2 className="h-5 w-5 mr-2" />
+        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
+          <Trash2 className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-error)' }} />
           Bersihkan Data
         </h3>
-        <div className="bg-red-50 border border-red-200 p-6 rounded-lg">
+        <div className="neuro-card p-6" style={{ backgroundColor: 'var(--neuro-error-bg)', borderColor: 'var(--neuro-error)' }}>
           <div className="flex items-start space-x-4">
             <div className="flex-shrink-0">
-              <Trash2 className="h-6 w-6 text-red-600" />
+              <Trash2 className="h-6 w-6" style={{ color: 'var(--neuro-error)' }} />
             </div>
             <div className="flex-1">
-              <h4 className="font-medium text-red-900 mb-2">Hapus Semua Data</h4>
-              <p className="text-sm text-red-700 mb-4">
+              <h4 className="font-medium font-inter mb-2" style={{ color: 'var(--neuro-error)' }}>Hapus Semua Data</h4>
+              <p className="text-sm font-inter mb-4" style={{ color: 'var(--neuro-error)' }}>
                 Tindakan ini akan menghapus semua data Anda dari database termasuk proyek, pengaturan, dan informasi profil. 
                 <strong>Tindakan ini tidak dapat dibatalkan.</strong>
               </p>
@@ -575,7 +600,8 @@ export default function Settings() {
                     handleClearData();
                   }
                 }}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
+                className="neuro-button font-inter flex items-center space-x-2"
+                style={{ backgroundColor: 'var(--neuro-error)', color: 'white' }}
               >
                 <Trash2 className="h-4 w-4" />
                 <span>Hapus Semua Data</span>
@@ -586,23 +612,24 @@ export default function Settings() {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <LogOut className="h-5 w-5 mr-2" />
+        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
+          <LogOut className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
           Keluar Akun
         </h3>
-        <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg">
+        <div className="neuro-card p-6">
           <div className="flex items-start space-x-4">
             <div className="flex-shrink-0">
-              <LogOut className="h-6 w-6 text-gray-600" />
+              <LogOut className="h-6 w-6" style={{ color: 'var(--neuro-text-secondary)' }} />
             </div>
             <div className="flex-1">
-              <h4 className="font-medium text-gray-900 mb-2">Logout</h4>
-              <p className="text-sm text-gray-600 mb-4">
+              <h4 className="font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Logout</h4>
+              <p className="text-sm font-inter mb-4" style={{ color: 'var(--neuro-text-secondary)' }}>
                 Keluar dari akun Anda dan kembali ke halaman login.
               </p>
               <button 
                 onClick={handleLogout}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                className="neuro-button font-inter flex items-center space-x-2"
+                style={{ backgroundColor: 'var(--neuro-text-secondary)', color: 'white' }}
               >
                 <LogOut className="h-4 w-4" />
                 <span>Logout</span>
@@ -633,7 +660,7 @@ export default function Settings() {
     return (
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--neuro-orange)' }}></div>
         </div>
       </div>
     );
@@ -643,8 +670,8 @@ export default function Settings() {
     <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-1">Manage your account settings and preferences</p>
+        <h1 className="text-2xl font-bold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Settings</h1>
+        <p className="font-inter mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>Manage your account settings and preferences</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -657,15 +684,20 @@ export default function Settings() {
                 <motion.button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
+                  className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-300 font-inter ${
                     activeTab === tab.id
-                      ? 'bg-indigo-50 text-indigo-700 border-l-4 border-indigo-700'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'neuro-card-pressed'
+                      : 'neuro-card hover:neuro-card-hover'
                   }`}
+                  style={{
+                    color: activeTab === tab.id ? 'var(--neuro-orange)' : 'var(--neuro-text-primary)'
+                  }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Icon className="h-5 w-5 mr-3" />
+                  <Icon className="h-5 w-5 mr-3" style={{
+                    color: activeTab === tab.id ? 'var(--neuro-orange)' : 'var(--neuro-text-secondary)'
+                  }} />
                   {tab.label}
                 </motion.button>
               );
@@ -675,19 +707,20 @@ export default function Settings() {
 
         {/* Content */}
         <div className="flex-1">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          <div className="neuro-card p-8">
             {renderTabContent()}
             
             {/* Save Button */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="mt-8 pt-6" style={{ borderTop: '1px solid var(--neuro-border)' }}>
               <div className="flex items-center justify-between">
                 {saveMessage && (
                   <motion.p
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className={`text-sm ${
-                      saveMessage.includes('Error') ? 'text-red-600' : 'text-green-600'
-                    }`}
+                    className="text-sm font-inter"
+                    style={{
+                      color: saveMessage.includes('Error') ? 'var(--neuro-error)' : 'var(--neuro-success)'
+                    }}
                   >
                     {saveMessage}
                   </motion.p>
@@ -695,7 +728,7 @@ export default function Settings() {
                 <motion.button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-colors ml-auto"
+                  className="neuro-button-orange px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 ml-auto font-inter"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
-import Dashboard from './Dashboard';
+import FreelanceDashboard from './FreelanceDashboard';
 import ProjectList from './ProjectList';
 import AddProject from './AddProject';
 import MonthlyReport from './MonthlyReport';
@@ -41,7 +41,10 @@ export default function ClientApp() {
 
   useEffect(() => {
     // Initialize user data and projects
-    initializeApp();
+    const init = async () => {
+      await initializeApp();
+    };
+    init();
   }, []);
 
   const initializeApp = async () => {
@@ -111,101 +114,101 @@ export default function ClientApp() {
           category: project.category,
           createdAt: project.createdAt
         })) || [];
-        setProjects(projectsData);
+        // setProjects(projectsData); // Commented out as projects are not used in UI
       }
     } catch (error) {
       console.error('Error fetching projects:', error);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
+  // const handleLogout = async () => {
+  //   try {
+  //     const response = await fetch('/api/auth/logout', {
+  //       method: 'POST',
+  //       credentials: 'include'
+  //     });
       
-      if (response.ok) {
-        // Clear local storage and redirect to login
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.href = '/login';
-      }
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
+  //     if (response.ok) {
+  //       // Clear local storage and redirect to login
+  //       localStorage.clear();
+  //       sessionStorage.clear();
+  //       window.location.href = '/login';
+  //     }
+  //   } catch (error) {
+  //     console.error('Error logging out:', error);
+  //   }
+  // };
 
-  const handleProjectCreate = async (newProject: Omit<Project, 'id' | 'createdAt'>) => {
-    try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(newProject)
-      });
+  // const handleProjectCreate = async (newProject: Omit<Project, 'id' | 'createdAt'>) => {
+  //   try {
+  //     const response = await fetch('/api/projects', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json'
+  //       },
+  //       credentials: 'include',
+  //       body: JSON.stringify(newProject)
+  //     });
       
-      if (response.ok) {
-        const createdProject = await response.json();
-        const project: Project = {
-          id: createdProject._id,
-          title: createdProject.title,
-          client: createdProject.client,
-          status: createdProject.status,
-          priority: createdProject.priority,
-          budget: createdProject.budget,
-          deadline: createdProject.deadline,
-          progress: createdProject.progress || 0,
-          description: createdProject.description,
-          category: createdProject.category,
-          createdAt: createdProject.createdAt
-        };
-        setProjects(prev => [project, ...prev]);
-      }
-    } catch (error) {
-      console.error('Error creating project:', error);
-    }
-  };
+  //     if (response.ok) {
+  //       const createdProject = await response.json();
+  //       const project: Project = {
+  //         id: createdProject._id,
+  //         title: createdProject.title,
+  //         client: createdProject.client,
+  //         status: createdProject.status,
+  //         priority: createdProject.priority,
+  //         budget: createdProject.budget,
+  //         deadline: createdProject.deadline,
+  //         progress: createdProject.progress || 0,
+  //         description: createdProject.description,
+  //         category: createdProject.category,
+  //         createdAt: createdProject.createdAt
+  //       };
+  //       setProjects(prev => [project, ...prev]);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error creating project:', error);
+  //   }
+  // };
 
-  const handleProjectUpdate = async (updatedProject: Project) => {
-    try {
-      const response = await fetch(`/api/projects/${updatedProject.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(updatedProject)
-      });
+  // const handleProjectUpdate = async (updatedProject: Project) => {
+  //   try {
+  //     const response = await fetch(`/api/projects/${updatedProject.id}`, {
+  //       method: 'PUT',
+  //       headers: {
+  //         'Content-Type': 'application/json'
+  //       },
+  //       credentials: 'include',
+  //       body: JSON.stringify(updatedProject)
+  //     });
       
-      if (response.ok) {
-        setProjects(prev => 
-          prev.map(project => 
-            project.id === updatedProject.id ? updatedProject : project
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error updating project:', error);
-    }
-  };
+  //     if (response.ok) {
+  //       setProjects(prev => 
+  //         prev.map(project => 
+  //           project.id === updatedProject.id ? updatedProject : project
+  //         )
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error('Error updating project:', error);
+  //   }
+  // };
 
-  const handleProjectDelete = async (projectId: string) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+  // const handleProjectDelete = async (projectId: string) => {
+  //   try {
+  //     const response = await fetch(`/api/projects/${projectId}`, {
+  //       method: 'DELETE',
+  //       credentials: 'include'
+  //     });
       
-      if (response.ok) {
-        setProjects(prev => prev.filter(project => project.id !== projectId));
-      }
-    } catch (error) {
-      console.error('Error deleting project:', error);
-    }
-  };
+  //     if (response.ok) {
+  //       setProjects(prev => prev.filter(project => project.id !== projectId));
+  //     }
+  //   } catch (error) {
+  //     console.error('Error deleting project:', error);
+  //   }
+  // };
 
   const renderContent = () => {
     const pageVariants = {
@@ -243,7 +246,7 @@ export default function ClientApp() {
             variants={pageVariants}
             transition={pageTransition}
           >
-            <Dashboard />
+            <FreelanceDashboard onNavigate={setActiveTab} />
           </motion.div>
         );
       case 'projects':
@@ -310,7 +313,7 @@ export default function ClientApp() {
             variants={pageVariants}
             transition={pageTransition}
           >
-            <Dashboard />
+            <FreelanceDashboard onNavigate={setActiveTab} />
           </motion.div>
         );
     }
@@ -365,18 +368,15 @@ export default function ClientApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar - Always visible */}
-      <div>
-        <Sidebar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          user={user || undefined}
-        />
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar - Fixed position */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="ml-20 flex flex-col min-h-screen">
         {/* Top Bar */}
         <TopBar
           user={user || undefined}

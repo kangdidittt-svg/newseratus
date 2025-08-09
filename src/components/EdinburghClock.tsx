@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Sun, Moon, Cloud, Star } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 
 interface TimeState {
   hours: number;
@@ -18,6 +18,19 @@ const EdinburghClock = () => {
     seconds: 0,
     period: 'morning'
   });
+  
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth < 640);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -186,20 +199,20 @@ const EdinburghClock = () => {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.6 }}
-      className={`relative overflow-hidden rounded-xl shadow-sm border border-gray-200 bg-gradient-to-br ${getBackgroundGradient()}`}
-      style={{ height: 'fit-content' }}
+      className={`relative overflow-hidden rounded-xl shadow-sm border border-gray-200 bg-gradient-to-br ${getBackgroundGradient()} w-full max-w-sm mx-auto`}
+      style={{ minHeight: 'fit-content' }}
     >
       {/* Background Elements */}
       <BackgroundElements />
       
       {/* Clock Container */}
-      <div className="relative z-10 p-6">
+      <div className="relative z-10 p-4 sm:p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h3 className={`text-lg font-semibold ${getTextColor()}`}>Edinburgh Time</h3>
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h3 className={`text-base sm:text-lg font-semibold ${getTextColor()}`}>Edinburgh Time</h3>
+          <div className="flex items-center space-x-1 sm:space-x-2">
             {getPeriodIcon()}
-            <span className={`text-sm font-medium ${getTextColor()} capitalize`}>
+            <span className={`text-xs sm:text-sm font-medium ${getTextColor()} capitalize`}>
               {time.period}
             </span>
           </div>
@@ -207,18 +220,18 @@ const EdinburghClock = () => {
         
         {/* Analog Clock */}
         <div className="flex justify-center">
-          <div className="relative w-32 h-32">
+          <div className="relative w-24 h-24 sm:w-32 sm:h-32">
             {/* Clock Face */}
-            <div className={`absolute inset-0 ${getClockFaceColor()} backdrop-blur-sm rounded-full border-4 border-gray-300 shadow-lg`}>
+            <div className={`absolute inset-0 ${getClockFaceColor()} backdrop-blur-sm rounded-full border-2 sm:border-4 border-gray-300 shadow-lg`}>
               {/* Hour Markers */}
               {[...Array(12)].map((_, i) => (
                 <div
                   key={`hour-marker-${i}`}
-                  className="absolute w-0.5 h-4 bg-gray-600"
+                  className="absolute w-0.5 h-3 sm:h-4 bg-gray-600"
                   style={{
-                    top: '8px',
+                    top: isSmallScreen ? '6px' : '8px',
                     left: '50%',
-                    transformOrigin: '50% 56px',
+                    transformOrigin: isSmallScreen ? '50% 42px' : '50% 56px',
                     transform: `translateX(-50%) rotate(${i * 30}deg)`
                   }}
                 />
@@ -226,9 +239,9 @@ const EdinburghClock = () => {
               
               {/* Hour Hand */}
               <motion.div
-                className="absolute w-1 bg-gray-800 rounded-full origin-bottom"
+                className="absolute w-0.5 sm:w-1 bg-gray-800 rounded-full origin-bottom"
                 style={{
-                  height: '32px',
+                  height: isSmallScreen ? '24px' : '32px',
                   left: '50%',
                   bottom: '50%',
                   transformOrigin: '50% 100%',
@@ -240,9 +253,9 @@ const EdinburghClock = () => {
               
               {/* Minute Hand */}
               <motion.div
-                className="absolute w-0.5 bg-gray-700 rounded-full origin-bottom"
+                className="absolute w-px sm:w-0.5 bg-gray-700 rounded-full origin-bottom"
                 style={{
-                  height: '44px',
+                  height: isSmallScreen ? '33px' : '44px',
                   left: '50%',
                   bottom: '50%',
                   transformOrigin: '50% 100%',
@@ -256,7 +269,7 @@ const EdinburghClock = () => {
               <motion.div
                 className="absolute w-px bg-red-500 rounded-full origin-bottom"
                 style={{
-                  height: '48px',
+                  height: isSmallScreen ? '36px' : '48px',
                   left: '50%',
                   bottom: '50%',
                   transformOrigin: '50% 100%',
@@ -267,19 +280,25 @@ const EdinburghClock = () => {
               />
               
               {/* Center Dot */}
-              <div className="absolute w-3 h-3 bg-gray-800 rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+              <div 
+                className="absolute bg-gray-800 rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                style={{
+                  width: isSmallScreen ? '8px' : '12px',
+                  height: isSmallScreen ? '8px' : '12px'
+                }}
+              />
             </div>
           </div>
         </div>
         
         {/* Digital Time Display */}
-        <div className="text-center mt-4">
-          <div className={`text-2xl font-bold ${getTextColor()}`}>
+        <div className="text-center mt-3 sm:mt-4">
+          <div className={`text-xl sm:text-2xl font-bold ${getTextColor()}`}>
             {time.hours.toString().padStart(2, '0')}:
             {time.minutes.toString().padStart(2, '0')}:
             {time.seconds.toString().padStart(2, '0')}
           </div>
-          <div className={`text-sm ${getTextColor()} opacity-80 mt-1`}>
+          <div className={`text-xs sm:text-sm ${getTextColor()} opacity-80 mt-1`}>
             {new Date().toLocaleDateString('en-GB', { 
               timeZone: 'Europe/London',
               weekday: 'long',

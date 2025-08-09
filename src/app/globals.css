@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import '../styles/neumorphic.css';
 
 :root {
   --background: #0f0f23;
@@ -31,30 +32,30 @@ body {
 
 
 
-/* Glass Morphism */
+/* Glass Morphism - Made lighter and thinner */
 .glass {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.2);
 }
 
 .glass-dark {
   background: rgba(15, 15, 35, 0.8);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.15);
 }
 
-/* Card Hover Effects */
+/* Card Hover Effects - Made lighter and thinner */
 .card-hover {
   transition: all 0.3s ease;
   transform: translateY(0);
 }
 
 .card-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(139, 92, 246, 0.12);
 }
 
 /* Gradient Text */
@@ -65,13 +66,13 @@ body {
   background-clip: text;
 }
 
-/* Pulse Animation */
+/* Pulse Animation - Made lighter and thinner */
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
   }
   50% {
-    box-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
   }
 }
 
@@ -87,16 +88,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--neuro-bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  background: var(--neuro-orange);
   border-radius: 4px;
+  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #7c3aed, #db2777);
+  background: var(--neuro-orange-light);
 }
 
 /* Input Field Styling - Fix white text issue */
@@ -127,14 +129,14 @@ select {
   border-radius: inherit;
 }
 
-/* Button Hover Effects */
+/* Button Hover Effects - Made lighter and thinner */
 .btn-primary {
   transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Smooth Transitions */
@@ -142,18 +144,18 @@ select {
   transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
 }
 
-/* Loading Animation */
+/* Loading Animation - Made lighter and thinner */
 @keyframes spin-glow {
   0% {
     transform: rotate(0deg);
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.25);
   }
   50% {
-    box-shadow: 0 0 40px rgba(236, 72, 153, 0.8);
+    box-shadow: 0 0 16px rgba(236, 72, 153, 0.4);
   }
   100% {
     transform: rotate(360deg);
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.25);
   }
 }
 
@@ -191,10 +193,10 @@ select {
   ring-offset: 2px;
 }
 
-/* Better Modal Backdrop */
+/* Better Modal Backdrop - Made lighter and thinner */
 .modal-backdrop {
   backdrop-filter: blur(8px);
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
 }
 

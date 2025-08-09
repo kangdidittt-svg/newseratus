@@ -2,393 +2,291 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  AreaChart,
-  Area
-} from 'recharts';
-import {
-  DollarSign,
-  Clock,
-  FolderOpen,
-  CheckCircle,
-  AlertCircle,
-  PauseCircle,
-  TrendingUp,
-  Calendar,
-  FileText,
-  Eye,
-  Sparkles,
-  Zap,
-  Star
-} from 'lucide-react';
-import ModernCard from '@/components/ModernCard';
-import GradientText from '@/components/GradientText';
-import EdinburghClock from '@/components/EdinburghClock';
+import PlayerCircle from './PlayerCircle';
+import DownloadList from './DownloadList';
+import EdinburghClock from './EdinburghClock';
 
-interface DashboardStats {
-  totalProjects: number;
-  activeProjects: number;
-  completedProjects: number;
-  onHoldProjects: number;
-  totalEarnings: number;
-  totalHours: number;
-  averageHourlyRate: number;
-  totalPendingPayments: number;
-}
-
-interface Project {
-  _id: string;
+interface Track {
+  id: string;
   title: string;
-  client: string;
-  status: string;
-  priority: string;
-  updatedAt: string;
-  budget?: number;
-  deadline?: string;
-  progress?: number;
-  description?: string;
+  artist: string;
+  album: string;
+  duration: number;
+  albumArt: string;
 }
 
-interface ProjectsByStatus {
-  name: string;
-  value: number;
+interface DownloadItem {
+  id: string;
+  track: Track;
+  status: 'pending' | 'downloading' | 'completed';
+  progress: number;
+  downloadedAt?: string;
 }
 
-interface MonthlyEarning {
-  _id: { year: number; month: number };
-  earnings: number;
-  hours: number;
-}
+const mockTracks: Track[] = [
+  {
+    id: '1',
+    title: 'Blinding Lights',
+    artist: 'The Weeknd',
+    album: 'After Hours',
+    duration: 200,
+    albumArt: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop&crop=face'
+  },
+  {
+    id: '2',
+    title: 'Levitating',
+    artist: 'Dua Lipa',
+    album: 'Future Nostalgia',
+    duration: 203,
+    albumArt: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=300&h=300&fit=crop&crop=face'
+  },
+  {
+    id: '3',
+    title: 'What A Man Gotta Do',
+    artist: 'Jonas Brothers',
+    album: 'Single',
+    duration: 177,
+    albumArt: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=300&fit=crop&crop=face'
+  },
+  {
+    id: '4',
+    title: 'You Should Be Sad',
+    artist: 'Halsey',
+    album: 'Manic',
+    duration: 206,
+    albumArt: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop&crop=face'
+  },
+  {
+    id: '5',
+    title: 'So Hot For Sarah Smith',
+    artist: 'Various Artists',
+    album: 'Compilation',
+    duration: 189,
+    albumArt: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=300&h=300&fit=crop&crop=face'
+  },
+  {
+    id: '6',
+    title: 'Boss Bitch',
+    artist: 'Doja Cat',
+    album: 'Hot Pink',
+    duration: 178,
+    albumArt: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=300&fit=crop&crop=face'
+  },
+  {
+    id: '7',
+    title: 'Dancing with a Stranger',
+    artist: 'Sam Smith',
+    album: 'Single',
+    duration: 191,
+    albumArt: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop&crop=face'
+  },
+  {
+    id: '8',
+    title: 'Underdog',
+    artist: 'Alicia Keys',
+    album: 'ALICIA',
+    duration: 213,
+    albumArt: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=300&h=300&fit=crop&crop=face'
+  }
+];
 
-const COLORS = ['#8b5cf6', '#ec4899', '#06b6d4', '#7c3aed'];
+const mockDownloads: DownloadItem[] = [
+  {
+    id: '1',
+    track: mockTracks[0],
+    status: 'completed',
+    progress: 100,
+    downloadedAt: '2024-01-15'
+  },
+  {
+    id: '2',
+    track: mockTracks[1],
+    status: 'downloading',
+    progress: 65
+  },
+  {
+    id: '3',
+    track: mockTracks[2],
+    status: 'pending',
+    progress: 0
+  }
+];
 
-interface DashboardProps {
-  refreshTrigger?: number;
-}
-
-export default function Dashboard({ refreshTrigger }: DashboardProps) {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
-  const [projectsByStatus, setProjectsByStatus] = useState<ProjectsByStatus[]>([]);
-  const [monthlyEarnings, setMonthlyEarnings] = useState<MonthlyEarning[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+export default function Dashboard() {
+  const [currentTrack, setCurrentTrack] = useState<Track | null>(mockTracks[0]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [tracks] = useState<Track[]>(mockTracks);
+  const [downloads] = useState<DownloadItem[]>(mockDownloads);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [refreshTrigger]);
+    let interval: NodeJS.Timeout;
+    if (isPlaying && currentTrack) {
+      interval = setInterval(() => {
+        setCurrentTime(prev => {
+          if (prev >= currentTrack.duration) {
+            setIsPlaying(false);
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, currentTrack]);
 
-  const fetchDashboardData = async () => {
-    try {
-      const [statsResponse] = await Promise.all([
-        fetch('/api/dashboard/stats', { credentials: 'include' })
-      ]);
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
 
-      if (statsResponse.ok) {
-        const data = await statsResponse.json();
-        setStats(data.stats);
-        setRecentProjects(data.recentProjects);
-        setProjectsByStatus(data.projectsByStatus);
-        setMonthlyEarnings(data.monthlyEarnings);
-      } else {
-        setError('Failed to fetch dashboard data');
-      }
-    } catch (error) {
-      console.error('Dashboard data fetch error:', error);
-      setError('Network error');
-    } finally {
-      setLoading(false);
+  const handleNext = () => {
+    if (currentTrack) {
+      const currentIndex = tracks.findIndex(track => track.id === currentTrack.id);
+      const nextIndex = (currentIndex + 1) % tracks.length;
+      setCurrentTrack(tracks[nextIndex]);
+      setCurrentTime(0);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <AlertCircle className="h-4 w-4 text-accent" />;
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-primary" />;
-      case 'on-hold':
-        return <PauseCircle className="h-4 w-4 text-secondary" />;
-      default:
-        return <FolderOpen className="h-4 w-4 text-gray-500" />;
+  const handlePrevious = () => {
+    if (currentTrack) {
+      const currentIndex = tracks.findIndex(track => track.id === currentTrack.id);
+      const prevIndex = currentIndex === 0 ? tracks.length - 1 : currentIndex - 1;
+      setCurrentTrack(tracks[prevIndex]);
+      setCurrentTime(0);
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-secondary/20 text-secondary';
-      case 'medium':
-        return 'bg-primary/20 text-primary';
-      case 'low':
-        return 'bg-accent/20 text-accent';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const handleTrackPlay = (track: Track) => {
+    setCurrentTrack(track);
+    setCurrentTime(0);
+    setIsPlaying(true);
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
-        >
-          <div className="loading-spinner rounded-full h-16 w-16 border-4 border-transparent border-t-primary border-r-secondary mx-auto mb-4"></div>
-          <GradientText className="text-xl">Loading Dashboard...</GradientText>
-        </motion.div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <ModernCard className="max-w-md mx-auto">
-            <div className="text-secondary mb-4 text-lg">{error}</div>
-            <motion.button
-              onClick={fetchDashboardData}
-              className="bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-xl font-semibold"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Zap className="inline-block w-4 h-4 mr-2" />
-              Retry
-            </motion.button>
-          </ModernCard>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
-
-
-      {/* Stats Cards and Monthly Earnings */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Stats Cards Grid */}
-        <div className="lg:col-span-2">
-          <div className="grid grid-cols-2 gap-4">
-            {/* Active Projects Card */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-secondary rounded-full"></div>
-                  <span className="text-xs font-medium text-gray-700">Active Projects</span>
-                </div>
-                <span className="text-xs text-gray-500">Today</span>
-              </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
-                {stats?.activeProjects || 0}
-              </div>
-              <div className="text-xs text-gray-500">Projects in progress</div>
-            </motion.div>
-
-            {/* Completed Projects Card */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-accent rounded-full"></div>
-                  <span className="text-xs font-medium text-gray-700">Completed</span>
-                </div>
-                <span className="text-xs text-gray-500">Today</span>
-              </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
-                {stats?.completedProjects || 0}
-              </div>
-              <div className="text-xs text-gray-500">Projects finished</div>
-            </motion.div>
-
-            {/* Payment Pending Card */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span className="text-xs font-medium text-gray-700">Payment Pending</span>
-                </div>
-                <span className="text-xs text-gray-500">Today</span>
-              </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
-                ${(stats?.totalPendingPayments || 0).toLocaleString()}
-              </div>
-              <div className="text-xs text-gray-500">Pending payments</div>
-            </motion.div>
-
-            {/* Total Earnings Card */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-accent rounded-full"></div>
-                  <span className="text-xs font-medium text-gray-700">Total Earnings</span>
-                </div>
-                <span className="text-xs text-gray-500">Today</span>
-              </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
-                ${(stats?.totalEarnings || 0).toLocaleString()}
-              </div>
-              <div className="text-xs text-gray-500">Total earned</div>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Edinburgh Clock */}
-        <EdinburghClock />
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Projects by Status Chart */}
-        <div className="lg:col-span-2">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 h-64"
+    <div className="min-h-screen bg-var(--neuro-bg) flex" style={{ background: 'var(--neuro-bg)' }}>
+      {/* Main Content Area */}
+      <div className="flex-1 p-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header with Edinburgh Clock */}
+          <motion.div
+            className="neuro-card p-6 mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Projects by Status</h3>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={projectsByStatus}
-                  margin={{
-                    top: 20,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
-                    cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }}
-                  />
-                  <Bar 
-                    dataKey="value" 
-                    radius={[4, 4, 0, 0]}
-                    animationDuration={1000}
-                    animationBegin={0}
-                  >
-                    {projectsByStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-var(--neuro-text-primary) font-inter mb-2">
+                  {currentTrack ? currentTrack.title : 'Blinding Lights'}
+                </h1>
+                <p className="text-var(--neuro-text-secondary) font-inter">
+                  {currentTrack ? `${currentTrack.artist} • ${currentTrack.album}` : 'The Weeknd • After Hours'}
+                </p>
+              </div>
+              <div className="text-right">
+                <EdinburghClock />
+              </div>
             </div>
           </motion.div>
-        </div>
 
-        {/* Recent Projects */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.7 }}
-          className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 h-64"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Projects</h3>
-          <div className="space-y-3 overflow-y-auto h-48">
-            {recentProjects.length > 0 ? (
-              recentProjects.slice(0, 4).map((project) => (
-                <div key={project._id} className="group hover:bg-gray-50 p-3 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-gray-200">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        {getStatusIcon(project.status)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600 transition-colors">{project.title}</h4>
-                        <p className="text-xs text-gray-500 truncate">{project.client}</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end space-y-1">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(project.priority)}`}>
-                        {project.priority}
-                      </span>
-                      <span className="text-xs text-gray-400">{formatDate(project.updatedAt)}</span>
-                    </div>
+          {/* Player Section */}
+          <motion.div
+            className="flex justify-center mb-8"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <PlayerCircle
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              currentTime={currentTime}
+              onPlayPause={handlePlayPause}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+            />
+          </motion.div>
+
+          {/* Stats Cards */}
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.8 }}
+          >
+            {/* Intentions Card */}
+            <motion.div
+              className="neuro-card p-6"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-3 h-3 bg-pink-400 rounded-full" />
+                <h3 className="text-lg font-semibold text-var(--neuro-text-primary) font-inter">
+                  Intentions
+                </h3>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full" />
+                  <div className="w-2 h-2 bg-pink-400 rounded-full" />
+                  <div className="w-2 h-2 bg-red-400 rounded-full" />
+                </div>
+                <div className="w-full h-8 bg-var(--neuro-bg-dark) rounded-lg flex items-center px-3">
+                  <div className="w-6 h-6 bg-var(--neuro-accent) rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full" />
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-6 text-gray-500">
-                <FolderOpen className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">No recent projects</p>
               </div>
-            )}
-          </div>
-        </motion.div>
+              <div className="mt-4">
+                <p className="text-2xl font-bold text-var(--neuro-text-primary) font-inter">01</p>
+                <p className="text-sm text-var(--neuro-text-muted) font-inter">Curated collections</p>
+              </div>
+            </motion.div>
+
+            {/* Play Card */}
+            <motion.div
+              className="neuro-card p-6"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-3 h-3 bg-blue-400 rounded-full" />
+                <h3 className="text-lg font-semibold text-var(--neuro-text-primary) font-inter">
+                  Play
+                </h3>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full" />
+                  <div className="w-2 h-2 bg-pink-400 rounded-full" />
+                  <div className="w-2 h-2 bg-red-400 rounded-full" />
+                </div>
+                <div className="w-full h-8 bg-var(--neuro-bg-dark) rounded-lg flex items-center px-3">
+                  <div className="w-6 h-6 bg-var(--neuro-accent) rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full" />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4">
+                <p className="text-2xl font-bold text-var(--neuro-text-primary) font-inter">02</p>
+                <p className="text-sm text-var(--neuro-text-muted) font-inter">Play collections</p>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
       </div>
-    </motion.div>
+
+      {/* Right Sidebar - Download List */}
+      <div className="w-96 p-6 border-l border-var(--neuro-bg-dark)">
+        <DownloadList
+          tracks={tracks}
+          downloads={downloads}
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          onTrackPlay={handleTrackPlay}
+        />
+      </div>
+    </div>
   );
 }

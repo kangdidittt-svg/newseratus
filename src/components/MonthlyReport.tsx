@@ -20,16 +20,8 @@ import {
   CheckCircle,
   Download,
   TrendingUp,
-  Calendar,
   FileText
 } from 'lucide-react';
-
-interface MonthlyData {
-  month: string;
-  earnings: number;
-  projects: number;
-  hours: number;
-}
 
 interface DashboardStats {
   totalProjects: number;
@@ -136,8 +128,8 @@ Generated on: ${new Date().toLocaleDateString()}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading report...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: 'var(--neuro-orange)' }}></div>
+          <p className="mt-4 font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>Loading report...</p>
         </motion.div>
       </div>
     );
@@ -153,14 +145,19 @@ Generated on: ${new Date().toLocaleDateString()}
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{currentMonth} {currentYear} Report</h1>
-          <p className="text-gray-600 mt-1">Your freelance performance summary</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>{currentMonth} {currentYear} Report</h1>
+          <p className="mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>Your freelance performance summary</p>
         </div>
         <div className="flex items-center space-x-4">
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="px-4 py-2 rounded-lg neuro-select font-inter"
+            style={{ 
+              background: 'var(--neuro-bg)',
+              color: 'var(--neuro-text-primary)',
+              border: 'none'
+            }}
           >
             <option value="current">Current Month</option>
             <option value="last3">Last 3 Months</option>
@@ -169,11 +166,12 @@ Generated on: ${new Date().toLocaleDateString()}
           </select>
           <motion.button
             onClick={handleExportReport}
-            className="bg-cyan-600 text-white px-6 py-2 rounded-lg hover:bg-cyan-700 flex items-center space-x-2 transition-colors"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className="px-6 py-2 rounded-lg neuro-button hover:neuro-button-hover flex items-center space-x-2 font-inter font-medium transition-all duration-300"
+            style={{ color: 'var(--neuro-text-primary)' }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4" style={{ color: 'var(--neuro-orange)' }} />
             <span>Export</span>
           </motion.button>
         </div>
@@ -185,16 +183,17 @@ Generated on: ${new Date().toLocaleDateString()}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-cyan-50 to-cyan-100 p-6 rounded-xl border border-cyan-200"
+          className="p-6 rounded-xl neuro-card font-inter"
+          style={{ background: 'var(--neuro-bg)' }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-cyan-700">Total Earnings</p>
-              <p className="text-2xl font-bold text-cyan-800">${stats?.totalEarnings?.toLocaleString()}</p>
-              <p className="text-xs text-cyan-600 mt-1">From {stats?.totalProjects} projects</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--neuro-text-secondary)' }}>Total Earnings</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>${stats?.totalEarnings?.toLocaleString()}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>From {stats?.totalProjects} projects</p>
             </div>
-            <div className="h-12 w-12 bg-cyan-200 rounded-lg flex items-center justify-center">
-              <DollarSign className="h-6 w-6 text-cyan-700" />
+            <div className="h-12 w-12 rounded-lg flex items-center justify-center neuro-icon">
+              <DollarSign className="h-6 w-6" style={{ color: 'var(--neuro-orange)' }} />
             </div>
           </div>
         </motion.div>
@@ -203,16 +202,17 @@ Generated on: ${new Date().toLocaleDateString()}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200"
+          className="p-6 rounded-xl neuro-card font-inter"
+          style={{ background: 'var(--neuro-bg)' }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-purple-700">Total Projects</p>
-              <p className="text-2xl font-bold text-purple-800">{stats?.totalProjects}</p>
-              <p className="text-xs text-purple-600 mt-1">{stats?.activeProjects} active projects</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--neuro-text-secondary)' }}>Total Projects</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>{stats?.totalProjects}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>{stats?.activeProjects} active projects</p>
             </div>
-            <div className="h-12 w-12 bg-purple-200 rounded-lg flex items-center justify-center">
-              <FolderOpen className="h-6 w-6 text-purple-700" />
+            <div className="h-12 w-12 rounded-lg flex items-center justify-center neuro-icon">
+              <FolderOpen className="h-6 w-6" style={{ color: 'var(--neuro-orange)' }} />
             </div>
           </div>
         </motion.div>
@@ -221,16 +221,17 @@ Generated on: ${new Date().toLocaleDateString()}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200"
+          className="p-6 rounded-xl neuro-card font-inter"
+          style={{ background: 'var(--neuro-bg)' }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-green-700">Completed</p>
-              <p className="text-2xl font-bold text-green-800">{stats?.completedProjects}</p>
-              <p className="text-xs text-green-600 mt-1">{stats?.totalProjects ? Math.round((stats?.completedProjects / stats?.totalProjects) * 100) : 0}% completion rate</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--neuro-text-secondary)' }}>Completed</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>{stats?.completedProjects}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>{stats?.totalProjects ? Math.round((stats?.completedProjects / stats?.totalProjects) * 100) : 0}% completion rate</p>
             </div>
-            <div className="h-12 w-12 bg-green-200 rounded-lg flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-green-700" />
+            <div className="h-12 w-12 rounded-lg flex items-center justify-center neuro-icon">
+              <CheckCircle className="h-6 w-6" style={{ color: 'var(--neuro-orange)' }} />
             </div>
           </div>
         </motion.div>
@@ -239,16 +240,17 @@ Generated on: ${new Date().toLocaleDateString()}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200"
+          className="p-6 rounded-xl neuro-card font-inter"
+          style={{ background: 'var(--neuro-bg)' }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-700">Total Hours</p>
-              <p className="text-2xl font-bold text-blue-800">{stats?.totalHours}h</p>
-              <p className="text-xs text-blue-600 mt-1">${stats?.averageHourlyRate}/hour avg</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--neuro-text-secondary)' }}>Total Hours</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>{stats?.totalHours}h</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>${stats?.averageHourlyRate}/hour avg</p>
             </div>
-            <div className="h-12 w-12 bg-blue-200 rounded-lg flex items-center justify-center">
-              <Clock className="h-6 w-6 text-blue-700" />
+            <div className="h-12 w-12 rounded-lg flex items-center justify-center neuro-icon">
+              <Clock className="h-6 w-6" style={{ color: 'var(--neuro-orange)' }} />
             </div>
           </div>
         </motion.div>
@@ -261,11 +263,12 @@ Generated on: ${new Date().toLocaleDateString()}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
+          className="p-6 rounded-xl neuro-card font-inter"
+          style={{ background: 'var(--neuro-bg)' }}
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Monthly Earnings Trend</h3>
-            <TrendingUp className="h-5 w-5 text-cyan-600" />
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Monthly Earnings Trend</h3>
+            <TrendingUp className="h-5 w-5" style={{ color: 'var(--neuro-orange)' }} />
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -285,10 +288,10 @@ Generated on: ${new Date().toLocaleDateString()}
                 <Line 
                   type="monotone" 
                   dataKey="earnings" 
-                  stroke="#06b6d4" 
+                  stroke="var(--neuro-orange)" 
                   strokeWidth={3}
-                  dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#06b6d4', strokeWidth: 2 }}
+                  dot={{ fill: 'var(--neuro-orange)', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: 'var(--neuro-orange)', strokeWidth: 2 }}
                   animationBegin={0}
                   animationDuration={1500}
                 />
@@ -302,11 +305,12 @@ Generated on: ${new Date().toLocaleDateString()}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
+          className="p-6 rounded-xl neuro-card font-inter"
+          style={{ background: 'var(--neuro-bg)' }}
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Hours by Month</h3>
-            <Clock className="h-5 w-5 text-blue-600" />
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Hours by Month</h3>
+            <Clock className="h-5 w-5" style={{ color: 'var(--neuro-orange)' }} />
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -325,7 +329,7 @@ Generated on: ${new Date().toLocaleDateString()}
                 />
                 <Bar 
                   dataKey="hours" 
-                  fill="#3b82f6" 
+                  fill="var(--neuro-orange)" 
                   radius={[4, 4, 0, 0]}
                   animationBegin={0}
                   animationDuration={1500}
@@ -341,60 +345,61 @@ Generated on: ${new Date().toLocaleDateString()}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
-        className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 rounded-xl border border-gray-200"
+        className="p-8 rounded-xl neuro-card font-inter"
+        style={{ background: 'var(--neuro-bg)' }}
       >
         <div className="flex items-center mb-6">
-          <FileText className="h-6 w-6 text-gray-600 mr-3" />
-          <h3 className="text-xl font-semibold text-gray-900">Monthly Summary</h3>
+          <FileText className="h-6 w-6 mr-3" style={{ color: 'var(--neuro-orange)' }} />
+          <h3 className="text-xl font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Monthly Summary</h3>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
-              <div className="w-2 h-2 bg-cyan-600 rounded-full mr-2"></div>
+            <h4 className="font-semibold mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
+              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: 'var(--neuro-orange)' }}></div>
               Key Achievements
             </h4>
-            <ul className="text-sm text-gray-600 space-y-2">
+            <ul className="text-sm space-y-2" style={{ color: 'var(--neuro-text-secondary)' }}>
               <li className="flex items-start">
-                <span className="text-cyan-600 mr-2">✓</span>
+                <span className="mr-2" style={{ color: 'var(--neuro-orange)' }}>✓</span>
                 Completed {stats?.completedProjects} projects successfully
               </li>
               <li className="flex items-start">
-                <span className="text-cyan-600 mr-2">✓</span>
+                <span className="mr-2" style={{ color: 'var(--neuro-orange)' }}>✓</span>
                 Earned ${stats?.totalEarnings?.toLocaleString()} in total revenue
               </li>
               <li className="flex items-start">
-                <span className="text-cyan-600 mr-2">✓</span>
+                <span className="mr-2" style={{ color: 'var(--neuro-orange)' }}>✓</span>
                 Maintained {stats?.activeProjects} active projects
               </li>
               <li className="flex items-start">
-                <span className="text-cyan-600 mr-2">✓</span>
+                <span className="mr-2" style={{ color: 'var(--neuro-orange)' }}>✓</span>
                 Worked {stats?.totalHours} hours total
               </li>
             </ul>
           </div>
           
           <div>
-            <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
-              <div className="w-2 h-2 bg-purple-600 rounded-full mr-2"></div>
+            <h4 className="font-semibold mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
+              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: 'var(--neuro-orange)' }}></div>
               Performance Metrics
             </h4>
-            <ul className="text-sm text-gray-600 space-y-2">
+            <ul className="text-sm space-y-2" style={{ color: 'var(--neuro-text-secondary)' }}>
               <li className="flex justify-between">
                 <span>Average hourly rate:</span>
-                <span className="font-medium">${stats?.averageHourlyRate}</span>
+                <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>${stats?.averageHourlyRate}</span>
               </li>
               <li className="flex justify-between">
                 <span>Project completion rate:</span>
-                <span className="font-medium">{stats?.totalProjects ? Math.round((stats?.completedProjects / stats?.totalProjects) * 100) : 0}%</span>
+                <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>{stats?.totalProjects ? Math.round((stats?.completedProjects / stats?.totalProjects) * 100) : 0}%</span>
               </li>
               <li className="flex justify-between">
                 <span>Average project value:</span>
-                <span className="font-medium">${stats?.totalProjects ? Math.round(stats?.totalEarnings / stats?.totalProjects) : 0}</span>
+                <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>${stats?.totalProjects ? Math.round(stats?.totalEarnings / stats?.totalProjects) : 0}</span>
               </li>
               <li className="flex justify-between">
                 <span>Hours per project:</span>
-                <span className="font-medium">{stats?.totalProjects ? Math.round(stats?.totalHours / stats?.totalProjects) : 0}h</span>
+                <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>{stats?.totalProjects ? Math.round(stats?.totalHours / stats?.totalProjects) : 0}h</span>
               </li>
             </ul>
           </div>

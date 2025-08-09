@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, X } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 interface AddProjectProps {
   onProjectAdded?: () => void;
@@ -79,8 +79,8 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
     >
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Add New Project</h1>
-        <p className="text-gray-600 mt-1">Create a new project to start tracking your work</p>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>Add New Project</h1>
+        <p className="mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>Create a new project to start tracking your work</p>
       </div>
 
       {/* Success Message */}
@@ -88,61 +88,71 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center space-x-2"
+          className="px-4 py-3 rounded-xl flex items-center space-x-2"
+          style={{ 
+            backgroundColor: 'var(--neuro-success-light)', 
+            border: '1px solid var(--neuro-success)', 
+            color: 'var(--neuro-success)' 
+          }}
         >
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--neuro-success)' }}></div>
           <span>Project created successfully!</span>
         </motion.div>
       )}
 
       {/* Form */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+      <div className="neuro-card p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center space-x-2"
+              className="px-4 py-3 rounded-xl flex items-center space-x-2"
+              style={{ 
+                backgroundColor: 'var(--neuro-error-light)', 
+                border: '1px solid var(--neuro-error)', 
+                color: 'var(--neuro-error)' 
+              }}
             >
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--neuro-error)' }}></div>
               <span>{error}</span>
             </motion.div>
           )}
 
           {/* Project Title */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Project Title *</label>
+            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Project Title *</label>
             <input
               type="text"
               required
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              className="neuro-input w-full px-4 py-3 transition-all"
               placeholder="Enter project title"
             />
           </div>
 
           {/* Client */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Client *</label>
+            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Client *</label>
             <input
               type="text"
               required
               value={formData.client}
               onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="neuro-input w-full px-4 py-3 transition-all"
               placeholder="Enter client name"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+              className="neuro-input w-full px-4 py-3 transition-all resize-none"
               placeholder="Describe your project..."
             />
           </div>
@@ -150,24 +160,24 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
           {/* Budget and Deadline */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Budget ($)</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Budget ($)</label>
               <input
                 type="number"
                 value={formData.budget}
                 onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="neuro-input w-full px-4 py-3 transition-all"
                 placeholder="0.00"
                 min="0"
                 step="0.01"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Deadline</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Deadline</label>
               <input
                 type="date"
                 value={formData.deadline}
                 onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="neuro-input w-full px-4 py-3 transition-all"
               />
             </div>
           </div>
@@ -175,11 +185,12 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
           {/* Category and Priority */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Category</label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="neuro-select w-full px-4 py-2"
+                required
               >
                 <option value="web-development">🌐 Web Development</option>
                 <option value="mobile-app">📱 Mobile App</option>
@@ -189,11 +200,12 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Priority</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Priority</label>
               <select
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="neuro-select w-full px-4 py-2"
+                required
               >
                 <option value="low">🟢 Low Priority</option>
                 <option value="medium">🟡 Medium Priority</option>
@@ -205,11 +217,12 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
           {/* Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="neuro-select w-full px-4 py-2"
+                required
               >
                 <option value="active">🔵 Active</option>
                 <option value="on-hold">🟡 On Hold</option>
@@ -223,13 +236,13 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
             <motion.button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              className="neuro-button-orange w-full py-4 px-6 font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
               whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
             >
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2" style={{ borderColor: 'var(--neuro-text-primary)' }}></div>
                   <span>Creating Project...</span>
                 </>
               ) : (
@@ -244,9 +257,9 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
       </div>
 
       {/* Tips */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
-        <h3 className="font-semibold text-indigo-900 mb-2">💡 Tips for Creating Projects</h3>
-        <ul className="text-sm text-indigo-700 space-y-1">
+      <div className="neuro-card p-6">
+        <h3 className="font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>💡 Tips for Creating Projects</h3>
+        <ul className="text-sm space-y-1" style={{ color: 'var(--neuro-text-secondary)' }}>
           <li>• Use descriptive titles to easily identify your projects</li>
           <li>• Set realistic deadlines to manage expectations</li>
           <li>• Choose the right priority level to organize your workflow</li>

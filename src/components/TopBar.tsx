@@ -97,7 +97,12 @@ export default function TopBar({}: TopBarProps) {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-40 shadow-sm"
+      className="px-6 py-4 flex items-center justify-between sticky top-0 z-40"
+      style={{ 
+        background: 'var(--neuro-bg)',
+        borderBottom: '1px solid var(--neuro-border)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+      }}
     >
       {/* Left Section */}
       <div className="flex items-center space-x-4">
@@ -105,8 +110,8 @@ export default function TopBar({}: TopBarProps) {
 
         {/* Date Display */}
         <div className="hidden md:block">
-          <p className="text-sm text-gray-500">Today</p>
-          <p className="text-lg font-semibold text-gray-900">{formattedDate}</p>
+          <p className="text-sm" style={{ color: 'var(--neuro-text-secondary)' }}>Today</p>
+          <p className="text-lg font-semibold" style={{ color: 'var(--neuro-orange)' }}>{formattedDate}</p>
         </div>
       </div>
 
@@ -118,13 +123,19 @@ export default function TopBar({}: TopBarProps) {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 z-10 pointer-events-none" style={{ color: 'var(--neuro-text-muted)' }} />
           <input
             type="text"
             placeholder="Search projects, clients..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+            className="neuro-input w-full transition-all duration-200 relative z-0"
+            style={{
+              paddingLeft: '2.5rem',
+              paddingRight: '1rem',
+              paddingTop: '0.5rem',
+              paddingBottom: '0.5rem'
+            }}
           />
         </motion.div>
       </div>
@@ -135,11 +146,11 @@ export default function TopBar({}: TopBarProps) {
         <div className="relative">
           <motion.button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
+            className="neuro-button p-2 transition-colors relative"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Bell className="h-5 w-5 text-gray-600" />
+            <Bell className="h-5 w-5" style={{ color: 'var(--neuro-text-primary)' }} />
             {unreadCount > 0 && (
               <motion.span
                 initial={{ scale: 0 }}
@@ -157,17 +168,18 @@ export default function TopBar({}: TopBarProps) {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50"
+              className="neuro-card absolute right-0 mt-2 w-80 py-2 z-50"
             >
-              <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+              <div className="px-4 py-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--neuro-border)' }}>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Notifications</h3>
-                  <p className="text-sm text-gray-500">{unreadCount} unread</p>
+                  <h3 className="font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Notifications</h3>
+                  <p className="text-sm" style={{ color: 'var(--neuro-text-secondary)' }}>{unreadCount} unread</p>
                 </div>
                 {unreadCount > 0 && (
                   <button
                     onClick={() => markAsRead()}
-                    className="text-xs text-cyan-600 hover:text-cyan-700 font-medium"
+                    className="text-xs font-medium"
+                    style={{ color: 'var(--neuro-orange)' }}
                   >
                     Mark all read
                   </button>
@@ -176,21 +188,29 @@ export default function TopBar({}: TopBarProps) {
               <div className="max-h-64 overflow-y-auto">
                 {isLoadingNotifications ? (
                   <div className="px-4 py-8 text-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-cyan-600 mx-auto"></div>
-                    <p className="text-sm text-gray-500 mt-2">Loading notifications...</p>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 mx-auto" style={{ borderColor: 'var(--neuro-orange)' }}></div>
+                    <p className="text-sm mt-2" style={{ color: 'var(--neuro-text-secondary)' }}>Loading notifications...</p>
                   </div>
                 ) : notifications.length === 0 ? (
                   <div className="px-4 py-8 text-center">
-                    <Bell className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No notifications yet</p>
+                    <Bell className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--neuro-text-muted)' }} />
+                    <p className="text-sm" style={{ color: 'var(--neuro-text-secondary)' }}>No notifications yet</p>
                   </div>
                 ) : (
                   notifications.map((notification) => (
                     <motion.div
                       key={notification.id}
-                      className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-l-4 ${
-                        notification.unread ? 'border-cyan-500 bg-cyan-50/30' : 'border-transparent'
-                      }`}
+                      className="px-4 py-3 cursor-pointer border-l-4 transition-colors"
+                      style={{
+                        borderLeftColor: notification.unread ? 'var(--neuro-orange)' : 'transparent',
+                        backgroundColor: notification.unread ? 'var(--neuro-orange-light)' : 'transparent'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--neuro-bg-secondary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = notification.unread ? 'var(--neuro-orange-light)' : 'transparent';
+                      }}
                       whileHover={{ x: 4 }}
                       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                       onClick={() => {
@@ -201,22 +221,23 @@ export default function TopBar({}: TopBarProps) {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900 text-sm">{notification.title}</p>
-                          <p className="text-gray-600 text-sm mt-1 leading-relaxed">{notification.message}</p>
-                          <p className="text-gray-400 text-xs mt-2">{notification.time}</p>
+                          <p className="font-medium text-sm" style={{ color: 'var(--neuro-text-primary)' }}>{notification.title}</p>
+                          <p className="text-sm mt-1 leading-relaxed" style={{ color: 'var(--neuro-text-secondary)' }}>{notification.message}</p>
+                          <p className="text-xs mt-2" style={{ color: 'var(--neuro-text-muted)' }}>{notification.time}</p>
                         </div>
                         {notification.unread && (
-                          <div className="w-2 h-2 bg-cyan-500 rounded-full mt-1 ml-2 flex-shrink-0"></div>
+                          <div className="w-2 h-2 rounded-full mt-1 ml-2 flex-shrink-0" style={{ backgroundColor: 'var(--neuro-orange)' }}></div>
                         )}
                       </div>
                     </motion.div>
                   ))
                 )}
               </div>
-              <div className="px-4 py-2 border-t border-gray-100">
+              <div className="px-4 py-2" style={{ borderTop: '1px solid var(--neuro-border)' }}>
                 <button 
                   onClick={() => fetchNotifications()}
-                  className="text-cyan-600 hover:text-cyan-700 text-sm font-medium"
+                  className="text-sm font-medium"
+                  style={{ color: 'var(--neuro-orange)' }}
                 >
                   Refresh notifications
                 </button>

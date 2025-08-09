@@ -1,30 +1,79 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import {
-  LayoutDashboard,
-  Plus,
-  FolderOpen,
-  FileText,
-  Settings
-} from 'lucide-react';
+import { Home, FolderOpen, Plus, ChartColumn, Settings } from 'lucide-react';
+import Image from 'next/image';
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  user?: {
-    name: string;
-    email: string;
-    avatar?: string;
-  };
 }
 
-export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
+export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+  const [profileAvatar, setProfileAvatar] = useState<string>('/api/placeholder/150/150');
+
+  // Load profile avatar from API
+  useEffect(() => {
+    loadProfileAvatar();
+    
+    // Set up interval to check for profile updates
+    const interval = setInterval(() => {
+      loadProfileAvatar();
+    }, 30000); // Check every 30 seconds
+    
+    // Listen for storage events (when settings are updated)
+    const handleStorageChange = () => {
+      loadProfileAvatar();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+  
+  // Add a method to manually refresh avatar (can be called from parent)
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      loadProfileAvatar();
+    };
+    
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
+  }, []);
+
+  const loadProfileAvatar = async () => {
+    try {
+      const response = await fetch('/api/user/settings', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setProfileAvatar(data.settings?.profile?.avatar || '/api/placeholder/150/150');
+      }
+    } catch (error) {
+      console.error('Error loading profile avatar:', error);
+    }
+  };
+
   const menuItems = [
     {
       id: 'dashboard',
       label: 'Dashboard',
-      icon: LayoutDashboard,
+      icon: Home,
+    },
+    {
+      id: 'projects',
+      label: 'Projects',
+      icon: FolderOpen,
     },
     {
       id: 'add-project',
@@ -32,19 +81,9 @@ export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps)
       icon: Plus,
     },
     {
-      id: 'projects',
-      label: 'Project List',
-      icon: FolderOpen,
-    },
-    {
       id: 'monthly-report',
-      label: 'Monthly Report',
-      icon: FileText,
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: Settings,
+      label: 'Reports',
+      icon: ChartColumn,
     },
   ];
 
@@ -75,35 +114,47 @@ export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps)
     },
   };
 
-
-
   return (
     <motion.div
       variants={sidebarVariants}
       initial="hidden"
       animate="visible"
-      className="w-20 lg:w-20 md:w-16 sm:w-14 bg-gray-900 min-h-screen shadow-xl flex flex-col justify-center items-center py-8"
+      className="w-20 bg-var(--neuro-bg) h-screen flex flex-col items-center justify-center p-4 fixed left-0 top-0 z-10"
+      style={{ background: 'var(--neuro-bg)' }}
     >
-      <div className="flex flex-col items-center space-y-8">
-        {/* Logo/Brand */}
-        <motion.div 
-          variants={itemVariants}
-          className="flex justify-center"
+      {/* Profile Avatar */}
+      <motion.div
+        variants={itemVariants}
+        className="mb-8 flex flex-col items-center"
+      >
+        <motion.div
+          className="relative"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <motion.div 
-            className="w-12 h-12 md:w-10 md:h-10 sm:w-8 sm:h-8 bg-white rounded-2xl flex items-center justify-center"
-            whileHover={{ 
-              scale: 1.1,
-              transition: { duration: 0.3 }
+          <Image
+            src={profileAvatar || '/api/placeholder/150/150'}
+            alt="Profile"
+            width={48}
+            height={48}
+            className="w-12 h-12 rounded-full object-cover border-2 shadow-md"
+            style={{ borderColor: 'var(--neuro-orange)' }}
+            onError={() => {
+              // Handle error if needed
             }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className="text-gray-900 font-bold text-xl md:text-lg sm:text-base">N</span>
-          </motion.div>
+          />
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2" 
+               style={{ 
+                 backgroundColor: 'var(--neuro-success)', 
+                 borderColor: 'var(--neuro-bg)' 
+               }}>
+          </div>
         </motion.div>
+      </motion.div>
 
-        {/* Navigation Menu */}
-        <motion.nav className="space-y-4">
+      {/* Navigation Menu */}
+      <motion.nav className="flex flex-col items-center">
+        <div className="space-y-2 flex flex-col items-center">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -113,63 +164,44 @@ export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps)
                 key={item.id}
                 variants={itemVariants}
                 custom={index}
-                className="flex justify-center"
               >
                 <motion.button
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-12 h-12 md:w-10 md:h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-2xl transition-all duration-300 group relative ${
-                    activeTab === item.id 
-                      ? 'bg-white text-gray-900 shadow-lg' 
-                      : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                  className={`w-full flex items-center justify-center p-3 rounded-xl font-inter font-medium transition-all duration-300 ${
+                    isActive
+                      ? 'neuro-card-pressed'
+                      : 'neuro-button hover:neuro-button-hover'
                   }`}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ 
-                    scale: 0.9,
-                    transition: { duration: 0.1 }
+                  style={{
+                    color: isActive ? 'var(--neuro-orange)' : 'var(--neuro-text-primary)'
                   }}
+                  onClick={() => setActiveTab(item.id)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   title={item.label}
                 >
-                  <Icon className="h-6 w-6 md:h-5 md:w-5 sm:h-4 sm:w-4" />
-                  {isActive && (
-                    <motion.div
-                      className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-white rounded-full"
-                      layoutId="activeIndicator"
-                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    />
-                  )}
+                  <Icon className="w-5 h-5" style={{ color: isActive ? 'var(--neuro-orange)' : 'var(--neuro-text-secondary)' }} />
                 </motion.button>
               </motion.div>
             );
           })}
-        </motion.nav>
-
-        {/* User Profile Section */}
-        <div className="flex flex-col items-center">
-          {/* Profile Photo */}
-          <motion.div
-            variants={itemVariants}
-            className="w-12 h-12 md:w-10 md:h-10 sm:w-8 sm:h-8 rounded-2xl overflow-hidden cursor-pointer relative"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            title={user?.name || 'User Profile'}
-            onClick={() => setActiveTab('settings')}
-          >
-            {user?.avatar && !user.avatar.includes('placeholder') ? (
-              <img 
-                src={user.avatar} 
-                alt={user.name || 'User'}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
-                <span className="text-white font-semibold text-lg md:text-base sm:text-sm">
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
-                </span>
-              </div>
-            )}
-          </motion.div>
         </div>
-      </div>
+      </motion.nav>
+
+      {/* Settings Button */}
+      <motion.div
+        variants={itemVariants}
+        className="mt-8 flex flex-col items-center"
+      >
+        <motion.button
+          className="neuro-button w-full p-3 flex items-center justify-center rounded-xl"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setActiveTab('settings')}
+          title="Settings"
+        >
+          <Settings className="w-5 h-5" style={{ color: 'var(--neuro-text-secondary)' }} />
+        </motion.button>
+      </motion.div>
     </motion.div>
   );
 }

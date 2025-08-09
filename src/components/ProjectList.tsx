@@ -20,11 +20,10 @@ interface Project {
 
 interface ProjectListProps {
   refreshTrigger?: number;
-  onEditProject?: (project: Project) => void;
   onAddProject?: () => void;
 }
 
-export default function ProjectList({ refreshTrigger, onEditProject, onAddProject }: ProjectListProps) {
+export default function ProjectList({ refreshTrigger, onAddProject }: ProjectListProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -192,21 +191,21 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'pending': return 'text-primary bg-primary/20';
-      case 'in progress': return 'text-accent bg-accent/20';
-      case 'active': return 'text-accent bg-accent/20';
-      case 'completed': return 'text-secondary bg-secondary/20';
-      case 'on-hold': return 'text-primary bg-primary/20';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'pending': return { color: 'var(--neuro-warning)', backgroundColor: 'var(--neuro-warning-light)' };
+      case 'in progress': return { color: 'var(--neuro-info)', backgroundColor: 'var(--neuro-info-light)' };
+      case 'active': return { color: 'var(--neuro-info)', backgroundColor: 'var(--neuro-info-light)' };
+      case 'completed': return { color: 'var(--neuro-success)', backgroundColor: 'var(--neuro-success-light)' };
+      case 'on-hold': return { color: 'var(--neuro-error)', backgroundColor: 'var(--neuro-error-light)' };
+      default: return { color: 'var(--neuro-text-muted)', backgroundColor: 'var(--neuro-bg-secondary)' };
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority.toLowerCase()) {
-      case 'high': return 'text-secondary bg-secondary/20';
-      case 'medium': return 'text-primary bg-primary/20';
-      case 'low': return 'text-accent bg-accent/20';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'high': return { color: 'var(--neuro-error)', backgroundColor: 'var(--neuro-error-light)' };
+      case 'medium': return { color: 'var(--neuro-orange)', backgroundColor: 'var(--neuro-orange-light)' };
+      case 'low': return { color: 'var(--neuro-success)', backgroundColor: 'var(--neuro-success-light)' };
+      default: return { color: 'var(--neuro-text-muted)', backgroundColor: 'var(--neuro-bg-secondary)' };
     }
   };
 
@@ -228,8 +227,8 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading projects...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: 'var(--neuro-orange)' }}></div>
+          <p className="mt-4" style={{ color: 'var(--neuro-text-secondary)' }}>Loading projects...</p>
         </motion.div>
       </div>
     );
@@ -251,13 +250,13 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Project List</h1>
-          <p className="text-gray-600 mt-1">Manage all your projects in one place</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>Project List</h1>
+          <p className="mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>Manage all your projects in one place</p>
         </div>
         {onAddProject && (
           <motion.button
             onClick={onAddProject}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 hover:from-purple-700 hover:to-pink-700 btn-animate"
+            className="neuro-button-orange px-6 py-3 font-semibold transition-all duration-300 flex items-center space-x-2"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -273,15 +272,15 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
+          className="neuro-card p-6"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Projects</p>
-              <p className="text-2xl font-bold text-gray-900">{totalProjects}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--neuro-text-secondary)' }}>Total Projects</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>{totalProjects}</p>
             </div>
-            <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Tag className="h-6 w-6 text-purple-600" />
+            <div className="h-12 w-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--neuro-orange-light)' }}>
+              <Tag className="h-6 w-6" style={{ color: 'var(--neuro-orange)' }} />
             </div>
           </div>
         </motion.div>
@@ -290,15 +289,15 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
+          className="neuro-card p-6"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-2xl font-bold text-cyan-600">{activeProjects}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--neuro-text-secondary)' }}>Active</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--neuro-info)' }}>{activeProjects}</p>
             </div>
-            <div className="h-12 w-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <Clock className="h-6 w-6 text-accent" />
+            <div className="h-12 w-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--neuro-info-light)' }}>
+              <Clock className="h-6 w-6" style={{ color: 'var(--neuro-info)' }} />
             </div>
           </div>
         </motion.div>
@@ -307,15 +306,15 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
+          className="neuro-card p-6"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-pink-600">{completedProjects}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--neuro-text-secondary)' }}>Completed</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--neuro-success)' }}>{completedProjects}</p>
             </div>
-            <div className="h-12 w-12 bg-secondary/20 rounded-lg flex items-center justify-center">
-              <Calendar className="h-6 w-6 text-secondary" />
+            <div className="h-12 w-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--neuro-success-light)' }}>
+              <Calendar className="h-6 w-6" style={{ color: 'var(--neuro-success)' }} />
             </div>
           </div>
         </motion.div>
@@ -324,15 +323,15 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
+          className="neuro-card p-6"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-purple-600">{pendingProjects}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--neuro-text-secondary)' }}>Pending</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--neuro-warning)' }}>{pendingProjects}</p>
             </div>
-            <div className="h-12 w-12 bg-primary/20 rounded-lg flex items-center justify-center">
-              <Clock className="h-6 w-6 text-primary" />
+            <div className="h-12 w-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--neuro-warning-light)' }}>
+              <Clock className="h-6 w-6" style={{ color: 'var(--neuro-warning)' }} />
             </div>
           </div>
         </motion.div>
@@ -345,14 +344,14 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
           animate={{ opacity: 1 }}
           className="text-center py-12"
         >
-          <div className="bg-white rounded-xl p-12 shadow-sm border border-gray-200">
+          <div className="neuro-card p-12">
             <div className="text-6xl mb-4">📋</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Projects Yet</h3>
-            <p className="text-gray-600 mb-6">Start by creating your first project to get organized!</p>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>No Projects Yet</h3>
+            <p className="mb-6" style={{ color: 'var(--neuro-text-secondary)' }}>Start by creating your first project to get organized!</p>
             {onAddProject && (
               <motion.button
                 onClick={onAddProject}
-                className="bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-xl font-semibold inline-flex items-center space-x-2"
+                className="neuro-button-orange px-6 py-3 font-semibold inline-flex items-center space-x-2"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -370,7 +369,7 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
+              className="neuro-card overflow-hidden neuro-card-hover transition-all duration-300"
             >
               {/* Project Header */}
               <div className="p-6 pb-4">
@@ -378,9 +377,9 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl">{getCategoryIcon(project.category)}</span>
                     <div>
-                      <h3 className="font-semibold text-gray-900 text-lg">{project.title}</h3>
-                      <p className="text-sm text-gray-600 flex items-center mt-1">
-                        <User className="h-4 w-4 mr-1" />
+                      <h3 className="font-semibold text-lg" style={{ color: 'var(--neuro-text-primary)' }}>{project.title}</h3>
+                      <p className="text-sm flex items-center mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>
+                        <User className="h-4 w-4 mr-1" style={{ color: 'var(--neuro-text-muted)' }} />
                         {project.client}
                       </p>
                     </div>
@@ -388,7 +387,14 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleEditProject(project)}
-                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      className="neuro-button p-2 transition-colors"
+                      style={{ color: 'var(--neuro-text-muted)' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = 'var(--neuro-orange)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'var(--neuro-text-muted)';
+                      }}
                       title="Edit Project"
                     >
                       <Edit className="h-4 w-4" />
@@ -396,7 +402,14 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
                     {project.status !== 'completed' && (
                       <button
                         onClick={() => handleMarkAsComplete(project.id)}
-                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        className="neuro-button p-2 transition-colors"
+                        style={{ color: 'var(--neuro-text-muted)' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = 'var(--neuro-success)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = 'var(--neuro-text-muted)';
+                        }}
                         title="Mark as Complete"
                       >
                         <Check className="h-4 w-4" />
@@ -404,7 +417,14 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
                     )}
                     <button
                       onClick={() => handleDeleteProject(project.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="neuro-button p-2 transition-colors"
+                      style={{ color: 'var(--neuro-text-muted)' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = 'var(--neuro-error)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'var(--neuro-text-muted)';
+                      }}
                       title="Delete Project"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -414,41 +434,44 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
 
                 {/* Status and Priority */}
                 <div className="flex items-center space-x-2 mb-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                  <span className="px-3 py-1 rounded-full text-xs font-medium" style={getStatusColor(project.status)}>
                     {project.status}
                   </span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(project.priority)}`}>
+                  <span className="px-3 py-1 rounded-full text-xs font-medium" style={getPriorityColor(project.priority)}>
                     {project.priority} Priority
                   </span>
                 </div>
 
                 {/* Budget */}
-                <div className="flex items-center text-gray-600 mb-4">
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  <span className="font-semibold text-lg text-green-600">
+                <div className="flex items-center mb-4" style={{ color: 'var(--neuro-text-secondary)' }}>
+                  <DollarSign className="h-4 w-4 mr-2" style={{ color: 'var(--neuro-text-muted)' }} />
+                  <span className="font-semibold text-lg" style={{ color: 'var(--neuro-success)' }}>
                     ${project.budget.toLocaleString()}
                   </span>
                 </div>
 
                 {/* Description */}
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{project.description}</p>
+                <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--neuro-text-secondary)' }}>{project.description}</p>
 
                 {/* Deadline */}
-                <div className="flex items-center text-gray-500 text-sm">
-                  <Calendar className="h-4 w-4 mr-2" />
+                <div className="flex items-center text-sm" style={{ color: 'var(--neuro-text-muted)' }}>
+                  <Calendar className="h-4 w-4 mr-2" style={{ color: 'var(--neuro-text-muted)' }} />
                   <span>Due: {formatDate(project.deadline)}</span>
                 </div>
               </div>
 
               {/* Progress Bar */}
               <div className="px-6 pb-6">
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full rounded-full h-2" style={{ backgroundColor: 'var(--neuro-bg-secondary)' }}>
                   <div 
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: project.status.toLowerCase() === 'completed' ? '100%' : '60%' }}
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: project.status.toLowerCase() === 'completed' ? '100%' : '60%',
+                      backgroundColor: 'var(--neuro-orange)'
+                    }}
                   ></div>
                 </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                <div className="flex justify-between text-xs mt-2" style={{ color: 'var(--neuro-text-muted)' }}>
                   <span>Progress</span>
                   <span>{project.status.toLowerCase() === 'completed' ? '100%' : '60%'}</span>
                 </div>
@@ -460,18 +483,18 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
 
       {/* Edit Project Modal */}
       {editingProject && (
-        <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+            className="neuro-card p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Edit Project</h2>
+              <h2 className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>Edit Project</h2>
               <button
                 onClick={closeEditModal}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="neuro-button p-2 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -480,36 +503,36 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
             <div className="space-y-4">
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Project Title</label>
                 <input
                   type="text"
                   value={editFormData.title || ''}
                   onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent focus-ring"
+                  className="neuro-input w-full px-4 py-2"
                   placeholder="Enter project title"
                 />
               </div>
 
               {/* Client */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Client</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Client</label>
                 <input
                   type="text"
                   value={editFormData.client || ''}
                   onChange={(e) => setEditFormData({ ...editFormData, client: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent focus-ring"
+                  className="neuro-input w-full px-4 py-2"
                   placeholder="Enter client name"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Description</label>
                 <textarea
                   value={editFormData.description || ''}
                   onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="neuro-input w-full px-4 py-2"
                   placeholder="Enter project description"
                 />
               </div>
@@ -517,11 +540,11 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
               {/* Category and Status */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Category</label>
                   <select
                     value={editFormData.category || ''}
                     onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="neuro-select w-full px-4 py-2"
                   >
                     <option value="web-development">Web Development</option>
                     <option value="mobile-app">Mobile App</option>
@@ -531,11 +554,11 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Status</label>
                   <select
                     value={editFormData.status || ''}
                     onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as 'active' | 'completed' | 'pending' | 'on-hold' })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="neuro-select w-full px-4 py-2"
                   >
                     <option value="active">Active</option>
                     <option value="completed">Completed</option>
@@ -548,11 +571,11 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
               {/* Priority and Budget */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Priority</label>
                   <select
                     value={editFormData.priority || ''}
                     onChange={(e) => setEditFormData({ ...editFormData, priority: e.target.value as 'low' | 'medium' | 'high' })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="neuro-select w-full px-4 py-2"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -561,12 +584,12 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Budget ($)</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Budget ($)</label>
                   <input
                     type="number"
                     value={editFormData.budget || ''}
                     onChange={(e) => setEditFormData({ ...editFormData, budget: Number(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="neuro-input w-full px-4 py-2"
                     placeholder="Enter budget"
                   />
                 </div>
@@ -574,27 +597,27 @@ export default function ProjectList({ refreshTrigger, onEditProject, onAddProjec
 
               {/* Deadline */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Deadline</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Deadline</label>
                 <input
                   type="date"
                   value={editFormData.deadline ? editFormData.deadline.split('T')[0] : ''}
                   onChange={(e) => setEditFormData({ ...editFormData, deadline: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="neuro-input w-full px-4 py-2"
                 />
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end space-x-4 mt-6 pt-6 border-t border-gray-200">
+            <div className="flex justify-end space-x-4 mt-6 pt-6" style={{ borderTop: '1px solid var(--neuro-border)' }}>
               <button
                 onClick={closeEditModal}
-                className="px-6 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors btn-animate"
+                className="neuro-button px-6 py-2 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateProject}
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 hover:from-purple-700 hover:to-pink-700 btn-animate"
+                className="neuro-button-orange px-6 py-2 transition-all duration-300"
               >
                 Update Project
               </button>

@@ -57,7 +57,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     const recentProjects = await Project.find({ userId: userObjectId })
       .sort({ updatedAt: -1 })
       .limit(5)
-      .select('title client status priority updatedAt')
+      .select('title client status priority budget deadline createdAt updatedAt')
       .lean();
 
     // Get projects by status for chart

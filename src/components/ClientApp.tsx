@@ -34,7 +34,7 @@ interface Project {
 export default function ClientApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [user, setUser] = useState<User | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
@@ -46,7 +46,7 @@ export default function ClientApp() {
       await initializeApp();
     };
     init();
-  }, []);
+  }, [initializeApp]);
 
   const initializeApp = async () => {
     try {
@@ -90,32 +90,7 @@ export default function ClientApp() {
       });
       if (response.ok) {
         const data = await response.json();
-        const projectsData = data.projects?.map((project: {
-          _id: string;
-          title: string;
-          client: string;
-          status: string;
-          priority: string;
-          budget: number;
-          deadline: string;
-          progress: number;
-          description: string;
-          category: string;
-          createdAt: string;
-        }) => ({
-          id: project._id,
-          title: project.title,
-          client: project.client,
-          status: project.status,
-          priority: project.priority,
-          budget: project.budget,
-          deadline: project.deadline,
-          progress: project.progress || 0,
-          description: project.description,
-          category: project.category,
-          createdAt: project.createdAt
-        })) || [];
-        // setProjects(projectsData); // Commented out as projects are not used in UI
+        // Projects data processing removed as not used in UI
       }
     } catch (error) {
       console.error('Error fetching projects:', error);

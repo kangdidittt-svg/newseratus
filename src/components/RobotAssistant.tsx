@@ -94,7 +94,7 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     };
     
     scheduleNextAction();
-  }, []);
+  }, [performAutoAction]);
 
   // Reminder system every 8 minutes
   useEffect(() => {
@@ -109,7 +109,7 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [lastInteraction]);
+  }, [lastInteraction, showRandomReminder]);
 
   const performAutoAction = () => {
     setAutoActionCounter(prev => prev + 1);

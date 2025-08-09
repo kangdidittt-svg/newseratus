@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   DollarSign,
   FolderOpen,
@@ -38,11 +38,9 @@ interface Project {
 
 interface FreelanceDashboardProps {
   onNavigate?: (tab: string) => void;
-  showModal?: boolean;
-  onModalClose?: () => void;
 }
 
-export default function FreelanceDashboard({ onNavigate, showModal = false, onModalClose }: FreelanceDashboardProps) {
+export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardProps) {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +58,7 @@ export default function FreelanceDashboard({ onNavigate, showModal = false, onMo
     priority: 'medium',
     category: 'web-development'
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   useEffect(() => {
     fetchDashboardData();
@@ -70,14 +68,15 @@ export default function FreelanceDashboard({ onNavigate, showModal = false, onMo
 
   const closeModal = () => {
     setShowAddProjectModal(false);
-    setNewProject({
+    setFormData({
       title: '',
       client: '',
       description: '',
       budget: '',
-      priority: 'Medium',
-      category: 'Web Development',
-      deadline: ''
+      deadline: '',
+      status: 'active',
+      priority: 'medium',
+      category: 'web-development'
     });
   };
 

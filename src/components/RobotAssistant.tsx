@@ -82,6 +82,18 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     return reminders;
   }, [userName, getProjectStats]);
 
+  const performAutoAction = useCallback(() => {
+    setAutoActionCounter(prev => prev + 1);
+    setIsActive(true);
+    
+    // Show notification occasionally (every 4th auto action)
+    if (autoActionCounter % 4 === 0) {
+      showRandomReminder();
+    }
+    
+    setTimeout(() => setIsActive(false), 2000);
+  }, [autoActionCounter, showRandomReminder]);
+
   // Auto action every 15-25 seconds (slower)
   useEffect(() => {
     const getRandomInterval = () => Math.random() * 10000 + 15000; // 15-25 seconds
@@ -110,18 +122,6 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
 
     return () => clearInterval(interval);
   }, [lastInteraction, showRandomReminder]);
-
-  const performAutoAction = useCallback(() => {
-    setAutoActionCounter(prev => prev + 1);
-    setIsActive(true);
-    
-    // Show notification occasionally (every 4th auto action)
-    if (autoActionCounter % 4 === 0) {
-      showRandomReminder();
-    }
-    
-    setTimeout(() => setIsActive(false), 2000);
-  }, [autoActionCounter, showRandomReminder]);
 
   const showRandomReminder = useCallback(() => {
     const projectReminders = getProjectReminders();

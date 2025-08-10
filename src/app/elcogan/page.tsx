@@ -182,7 +182,7 @@ export default function ElcoganPage() {
         setErrorMessage(data.error || 'Failed to create user');
         setShowError(true);
       }
-    } catch (error) {
+    } catch (_error) {
       setErrorMessage('Network error. Please try again.');
       setShowError(true);
     } finally {

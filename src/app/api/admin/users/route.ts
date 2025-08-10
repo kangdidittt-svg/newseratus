@@ -6,7 +6,7 @@ import { Notification } from '@/models/Notification';
 import bcrypt from 'bcryptjs';
 
 // GET - Fetch all users
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await connectDB();
     
@@ -169,7 +169,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update fields if provided
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     
     if (username && username !== user.username) {
       // Check if username is already taken

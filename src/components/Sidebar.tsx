@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Home, FolderOpen, Plus, ChartColumn, Settings } from 'lucide-react';
+import { Home, FolderOpen, Plus, ChartColumn } from 'lucide-react';
 import AddProjectPopover from './AddProjectPopover';
 
 interface SidebarProps {

@@ -17,7 +17,7 @@ async function authenticate(request: NextRequest) {
     }
 
     return { user: decoded };
-  } catch (_error) {
+  } catch {
     return { error: new Response('Authentication failed', { status: 401 }) };
   }
 }

@@ -1,9 +1,8 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Check, Trash2, Clock, User, Briefcase, AlertCircle } from 'lucide-react';
+import { Bell, Check, Trash2, User, Briefcase, AlertCircle } from 'lucide-react';
 import { useState, useRef, useEffect, ReactNode } from 'react';
-import SwipeableNotification from './SwipeableNotification';
 
 interface Notification {
   id: string;
@@ -37,7 +36,6 @@ export default function NotificationPopover({
   children
 }: NotificationPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -46,7 +44,6 @@ export default function NotificationPopover({
 
   // Auto-open on hover with delay
   const handleMouseEnter = () => {
-    setIsHovering(true);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -55,7 +52,6 @@ export default function NotificationPopover({
   };
 
   const handleMouseLeave = () => {
-    setIsHovering(false);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -75,7 +71,6 @@ export default function NotificationPopover({
         !triggerRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
-        setIsHovering(false);
       }
     };
 
@@ -255,10 +250,10 @@ export default function NotificationPopover({
                           }
                         }}
                         transition={{ 
-                           layout: { duration: 0.2, ease: "easeInOut" }
-                         }}
-                         animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
+                            layout: { duration: 0.2, ease: "easeInOut" },
+                            delay: index * 0.1
+                          }}
+                          animate={{ opacity: 1, x: 0 }}
                       className="px-4 py-3 border-l-4 transition-all duration-200 cursor-pointer group"
                       style={{
                         borderLeftColor: notification.unread ? 'var(--neuro-orange)' : 'transparent',

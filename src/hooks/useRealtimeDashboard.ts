@@ -233,7 +233,7 @@ export function useRealtimeDashboard() {
         clearInterval(interval);
       }
     };
-  }, [connectionStatus, fetchDashboardData]);
+  }, [connectionStatus]);
 
   return {
     ...dashboardData,

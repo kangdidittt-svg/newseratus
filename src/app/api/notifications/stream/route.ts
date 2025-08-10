@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
   
   const stream = new ReadableStream({
     start(controller) {
-      const send = (data: any) => {
+      const send = (data: unknown) => {
         if (!isActive) return;
         const message = `data: ${JSON.stringify(data)}\n\n`;
         controller.enqueue(encoder.encode(message));

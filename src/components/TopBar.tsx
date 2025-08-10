@@ -72,23 +72,7 @@ export default function TopBar({ onNavigateToSettings }: TopBarProps) {
 
   const connectionDisplay = getConnectionStatusDisplay();
 
-  // Test notification function
-  const createTestNotification = async () => {
-    try {
-      const response = await fetch('/api/notifications/test', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        console.log('✅ Test notification created successfully');
-      } else {
-        console.error('❌ Failed to create test notification');
-      }
-    } catch (error) {
-      console.error('❌ Error creating test notification:', error);
-    }
-  };
+
 
   const currentDate = new Date();
   const formattedDate = currentDate.toLocaleDateString('en-US', {

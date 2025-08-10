@@ -14,22 +14,14 @@ interface Notification {
   time: string;
 }
 
-interface NotificationEvent {
-  type: 'notification' | 'connected' | 'heartbeat' | 'error';
-  data?: Notification;
-  message?: string;
-  unreadCount?: number;
-  timestamp?: number;
-}
+
 
 export function useRealtimeNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'reconnecting'>('disconnected');
   const [isLoading, setIsLoading] = useState(true);
-  const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const maxReconnectAttempts = 5;
+
 
   // Fetch initial notifications
   const fetchInitialNotifications = useCallback(async () => {
@@ -51,12 +43,7 @@ export function useRealtimeNotifications() {
     }
   }, []);
 
-  // Connect to SSE stream - now handled in useEffect
-  const connectToStream = useCallback(() => {
-    // This function is now handled directly in the useEffect
-    // Keeping for backward compatibility but functionality moved
-    console.log('connectToStream called - handled in useEffect');
-  }, []);
+
 
   // Mark notifications as read
   const markAsRead = useCallback(async (notificationIds?: string[]) => {

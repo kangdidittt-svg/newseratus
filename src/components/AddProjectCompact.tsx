@@ -38,7 +38,7 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
     if (onFormDataChange) {
       onFormDataChange(isFormDirty());
     }
-  }, [formData, onFormDataChange]);
+  }, [formData, onFormDataChange, isFormDirty]);
 
   // Handle form data changes
   const handleInputChange = (field: string, value: string) => {

@@ -36,21 +36,7 @@ export default function AddProjectPopover({ isActive, onProjectAdded }: AddProje
     }
   };
 
-  // Handle hover untuk area popover
-  const handlePopoverMouseEnter = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-  };
 
-  const handlePopoverMouseLeave = () => {
-    if (!isFormDirty) {
-      hoverTimeoutRef.current = setTimeout(() => {
-        setOpen(false);
-      }, 200); // Delay lebih pendek untuk popover
-    }
-  };
 
   // Tutup popover jika klik di luar (hanya jika form tidak terisi)
   useEffect(() => {

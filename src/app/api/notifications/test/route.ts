@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
         createdAt: testNotification.createdAt
       }
     });
-  } catch (error) {
-    console.error('Error creating test notification:', error);
+  } catch (err) {
+    console.error('Error creating test notification:', err);
     return NextResponse.json(
       { error: 'Failed to create test notification' },
       { status: 500 }

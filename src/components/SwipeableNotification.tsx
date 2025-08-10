@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, PanInfo } from 'framer-motion';
 
 interface Notification {
@@ -47,12 +47,7 @@ const SwipeableNotification: React.FC<SwipeableNotificationProps> = ({
     }
   };
 
-  const handleDeleteClick = () => {
-    setIsDeleting(true);
-    setTimeout(() => {
-      onDelete();
-    }, 200);
-  };
+
 
   return (
     <div className="relative overflow-hidden" ref={constraintsRef}>

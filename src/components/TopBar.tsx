@@ -8,10 +8,11 @@ import {
   WifiOff
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import SwipeableNotification from './SwipeableNotification';
 import Image from 'next/image';
 import ProfilePopover from './ProfilePopover';
+import NotificationPopover from './NotificationPopover';
 import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications';
+import { setGlobalNotificationRefresh } from '../hooks/useNotificationRefresh';
 
 interface TopBarProps {
   user?: {
@@ -23,7 +24,6 @@ interface TopBarProps {
 
 export default function TopBar({}: TopBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [showNotifications, setShowNotifications] = useState(false);
   const [profileAvatar, setProfileAvatar] = useState<string>('/api/placeholder/150/150');
   const [userData, setUserData] = useState<{ username: string; email: string } | null>(null);
   
@@ -33,11 +33,24 @@ export default function TopBar({}: TopBarProps) {
     unreadCount,
     connectionStatus,
     isLoading: isLoadingNotifications,
-    markAsRead
+    markAsRead,
+    refreshNotifications
   } = useRealtimeNotifications();
 
-  // Delete notification function
-  const deleteNotification = async (notificationId: string) => {
+  // Track ongoing delete operations to prevent duplicates
+  const [deletingNotifications, setDeletingNotifications] = useState<Set<string>>(new Set());
+
+  // Delete notification function with duplicate prevention
+  const deleteNotification = async (notificationId: string): Promise<boolean> => {
+    // Prevent duplicate delete calls
+    if (deletingNotifications.has(notificationId)) {
+      console.log('🔄 Delete already in progress for notification:', notificationId);
+      return false;
+    }
+
+    // Add to deleting set
+    setDeletingNotifications(prev => new Set(prev).add(notificationId));
+
     try {
       const response = await fetch(`/api/notifications/${notificationId}`, {
         method: 'DELETE',
@@ -45,17 +58,24 @@ export default function TopBar({}: TopBarProps) {
       });
       
       if (response.ok) {
-        console.log('✅ Notification deleted successfully');
+        console.log('✅ Notification deleted successfully:', notificationId);
         // The notification will be removed from state by the realtime hook
         return true;
       } else {
         const errorData = await response.json();
-        console.error('❌ Failed to delete notification:', errorData.error || 'Unknown error');
+        console.error('❌ Failed to delete notification:', notificationId, errorData.error || 'Unknown error');
         return false;
       }
     } catch (error) {
-      console.error('❌ Error deleting notification:', error);
+      console.error('❌ Error deleting notification:', notificationId, error);
       return false;
+    } finally {
+      // Remove from deleting set
+      setDeletingNotifications(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(notificationId);
+        return newSet;
+      });
     }
   };
 
@@ -119,6 +139,11 @@ export default function TopBar({}: TopBarProps) {
       console.error('Error loading profile data:', error);
     }
   };
+
+  // Register global notification refresh
+  useEffect(() => {
+    setGlobalNotificationRefresh(refreshNotifications);
+  }, [refreshNotifications]);
 
   // Load profile data on component mount
   useEffect(() => {
@@ -198,10 +223,16 @@ export default function TopBar({}: TopBarProps) {
 
       {/* Right Section */}
       <div className="flex items-center space-x-3">
-        {/* Notifications */}
-        <div className="relative">
+        {/* Notifications with Popover */}
+        <NotificationPopover
+          notifications={notifications}
+          unreadCount={unreadCount}
+          isLoading={isLoadingNotifications}
+          connectionStatus={connectionStatus}
+          onMarkAsRead={markAsRead}
+          onDelete={deleteNotification}
+        >
           <motion.button
-            onClick={() => setShowNotifications(!showNotifications)}
             className="neuro-button p-2 transition-colors relative"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -227,81 +258,7 @@ export default function TopBar({}: TopBarProps) {
               </motion.span>
             )}
           </motion.button>
-
-          {/* Notifications Dropdown */}
-          <AnimatePresence>
-            {showNotifications && (
-              <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="neuro-card absolute right-0 mt-2 w-80 py-2 z-50"
-              >
-              <div className="px-4 py-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--neuro-border)' }}>
-                <div>
-                  <h3 className="font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Notifications</h3>
-                  <p className="text-sm" style={{ color: 'var(--neuro-text-secondary)' }}>{unreadCount} unread</p>
-                </div>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={() => markAsRead()}
-                    className="text-xs font-medium"
-                    style={{ color: 'var(--neuro-orange)' }}
-                  >
-                    Mark all read
-                  </button>
-                )}
-              </div>
-              <div className="max-h-64 overflow-y-auto">
-                {isLoadingNotifications ? (
-                  <div className="px-4 py-8 text-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 mx-auto" style={{ borderColor: 'var(--neuro-orange)' }}></div>
-                    <p className="text-sm mt-2" style={{ color: 'var(--neuro-text-secondary)' }}>Loading notifications...</p>
-                  </div>
-                ) : notifications.length === 0 ? (
-                  <div className="px-4 py-8 text-center">
-                    <Bell className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--neuro-text-muted)' }} />
-                    <p className="text-sm" style={{ color: 'var(--neuro-text-secondary)' }}>No notifications yet</p>
-                  </div>
-                ) : (
-                  notifications.map((notification) => (
-                    <SwipeableNotification
-                      key={notification.id}
-                      notification={notification}
-                      onMarkAsRead={() => markAsRead([notification.id])}
-                      onDelete={() => deleteNotification(notification.id)}
-                    />
-                  ))
-                )}
-              </div>
-              <div className="px-4 py-2" style={{ borderTop: '1px solid var(--neuro-border)' }}>
-                <div className="flex items-center justify-between mb-2">
-                  <button 
-                    onClick={() => {
-                      markAsRead();
-                      setShowNotifications(false);
-                    }}
-                    className="text-sm py-2 px-3 rounded-lg transition-colors flex-1 mr-2"
-                    style={{
-                      color: 'var(--neuro-text-secondary)',
-                      backgroundColor: 'transparent'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--neuro-bg-secondary)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    Mark all as read
-                  </button>
-
-                 </div>
-              </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        </NotificationPopover>
 
         {/* Profile Avatar */}
         <ProfilePopover 
@@ -337,15 +294,7 @@ export default function TopBar({}: TopBarProps) {
 
       </div>
 
-      {/* Click outside handlers */}
-      {showNotifications && (
-        <div
-          className="fixed inset-0 z-30"
-          onClick={() => {
-            setShowNotifications(false);
-          }}
-        />
-      )}
+
     </motion.div>
   );
 }

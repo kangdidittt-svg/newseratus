@@ -14,6 +14,7 @@ import {
 import EdinburghClock from './EdinburghClock';
 import RobotAssistant from './RobotAssistant';
 import { useRealtimeDashboard, triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
+import { triggerNotificationRefresh } from '../hooks/useNotificationRefresh';
 
 interface FreelanceDashboardProps {
   onNavigate?: (tab: string) => void;
@@ -98,12 +99,17 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
               clientName: formData.client
             })
           });
+          // Trigger immediate notification refresh
+          await triggerNotificationRefresh();
         } catch (notificationError) {
           console.error('Error creating notification:', notificationError);
         }
         
         // Trigger dashboard refresh
         triggerDashboardRefresh('project-created');
+        
+        // Trigger notification refresh again
+        await triggerNotificationRefresh();
         
         // Reset form
         setFormData({

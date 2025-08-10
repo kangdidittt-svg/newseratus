@@ -43,6 +43,30 @@ export function useRealtimeNotifications() {
     }
   }, []);
 
+  // Manual refresh function for immediate updates
+  const refreshNotifications = useCallback(async () => {
+    try {
+      setConnectionStatus('connecting');
+      const response = await fetch('/api/notifications', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.notifications);
+        setUnreadCount(data.unreadCount);
+        setConnectionStatus('connected');
+        console.log('🔄 Notifications refreshed manually');
+      } else {
+        setConnectionStatus('disconnected');
+      }
+    } catch (error) {
+      console.error('Error refreshing notifications:', error);
+      setConnectionStatus('disconnected');
+    }
+  }, []);
+
 
 
   // Mark notifications as read
@@ -117,8 +141,8 @@ export function useRealtimeNotifications() {
     fetchInitialNotifications();
     requestNotificationPermission();
     
-    // Start polling every 60 seconds (reduced from 10 seconds)
-    pollInterval = setInterval(pollNotifications, 60000);
+    // Start polling every 10 seconds for faster updates
+    pollInterval = setInterval(pollNotifications, 10000);
     
     // Initial poll
     setTimeout(pollNotifications, 1000);
@@ -150,6 +174,7 @@ export function useRealtimeNotifications() {
      unreadCount,
      connectionStatus,
      markAsRead,
+     refreshNotifications,
      isLoading
    };
 }

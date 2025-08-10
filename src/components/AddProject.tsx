@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
+import { triggerNotificationRefresh } from '../hooks/useNotificationRefresh';
+import SuccessPopup from './SuccessPopup';
 
 interface AddProjectProps {
   onProjectAdded?: () => void;
@@ -23,11 +25,18 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [isLoadingPopup, setIsLoadingPopup] = useState(false);
+  const [successData, setSuccessData] = useState({ title: '', message: '' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
+    
+    // Show loading popup
+    setShowSuccessPopup(true);
+    setIsLoadingPopup(true);
 
     try {
       const response = await fetch('/api/projects', {
@@ -62,12 +71,29 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
               clientName: formData.client
             })
           });
+          // Trigger immediate notification refresh
+          await triggerNotificationRefresh();
         } catch (notificationError) {
           console.error('Error creating notification:', notificationError);
         }
         
-        // Trigger dashboard refresh
-        triggerDashboardRefresh('project-created');
+        // Simulate processing time untuk efek loading yang lebih realistis
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Trigger notification refresh again after loading
+        await triggerNotificationRefresh();
+        
+        // Stop loading dan show success
+        setIsLoadingPopup(false);
+        setSuccessData({
+          title: 'Project Berhasil Dibuat! 🎉',
+          message: `Project "${formData.title}" untuk client ${formData.client} telah berhasil ditambahkan`
+        });
+        
+        // Trigger dashboard refresh setelah delay
+        setTimeout(() => {
+          triggerDashboardRefresh('project-created');
+        }, 1000);
         
         // Reset form
         setFormData({
@@ -88,13 +114,22 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Failed to create project');
+        setShowSuccessPopup(false);
+        setIsLoadingPopup(false);
       }
     } catch (error) {
       console.error('Error creating project:', error);
       setError('Network error. Please try again.');
+      setShowSuccessPopup(false);
+      setIsLoadingPopup(false);
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  const handleSuccessComplete = () => {
+    setShowSuccessPopup(false);
+    setIsLoadingPopup(false);
   };
 
   return (
@@ -293,6 +328,15 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
           <li>• Add detailed descriptions to track project requirements</li>
         </ul>
       </div>
+      
+      {/* Success Popup */}
+       <SuccessPopup
+         isVisible={showSuccessPopup}
+         isLoading={isLoadingPopup}
+         title={successData.title}
+         message={successData.message}
+         onComplete={handleSuccessComplete}
+       />
     </motion.div>
   );
 }

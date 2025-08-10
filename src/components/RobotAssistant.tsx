@@ -21,6 +21,7 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
   const { user } = useAuth();
   const [isActive, setIsActive] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showNotification, setShowNotification] = useState(false);
   const [lastInteraction, setLastInteraction] = useState(Date.now());
   const [autoActionCounter, setAutoActionCounter] = useState(0);

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Home, FolderOpen, Plus, ChartColumn, Settings } from 'lucide-react';
 import Image from 'next/image';
+import AddProjectPopover from './AddProjectPopover';
 
 interface SidebarProps {
   activeTab: string;
@@ -165,22 +166,32 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
                 variants={itemVariants}
                 custom={index}
               >
-                <motion.button
-                  className={`w-full flex items-center justify-center p-3 rounded-xl font-inter font-medium transition-all duration-300 ${
-                    isActive
-                      ? 'neuro-card-pressed'
-                      : 'neuro-button hover:neuro-button-hover'
-                  }`}
-                  style={{
-                    color: isActive ? 'var(--neuro-orange)' : 'var(--neuro-text-primary)'
-                  }}
-                  onClick={() => setActiveTab(item.id)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  title={item.label}
-                >
-                  <Icon className="w-5 h-5" style={{ color: isActive ? 'var(--neuro-orange)' : 'var(--neuro-text-secondary)' }} />
-                </motion.button>
+                {item.id === 'add-project' ? (
+                  <AddProjectPopover 
+                    isActive={isActive}
+                    onProjectAdded={() => {
+                      // Refresh projects or handle project added
+                      setActiveTab('projects');
+                    }}
+                  />
+                ) : (
+                  <motion.button
+                    className={`w-full flex items-center justify-center p-3 rounded-xl font-inter font-medium transition-all duration-300 ${
+                      isActive
+                        ? 'neuro-card-pressed'
+                        : 'neuro-button hover:neuro-button-hover'
+                    }`}
+                    style={{
+                      color: isActive ? 'var(--neuro-orange)' : 'var(--neuro-text-primary)'
+                    }}
+                    onClick={() => setActiveTab(item.id)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    title={item.label}
+                  >
+                    <Icon className="w-5 h-5" style={{ color: isActive ? 'var(--neuro-orange)' : 'var(--neuro-text-secondary)' }} />
+                  </motion.button>
+                )}
               </motion.div>
             );
           })}

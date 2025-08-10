@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, DollarSign, User, Tag, Clock, Plus, Edit, Trash2, Check, X } from 'lucide-react';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import { triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
 
 interface Project {
   id: string;
@@ -152,6 +153,9 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
         setEditingProject(null);
         setEditFormData({});
         
+        // Trigger dashboard refresh
+        triggerDashboardRefresh('project-updated');
+        
         // Refresh projects list
         fetchProjects();
         
@@ -183,6 +187,9 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
         setProjects(projects.map(p => 
           p.id === projectId ? updatedProject.project : p
         ));
+        
+        // Trigger dashboard refresh
+        triggerDashboardRefresh('project-completed');
       }
     } catch (error) {
       console.error('Error marking project as complete:', error);

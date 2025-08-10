@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Edit, Trash2, CheckCircle, X, Save } from 'lucide-react';
+import { triggerDashboardRefresh } from '../../../hooks/useRealtimeDashboard';
 
 interface Project {
   _id: string;
@@ -170,6 +171,10 @@ export default function ManageProjectsPage() {
 
       if (response.ok) {
         fetchProjects();
+        
+        // Trigger dashboard refresh
+        triggerDashboardRefresh('project-completed');
+        
         const formattedBudget = new Intl.NumberFormat('en-US', {
           style: 'currency',
           currency: 'USD'

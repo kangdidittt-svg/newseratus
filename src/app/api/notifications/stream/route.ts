@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
         } catch (error) {
           console.error('Notification poll error:', error);
         }
-      }, 15000);
+      }, 45000); // Increased from 15 seconds to 45 seconds
 
       // Cleanup
       const cleanup = () => {

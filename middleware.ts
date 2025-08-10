@@ -12,9 +12,22 @@ export function middleware(request: NextRequest) {
   // Get token from cookies
   const token = request.cookies.get('auth-token')?.value;
   
-  // Verify token
-  const user = token ? verifyToken(token) : null;
-  const isAuthenticated = !!user;
+  // Verify token with error handling
+  let user = null;
+  let isAuthenticated = false;
+  
+  if (token) {
+    try {
+      user = verifyToken(token);
+      isAuthenticated = !!user;
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      // Clear invalid token
+      const response = NextResponse.next();
+      response.cookies.delete('auth-token');
+      isAuthenticated = false;
+    }
+  }
   
   // Check if current path is protected
   const isProtectedRoute = protectedRoutes.some(route => 
@@ -60,7 +73,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
+     * - file extensions
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|public|.*\\.).*)',
   ],
 };

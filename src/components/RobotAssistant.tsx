@@ -117,11 +117,11 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     setTimeout(() => setIsActive(false), 2000);
   }, [autoActionCounter, showRandomReminder]);
 
-  // Auto action every 15-25 seconds (slower)
+  // Auto action every 2-5 minutes (much slower to reduce refresh feeling)
   useEffect(() => {
     if (!isMounted) return;
     
-    const getRandomInterval = () => Math.random() * 10000 + 15000; // 15-25 seconds
+    const getRandomInterval = () => Math.random() * 180000 + 120000; // 2-5 minutes
     
     const scheduleNextAction = () => {
       setTimeout(() => {

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, ArrowLeft, CheckCircle, X } from 'lucide-react';
 import Link from 'next/link';
+import { triggerDashboardRefresh } from '@/hooks/useRealtimeDashboard';
 
 function SuccessPopup({ message, onClose }: { message: string; onClose: () => void }) {
   return (
@@ -92,6 +93,32 @@ export default function NewProjectPage() {
       });
 
       if (response.ok) {
+        const projectData = await response.json();
+        
+        // Add notification for successful project creation
+        try {
+          await fetch('/api/notifications', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              title: 'Project Created Successfully',
+              message: `New project "${formData.title}" has been created for client ${formData.client}`,
+              type: 'general',
+              projectId: projectData.project?._id,
+              projectTitle: formData.title,
+              clientName: formData.client
+            })
+          });
+        } catch (notificationError) {
+          console.error('Error creating notification:', notificationError);
+        }
+        
+        // Trigger dashboard refresh immediately
+        triggerDashboardRefresh('project-created');
+        
         setShowSuccess(true);
         // Reset form
         setFormData({

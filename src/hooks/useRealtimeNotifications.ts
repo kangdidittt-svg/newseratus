@@ -117,8 +117,8 @@ export function useRealtimeNotifications() {
     fetchInitialNotifications();
     requestNotificationPermission();
     
-    // Start polling every 10 seconds
-    pollInterval = setInterval(pollNotifications, 10000);
+    // Start polling every 60 seconds (reduced from 10 seconds)
+    pollInterval = setInterval(pollNotifications, 60000);
     
     // Initial poll
     setTimeout(pollNotifications, 1000);

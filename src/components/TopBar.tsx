@@ -19,13 +19,13 @@ interface TopBarProps {
     email: string;
     avatar?: string;
   };
-  onNavigateToSettings?: () => void;
 }
 
-export default function TopBar({ onNavigateToSettings }: TopBarProps) {
+export default function TopBar({}: TopBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [profileAvatar, setProfileAvatar] = useState<string>('/api/placeholder/150/150');
+  const [userData, setUserData] = useState<{ username: string; email: string } | null>(null);
   
   // Use realtime notifications hook
   const {
@@ -46,12 +46,16 @@ export default function TopBar({ onNavigateToSettings }: TopBarProps) {
       
       if (response.ok) {
         console.log('✅ Notification deleted successfully');
-        // Remove notification from local state instead of refreshing
+        // The notification will be removed from state by the realtime hook
+        return true;
       } else {
-        console.error('❌ Failed to delete notification');
+        const errorData = await response.json();
+        console.error('❌ Failed to delete notification:', errorData.error || 'Unknown error');
+        return false;
       }
     } catch (error) {
       console.error('❌ Error deleting notification:', error);
+      return false;
     }
   };
 
@@ -84,39 +88,54 @@ export default function TopBar({ onNavigateToSettings }: TopBarProps) {
 
 
 
-  // Load profile avatar from API
-  const loadProfileAvatar = async () => {
+  // Load profile data from API
+  const loadProfileData = async () => {
     try {
-      const response = await fetch('/api/user/settings', {
+      // Get user settings for avatar
+      const settingsResponse = await fetch('/api/user/settings', {
         method: 'GET',
         credentials: 'include'
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setProfileAvatar(data.settings?.profile?.avatar || '/api/placeholder/150/150');
+      if (settingsResponse.ok) {
+        const settingsData = await settingsResponse.json();
+        setProfileAvatar(settingsData.settings?.profile?.avatar || '/api/placeholder/150/150');
+      }
+
+      // Get user auth data for username and email
+      const authResponse = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (authResponse.ok) {
+        const authData = await authResponse.json();
+        setUserData({
+          username: authData.user?.username || 'User',
+          email: authData.user?.email || 'user@example.com'
+        });
       }
     } catch (error) {
-      console.error('Error loading profile avatar:', error);
+      console.error('Error loading profile data:', error);
     }
   };
 
-  // Load profile avatar on component mount
+  // Load profile data on component mount
   useEffect(() => {
-    loadProfileAvatar();
+    loadProfileData();
     
     // Set up interval to check for profile updates
     const profileInterval = setInterval(() => {
-      loadProfileAvatar();
+      loadProfileData();
     }, 30000);
     
     // Listen for storage events (when settings are updated)
     const handleStorageChange = () => {
-      loadProfileAvatar();
+      loadProfileData();
     };
     
     const handleProfileUpdate = () => {
-      loadProfileAvatar();
+      loadProfileData();
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -286,9 +305,8 @@ export default function TopBar({ onNavigateToSettings }: TopBarProps) {
 
         {/* Profile Avatar */}
         <ProfilePopover 
-          userName="User" 
-          userEmail="user@example.com"
-          onNavigateToSettings={onNavigateToSettings}
+          userName={userData?.username || "User"} 
+          userEmail={userData?.email || "user@example.com"}
         >
           <div className="relative">
             <motion.div

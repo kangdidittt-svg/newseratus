@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
+import { triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
 
 interface AddProjectCompactProps {
   onProjectAdded?: () => void;
@@ -89,6 +90,9 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
         } catch (notificationError) {
           console.error('Error creating notification:', notificationError);
         }
+        
+        // Trigger dashboard refresh immediately
+        triggerDashboardRefresh('project-created');
         
         // Reset form
         setFormData({

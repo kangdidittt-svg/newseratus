@@ -13,7 +13,6 @@ import {
   EyeOff,
   Key,
   Trash2,
-  LogOut,
   Settings as SettingsIcon,
   Users,
   Edit,
@@ -281,6 +280,28 @@ export default function Settings() {
 
   const handleClearData = async () => {
     try {
+      // Send notification first before clearing data
+      try {
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            title: 'Data Berhasil Dibersihkan',
+            message: 'Anda baru saja melakukan pembersihan data. Semua data pribadi Anda telah dihapus dari sistem.',
+            type: 'system_action'
+          })
+        });
+        console.log('✅ Notification sent successfully');
+      } catch (notificationError) {
+        console.error('Failed to send notification:', notificationError);
+      }
+
+      // Wait a moment for notification to be processed
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       const response = await fetch('/api/user/clear-data', {
         method: 'DELETE',
         headers: {
@@ -306,31 +327,7 @@ export default function Settings() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
 
-      if (response.ok) {
-        // Clear any local storage or session data
-        localStorage.clear();
-        sessionStorage.clear();
-        // Redirect to login
-        window.location.href = '/login';
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error || 'Gagal logout. Silakan coba lagi.');
-      }
-    } catch (error) {
-      console.error('Error logging out:', error);
-      alert('Terjadi kesalahan saat logout.');
-    }
-  };
 
   const updateSettings = (section: keyof UserSettings, field: string, value: string | boolean) => {
     setSettings(prev => ({
@@ -736,49 +733,29 @@ export default function Settings() {
             <div className="flex-1">
               <h4 className="font-medium font-inter mb-2" style={{ color: 'var(--neuro-error)' }}>Hapus Semua Data</h4>
               <p className="text-sm font-inter mb-4" style={{ color: 'var(--neuro-error)' }}>
-                Tindakan ini akan menghapus semua data Anda dari database termasuk proyek, pengaturan, dan informasi profil. 
-                <strong>Tindakan ini tidak dapat dibatalkan.</strong>
+                Tindakan ini akan menghapus semua data <strong>milik Anda</strong> dari database termasuk proyek, pengaturan, dan informasi profil. 
+                Data pengguna lain tidak akan terpengaruh. <strong>Tindakan ini tidak dapat dibatalkan.</strong>
               </p>
-              <button 
+              <motion.button 
                 onClick={() => setDeleteDataModal(true)}
-                className="neuro-button font-inter flex items-center space-x-2"
-                style={{ backgroundColor: 'var(--neuro-error)', color: 'white' }}
+                className="neuro-button font-inter flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200"
+                style={{ 
+                  backgroundColor: 'var(--neuro-error)', 
+                  color: 'white',
+                  border: '1px solid var(--neuro-error)'
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <Trash2 className="h-4 w-4" />
                 <span>Hapus Semua Data</span>
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
       </div>
 
-      <div>
-        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
-          <LogOut className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
-          Keluar Akun
-        </h3>
-        <div className="neuro-card p-6">
-          <div className="flex items-start space-x-4">
-            <div className="flex-shrink-0">
-              <LogOut className="h-6 w-6" style={{ color: 'var(--neuro-text-secondary)' }} />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Logout</h4>
-              <p className="text-sm font-inter mb-4" style={{ color: 'var(--neuro-text-secondary)' }}>
-                Keluar dari akun Anda dan kembali ke halaman login.
-              </p>
-              <button 
-                onClick={handleLogout}
-                className="neuro-button font-inter flex items-center space-x-2"
-                style={{ backgroundColor: 'var(--neuro-text-secondary)', color: 'white' }}
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+
     </motion.div>
   );
   
@@ -1065,7 +1042,7 @@ export default function Settings() {
           setDeleteDataModal(false);
         }}
         title="Hapus Semua Data"
-        message="Apakah Anda yakin ingin menghapus semua data? Tindakan ini akan menghapus semua proyek, pengaturan, dan informasi profil Anda dari database. Tindakan ini tidak dapat dibatalkan!"
+        message="Apakah Anda yakin ingin menghapus semua data milik Anda? Tindakan ini akan menghapus semua proyek, pengaturan, dan informasi profil Anda dari database. Data pengguna lain tidak akan terpengaruh. Tindakan ini tidak dapat dibatalkan!"
         confirmText="Hapus Semua Data"
         cancelText="Batal"
       />

@@ -9,10 +9,9 @@ interface ProfilePopoverProps {
   children: React.ReactNode;
   userName?: string;
   userEmail?: string;
-  onNavigateToSettings?: () => void;
 }
 
-export default function ProfilePopover({ children, userName, userEmail, onNavigateToSettings }: ProfilePopoverProps) {
+export default function ProfilePopover({ children, userName, userEmail }: ProfilePopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -30,9 +29,7 @@ export default function ProfilePopover({ children, userName, userEmail, onNaviga
   const handleMouseLeave = () => {
     setIsHovering(false);
     timeoutRef.current = setTimeout(() => {
-      if (!isHovering) {
-        setIsOpen(false);
-      }
+      setIsOpen(false);
     }, 150);
   };
 
@@ -73,14 +70,17 @@ export default function ProfilePopover({ children, userName, userEmail, onNaviga
   const handleSettings = () => {
     // Close popover first
     setIsOpen(false);
-    // Navigate to settings using callback if available
-    if (onNavigateToSettings) {
-      onNavigateToSettings();
-    } else {
-      // Fallback to router navigation
-      router.push('/settings');
-    }
+    // Navigate to settings page
+    router.push('/settings');
   };
+
+  // Handle hover state changes
+  useEffect(() => {
+    if (isHovering && timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, [isHovering]);
 
   useEffect(() => {
     return () => {

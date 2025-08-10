@@ -117,21 +117,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         </div>
       </motion.nav>
 
-      {/* Settings Button */}
-      <motion.div
-        variants={itemVariants}
-        className="mt-8 flex flex-col items-center"
-      >
-        <motion.button
-          className="neuro-button w-full p-3 flex items-center justify-center rounded-xl"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setActiveTab('settings')}
-          title="Settings"
-        >
-          <Settings className="w-5 h-5" style={{ color: 'var(--neuro-text-secondary)' }} />
-        </motion.button>
-      </motion.div>
+
     </motion.div>
   );
 }

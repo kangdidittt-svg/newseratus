@@ -8,7 +8,6 @@ import FreelanceDashboard from './FreelanceDashboard';
 import ProjectList from './ProjectList';
 import AddProject from './AddProject';
 import MonthlyReport from './MonthlyReport';
-import Settings from './Settings';
 
 interface User {
   id: string;
@@ -22,6 +21,7 @@ interface User {
 export default function ClientApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [user, setUser] = useState<User | null>(null);
+  const [dashboardRefreshTrigger, setDashboardRefreshTrigger] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -213,7 +213,8 @@ export default function ClientApp() {
             transition={pageTransition}
           >
             <FreelanceDashboard 
-              onNavigate={handleNavigation} 
+              onNavigate={handleNavigation}
+              refreshTrigger={dashboardRefreshTrigger}
             />
           </motion.div>
         );
@@ -244,19 +245,7 @@ export default function ClientApp() {
             <MonthlyReport />
           </motion.div>
         );
-      case 'settings':
-        return (
-          <motion.div
-            key="settings"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <Settings />
-          </motion.div>
-        );
+
       case 'add-project':
         return (
           <motion.div
@@ -269,6 +258,7 @@ export default function ClientApp() {
           >
             <AddProject onProjectAdded={() => {
               setActiveTab('dashboard');
+              setDashboardRefreshTrigger(prev => prev + 1);
             }} />
           </motion.div>
         );
@@ -349,7 +339,6 @@ export default function ClientApp() {
         {/* Top Bar */}
         <TopBar
           user={user || undefined}
-          onNavigateToSettings={() => setActiveTab('settings')}
         />
 
         {/* Page Content */}

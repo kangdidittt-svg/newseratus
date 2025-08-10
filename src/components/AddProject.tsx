@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
+import { triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
 
 interface AddProjectProps {
   onProjectAdded?: () => void;
@@ -42,6 +43,32 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
       });
 
       if (response.ok) {
+        const projectData = await response.json();
+        
+        // Add notification for successful project creation
+        try {
+          await fetch('/api/notifications', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              title: 'Project Created Successfully',
+              message: `New project "${formData.title}" has been created for client ${formData.client}`,
+              type: 'general',
+              projectId: projectData.project?._id,
+              projectTitle: formData.title,
+              clientName: formData.client
+            })
+          });
+        } catch (notificationError) {
+          console.error('Error creating notification:', notificationError);
+        }
+        
+        // Trigger dashboard refresh
+        triggerDashboardRefresh('project-created');
+        
         // Reset form
         setFormData({
           title: '',

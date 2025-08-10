@@ -13,38 +13,15 @@ import {
 } from 'lucide-react';
 import EdinburghClock from './EdinburghClock';
 import RobotAssistant from './RobotAssistant';
-
-interface DashboardStats {
-  totalProjects: number;
-  activeProjects: number;
-  completedProjects: number;
-  onHoldProjects: number;
-  totalEarnings: number;
-  totalHours: number;
-  averageHourlyRate: number;
-  totalPendingPayments: number;
-}
-
-interface Project {
-  _id: string;
-  title: string;
-  client: string;
-  status: string;
-  priority: string;
-  budget: number;
-  deadline?: string;
-  createdAt: string;
-}
+import { useRealtimeDashboard, triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
 
 interface FreelanceDashboardProps {
   onNavigate?: (tab: string) => void;
+  refreshTrigger?: number;
 }
 
-export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardProps) {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function FreelanceDashboard({ onNavigate, refreshTrigger }: FreelanceDashboardProps) {
+  const { stats, recentProjects, loading, error, connectionStatus, refreshDashboard } = useRealtimeDashboard();
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,9 +38,12 @@ export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardPro
   });
 
 
+  // Handle refresh trigger from parent (legacy support)
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (refreshTrigger && refreshTrigger > 0) {
+      refreshDashboard();
+    }
+  }, [refreshTrigger, refreshDashboard]);
 
   // Removed useEffect dependency on showModal to prevent conflicts
 
@@ -99,6 +79,32 @@ export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardPro
       });
 
       if (response.ok) {
+        const projectData = await response.json();
+        
+        // Add notification for successful project creation
+        try {
+          await fetch('/api/notifications', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              title: 'Project Created Successfully',
+              message: `New project "${formData.title}" has been created for client ${formData.client}`,
+              type: 'general',
+              projectId: projectData.project?._id,
+              projectTitle: formData.title,
+              clientName: formData.client
+            })
+          });
+        } catch (notificationError) {
+          console.error('Error creating notification:', notificationError);
+        }
+        
+        // Trigger dashboard refresh
+        triggerDashboardRefresh('project-created');
+        
         // Reset form
         setFormData({
           title: '',
@@ -111,8 +117,7 @@ export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardPro
           category: 'web-development'
         });
         closeModal();
-        // Refresh dashboard data
-        fetchDashboardData();
+        // SSE will automatically update dashboard data
       } else {
         console.error('Failed to create project');
       }
@@ -131,27 +136,7 @@ export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardPro
     }));
   };
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/dashboard/stats', {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data.stats);
-        setRecentProjects(data.recentProjects || []);
-      } else {
-        setError('Failed to load dashboard data');
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      setError('Network error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -195,7 +180,7 @@ export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardPro
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Dashboard</h3>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
-            onClick={fetchDashboardData}
+            onClick={refreshDashboard}
             className="neuro-button px-4 py-2 text-sm"
           >
             Try Again
@@ -207,6 +192,44 @@ export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardPro
 
   return (
     <div className="p-6 space-y-6">
+      {/* Header with Connection Status */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>Dashboard</h1>
+            <p className="mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>Welcome back! Here&apos;s your project overview.</p>
+          </div>
+          <div className="flex gap-3 items-center">
+            {/* Connection Status Indicator - Hidden */}
+            <div className="flex items-center gap-2 text-sm" style={{ display: 'none' }}>
+              <div className={`w-2 h-2 rounded-full ${
+                connectionStatus === 'connected' ? 'bg-green-500' :
+                connectionStatus === 'connecting' ? 'bg-yellow-500' :
+                'bg-red-500'
+              }`}></div>
+              <span className={`text-xs ${
+                connectionStatus === 'connected' ? 'text-green-600' :
+                connectionStatus === 'connecting' ? 'text-yellow-600' :
+                'text-red-600'
+              }`}>
+                {connectionStatus === 'connected' ? 'Real-time' :
+                 connectionStatus === 'connecting' ? 'Connecting...' :
+                 'Offline'}
+              </span>
+            </div>
+            {/* Add Project Button - Hidden */}
+            <button
+              onClick={() => setShowAddProjectModal(true)}
+              className="neuro-button-orange px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              style={{ display: 'none' }}
+            >
+              <Plus className="w-4 h-4" />
+              Add Project
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Cards and Clock Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Stats Cards - 2x2 Grid */}

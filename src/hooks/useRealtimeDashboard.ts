@@ -97,7 +97,7 @@ export function useRealtimeDashboard() {
         } catch (error) {
           console.error('Polling fallback error:', error);
         }
-      }, 30000); // Poll every 30 seconds as fallback
+      }, 120000); // Poll every 2 minutes as fallback (reduced frequency)
       
       // Store interval for cleanup
       reconnectTimeout = pollInterval as NodeJS.Timeout;
@@ -225,7 +225,7 @@ export function useRealtimeDashboard() {
       interval = setInterval(() => {
         console.log('🔄 Dashboard: Fallback polling triggered');
         fetchDashboardData();
-      }, 60000); // 1 minute fallback polling
+      }, 120000); // 2 minute fallback polling (reduced frequency)
     }
 
     return () => {

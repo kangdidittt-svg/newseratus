@@ -23,8 +23,15 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
   const [currentMessage, setCurrentMessage] = useState('');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showNotification, setShowNotification] = useState(false);
-  const [lastInteraction, setLastInteraction] = useState(Date.now());
+  const [lastInteraction, setLastInteraction] = useState(0);
   const [autoActionCounter, setAutoActionCounter] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Initialize after component mounts to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+    setLastInteraction(Date.now());
+  }, []);
 
   const userName = user?.username || 'Teman';
 
@@ -112,6 +119,8 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
 
   // Auto action every 15-25 seconds (slower)
   useEffect(() => {
+    if (!isMounted) return;
+    
     const getRandomInterval = () => Math.random() * 10000 + 15000; // 15-25 seconds
     
     const scheduleNextAction = () => {
@@ -122,10 +131,12 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     };
     
     scheduleNextAction();
-  }, [performAutoAction]);
+  }, [performAutoAction, isMounted]);
 
   // Reminder system every 8 minutes
   useEffect(() => {
+    if (!isMounted) return;
+    
     const interval = setInterval(() => {
       const now = Date.now();
       const timeSinceLastInteraction = now - lastInteraction;
@@ -137,7 +148,7 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [lastInteraction, showRandomReminder]);
+  }, [lastInteraction, showRandomReminder, isMounted]);
 
   const handleRobotClick = () => {
     setIsActive(true);

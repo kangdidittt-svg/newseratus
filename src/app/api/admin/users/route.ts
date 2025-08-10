@@ -1,47 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import Project from '@/models/Project';
+import { Notification } from '@/models/Notification';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
-// Helper function to verify user token
-async function verifyUserToken(request: NextRequest) {
-  try {
-    const token = request.cookies.get('token')?.value;
-    
-    if (!token) {
-      return { error: 'No token provided', status: 401 };
-    }
-
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-    
-    await connectDB();
-    const user = await User.findById(decoded.userId);
-    
-    if (!user) {
-      return { error: 'User not found', status: 401 };
-    }
-    
-    return { user, status: 200 };
-  } catch (error) {
-    return { error: 'Invalid token', status: 401 };
-  }
-}
 
 // GET - Fetch all users
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await verifyUserToken(request);
-    
-    if (authResult.error) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: authResult.status }
-      );
-    }
-
     await connectDB();
     
     // Fetch all users, excluding password field
@@ -72,15 +38,6 @@ export async function GET(request: NextRequest) {
 // POST - Create new user
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await verifyUserToken(request);
-    
-    if (authResult.error) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: authResult.status }
-      );
-    }
-
     const { username, email, password, role } = await request.json();
 
     // Validation
@@ -192,15 +149,6 @@ export async function POST(request: NextRequest) {
 // PUT - Update user
 export async function PUT(request: NextRequest) {
   try {
-    const authResult = await verifyUserToken(request);
-    
-    if (authResult.error) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: authResult.status }
-      );
-    }
-
     const { userId, username, email, role, password } = await request.json();
 
     if (!userId) {
@@ -289,21 +237,19 @@ export async function PUT(request: NextRequest) {
 // DELETE - Delete user
 export async function DELETE(request: NextRequest) {
   try {
-    const authResult = await verifyUserToken(request);
-    
-    if (authResult.error) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: authResult.status }
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const { userId } = await request.json();
 
     if (!userId) {
       return NextResponse.json(
         { error: 'User ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate ObjectId format
+    if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+      return NextResponse.json(
+        { error: 'Invalid user ID format' },
         { status: 400 }
       );
     }
@@ -318,19 +264,19 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Prevent admin from deleting themselves
-    if (user._id.toString() === authResult.user._id.toString()) {
-      return NextResponse.json(
-        { error: 'Cannot delete your own account' },
-        { status: 400 }
-      );
-    }
-
+    // Delete all related data before deleting the user
+    // 1. Delete all projects owned by this user
+    await Project.deleteMany({ userId: userId });
+    
+    // 2. Delete all notifications for this user
+    await Notification.deleteMany({ userId: userId });
+    
+    // 3. Finally delete the user from database
     await User.findByIdAndDelete(userId);
 
     return NextResponse.json({
       success: true,
-      message: 'User deleted successfully'
+      message: 'User and all related data deleted successfully'
     });
 
   } catch (error) {

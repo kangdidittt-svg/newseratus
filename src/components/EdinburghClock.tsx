@@ -20,8 +20,16 @@ const EdinburghClock = () => {
   });
   
   const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Initialize after component mounts to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   useEffect(() => {
+    if (!isMounted) return;
+    
     const checkScreenSize = () => {
       setIsSmallScreen(window.innerWidth < 640);
     };
@@ -30,9 +38,11 @@ const EdinburghClock = () => {
     window.addEventListener('resize', checkScreenSize);
     
     return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
+  }, [isMounted]);
 
   useEffect(() => {
+    if (!isMounted) return;
+    
     const updateTime = () => {
       const now = new Date();
       // Edinburgh timezone (GMT+0 in winter, GMT+1 in summer)
@@ -54,7 +64,7 @@ const EdinburghClock = () => {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isMounted]);
 
   const getBackgroundStyle = () => {
     switch (time.period) {

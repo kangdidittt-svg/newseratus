@@ -14,7 +14,10 @@ import {
   Key,
   Trash2,
   LogOut,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Users,
+  Edit,
+  Crown
 } from 'lucide-react';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
@@ -33,14 +36,70 @@ interface UserSettings {
   };
 }
 
+interface AdminUser {
+  id: string;
+  username: string;
+  email: string;
+  role: 'user' | 'admin';
+  createdAt: string;
+}
+
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile');
   const [deleteDataModal, setDeleteDataModal] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('user');
+  const [settings, setSettings] = useState<UserSettings>({
+    profile: {
+      avatar: '/api/placeholder/150/150'
+    },
+    preferences: {
+      notifications: {
+        email: true,
+        push: true,
+        sms: false
+      },
+      language: 'en',
+      timezone: 'America/New_York'
+    }
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+  
+  // Password change states
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState('');
+  const [passwordChangeError, setPasswordChangeError] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  
+  // Admin management states
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [userActionMessage, setUserActionMessage] = useState('');
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   // Load settings from API on component mount
   useEffect(() => {
     loadSettings();
+    checkUserRole();
   }, []);
+  
+  // Load users when admin tab is active
+  useEffect(() => {
+    if (activeTab === 'admin' && currentUserRole === 'admin') {
+      loadUsers();
+    }
+  }, [activeTab, currentUserRole]);
   
   const loadSettings = async () => {
     try {
@@ -61,43 +120,127 @@ export default function Settings() {
       setIsLoading(false);
     }
   };
-  const [settings, setSettings] = useState<UserSettings>({
-    profile: {
-      avatar: '/api/placeholder/150/150'
-    },
-    preferences: {
-      notifications: {
-        email: true,
-        push: true,
-        sms: false
-      },
-      language: 'en',
-      timezone: 'America/New_York'
-    }
-  });
-  const [isLoading, setIsLoading] = useState(true);
-
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
   
-  // Password change states
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordChangeMessage, setPasswordChangeMessage] = useState('');
-  const [passwordChangeError, setPasswordChangeError] = useState('');
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const checkUserRole = async () => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUserRole(data.user?.role || 'user');
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+    }
+  };
+  
+  const loadUsers = async () => {
+    setIsLoadingUsers(true);
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      } else {
+        setUserActionMessage('Failed to load users');
+        setTimeout(() => setUserActionMessage(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error loading users:', error);
+      setUserActionMessage('Error loading users');
+      setTimeout(() => setUserActionMessage(''), 3000);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+  
+  const handleDeleteUser = (user: AdminUser) => {
+    setUserToDelete(user);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ userId: userToDelete.id })
+      });
+      
+      if (response.ok) {
+        setUsers(users.filter(user => user.id !== userToDelete.id));
+        setUserActionMessage('User deleted successfully');
+        setTimeout(() => setUserActionMessage(''), 3000);
+      } else {
+        const data = await response.json();
+        setUserActionMessage(data.error || 'Failed to delete user');
+        setTimeout(() => setUserActionMessage(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setUserActionMessage('Error deleting user');
+      setTimeout(() => setUserActionMessage(''), 3000);
+    } finally {
+      setShowDeleteModal(false);
+      setUserToDelete(null);
+    }
+  };
+
+  const cancelDeleteUser = () => {
+    setShowDeleteModal(false);
+    setUserToDelete(null);
+  };
+  
+  const handleUpdateUserRole = async (userId: string, newRole: 'user' | 'admin') => {
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ userId, role: newRole })
+      });
+      
+      if (response.ok) {
+        setUsers(users.map(user => 
+          user.id === userId ? { ...user, role: newRole } : user
+        ));
+        setUserActionMessage(`User role updated to ${newRole}`);
+        setTimeout(() => setUserActionMessage(''), 3000);
+        setShowEditModal(false);
+        setEditingUser(null);
+      } else {
+        const data = await response.json();
+        setUserActionMessage(data.error || 'Failed to update user role');
+        setTimeout(() => setUserActionMessage(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      setUserActionMessage('Error updating user role');
+      setTimeout(() => setUserActionMessage(''), 3000);
+    }
+  };
+
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'preferences', label: 'Preferences', icon: Bell },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'system', label: 'System', icon: SettingsIcon },
+    ...(currentUserRole === 'admin' ? [{ id: 'admin', label: 'User Management', icon: Users }] : []),
   ];
 
   const handleSave = async () => {
@@ -638,6 +781,178 @@ export default function Settings() {
       </div>
     </motion.div>
   );
+  
+  const renderAdminTab = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <div>
+        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
+          <Users className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
+          User Management
+        </h3>
+        
+        {/* Action Messages */}
+        {userActionMessage && (
+          <div className="mb-4 p-4 neuro-card" style={{ 
+            backgroundColor: userActionMessage.includes('Error') || userActionMessage.includes('Failed') 
+              ? 'var(--neuro-error-bg)' 
+              : 'var(--neuro-success-bg)', 
+            borderColor: userActionMessage.includes('Error') || userActionMessage.includes('Failed') 
+              ? 'var(--neuro-error)' 
+              : 'var(--neuro-success)' 
+          }}>
+            <p className="font-inter font-medium" style={{ 
+              color: userActionMessage.includes('Error') || userActionMessage.includes('Failed') 
+                ? 'var(--neuro-error)' 
+                : 'var(--neuro-success)' 
+            }}>
+              {userActionMessage}
+            </p>
+          </div>
+        )}
+        
+        {/* Users List */}
+        <div className="neuro-card p-6">
+          {isLoadingUsers ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--neuro-orange)' }}></div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {users.length === 0 ? (
+                <p className="text-center font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>
+                  No users found
+                </p>
+              ) : (
+                users.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-4 neuro-card rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--neuro-orange)' }}>
+                          <User className="h-5 w-5" style={{ color: 'white' }} />
+                        </div>
+                        <div>
+                          <p className="font-medium font-inter" style={{ color: 'var(--neuro-text-primary)' }}>
+                            {user.username}
+                          </p>
+                          <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>
+                            {user.email}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        {user.role === 'admin' && (
+                          <Crown className="h-4 w-4" style={{ color: 'var(--neuro-orange)' }} />
+                        )}
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium font-inter ${
+                          user.role === 'admin' 
+                            ? 'text-orange-600 bg-orange-100' 
+                            : 'text-blue-600 bg-blue-100'
+                        }`}>
+                          {user.role.toUpperCase()}
+                        </span>
+                      </div>
+                      
+                      <div className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>
+                        {new Date(user.createdAt).toLocaleDateString()}
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => {
+                            setEditingUser(user);
+                            setShowEditModal(true);
+                          }}
+                          className="p-2 neuro-button-orange rounded-lg transition-all duration-200"
+                          title="Edit Role"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        
+                        <button
+                          onClick={() => handleDeleteUser(user)}
+                          className="p-2 rounded-lg transition-all duration-200"
+                          style={{ 
+                            backgroundColor: 'var(--neuro-error-bg)',
+                            color: 'var(--neuro-error)',
+                            border: '1px solid var(--neuro-error)'
+                          }}
+                          title="Delete User"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Edit User Role Modal */}
+      {showEditModal && editingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="neuro-card p-6 max-w-md w-full mx-4"
+          >
+            <h3 className="text-lg font-semibold font-inter mb-4" style={{ color: 'var(--neuro-text-primary)' }}>
+              Edit User Role
+            </h3>
+            
+            <div className="mb-4">
+              <p className="font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
+                User: <strong>{editingUser.username}</strong>
+              </p>
+              <p className="text-sm font-inter mb-4" style={{ color: 'var(--neuro-text-secondary)' }}>
+                {editingUser.email}
+              </p>
+              
+              <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
+                Role
+              </label>
+              <select
+                value={editingUser.role}
+                onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as 'user' | 'admin' })}
+                className="neuro-select w-full"
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            
+            <div className="flex items-center justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingUser(null);
+                }}
+                className="px-4 py-2 neuro-card rounded-lg font-inter transition-all duration-200"
+                style={{ color: 'var(--neuro-text-secondary)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleUpdateUserRole(editingUser.id, editingUser.role)}
+                className="px-4 py-2 neuro-button-orange rounded-lg font-inter"
+              >
+                Update Role
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </motion.div>
+  );
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -649,6 +964,8 @@ export default function Settings() {
         return renderSecurityTab();
       case 'system':
         return renderSystemTab();
+      case 'admin':
+        return renderAdminTab();
       default:
         return renderProfileTab();
     }
@@ -750,6 +1067,17 @@ export default function Settings() {
         title="Hapus Semua Data"
         message="Apakah Anda yakin ingin menghapus semua data? Tindakan ini akan menghapus semua proyek, pengaturan, dan informasi profil Anda dari database. Tindakan ini tidak dapat dibatalkan!"
         confirmText="Hapus Semua Data"
+        cancelText="Batal"
+      />
+
+      {/* Delete User Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={cancelDeleteUser}
+        onConfirm={confirmDeleteUser}
+        title="Hapus Pengguna"
+        message={`Apakah Anda yakin ingin menghapus pengguna "${userToDelete?.username}"? Tindakan ini akan menghapus semua data terkait pengguna termasuk proyek dan notifikasi. Tindakan ini tidak dapat dibatalkan!`}
+        confirmText="Hapus Pengguna"
         cancelText="Batal"
       />
     </div>

@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   UserPlus,
@@ -70,8 +68,6 @@ function ErrorPopup({ message, onClose }: { message: string; onClose: () => void
 }
 
 export default function ElcoganPage() {
-  const { user } = useAuth();
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -92,15 +88,10 @@ export default function ElcoganPage() {
 
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
-  // Check if user is authenticated
+  // Load users on component mount
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    
     fetchUsers();
-  }, [user, router]);
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -209,16 +200,7 @@ export default function ElcoganPage() {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--neuro-bg)' }}>
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h1>
-          <p className="text-gray-600 mb-4">Please wait while we authenticate you.</p>
-        </div>
-      </div>
-    );
-  }
+  // Remove loading screen - show form directly
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--neuro-bg)' }}>

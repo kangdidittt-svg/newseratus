@@ -24,7 +24,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} antialiased min-h-screen relative`}>
+      <body className={`${inter.className} antialiased min-h-screen relative`} suppressHydrationWarning={true}>
         <AuthProvider>
           <div id="root" className="relative z-10">{children}</div>
         </AuthProvider>

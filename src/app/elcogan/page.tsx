@@ -92,15 +92,10 @@ export default function ElcoganPage() {
 
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
-  // Check if user is authenticated and has admin role
+  // Check if user is authenticated
   useEffect(() => {
     if (!user) {
       router.push('/login');
-      return;
-    }
-    
-    if (user.role !== 'admin') {
-      router.push('/dashboard');
       return;
     }
     
@@ -214,12 +209,12 @@ export default function ElcoganPage() {
     }
   };
 
-  if (!user || user.role !== 'admin') {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--neuro-bg)' }}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">You need admin privileges to access this page.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h1>
+          <p className="text-gray-600 mb-4">Please wait while we authenticate you.</p>
         </div>
       </div>
     );

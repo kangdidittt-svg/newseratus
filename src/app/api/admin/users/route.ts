@@ -6,8 +6,8 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-// Helper function to verify admin token
-async function verifyAdminToken(request: NextRequest) {
+// Helper function to verify user token
+async function verifyUserToken(request: NextRequest) {
   try {
     const token = request.cookies.get('token')?.value;
     
@@ -24,20 +24,16 @@ async function verifyAdminToken(request: NextRequest) {
       return { error: 'User not found', status: 401 };
     }
     
-    if (user.role !== 'admin') {
-      return { error: 'Admin access required', status: 403 };
-    }
-    
     return { user, status: 200 };
   } catch (error) {
     return { error: 'Invalid token', status: 401 };
   }
 }
 
-// GET - Fetch all users (admin only)
+// GET - Fetch all users
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await verifyAdminToken(request);
+    const authResult = await verifyUserToken(request);
     
     if (authResult.error) {
       return NextResponse.json(
@@ -73,10 +69,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create new user (admin only)
+// POST - Create new user
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await verifyAdminToken(request);
+    const authResult = await verifyUserToken(request);
     
     if (authResult.error) {
       return NextResponse.json(
@@ -193,10 +189,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Update user (admin only)
+// PUT - Update user
 export async function PUT(request: NextRequest) {
   try {
-    const authResult = await verifyAdminToken(request);
+    const authResult = await verifyUserToken(request);
     
     if (authResult.error) {
       return NextResponse.json(
@@ -290,10 +286,10 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE - Delete user (admin only)
+// DELETE - Delete user
 export async function DELETE(request: NextRequest) {
   try {
-    const authResult = await verifyAdminToken(request);
+    const authResult = await verifyUserToken(request);
     
     if (authResult.error) {
       return NextResponse.json(

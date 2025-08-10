@@ -67,6 +67,11 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
 
   const menuItems = [
     {
+      id: 'add-project',
+      label: 'Add Project',
+      icon: Plus,
+    },
+    {
       id: 'dashboard',
       label: 'Dashboard',
       icon: Home,
@@ -75,11 +80,6 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       id: 'projects',
       label: 'Projects',
       icon: FolderOpen,
-    },
-    {
-      id: 'add-project',
-      label: 'Add Project',
-      icon: Plus,
     },
     {
       id: 'monthly-report',

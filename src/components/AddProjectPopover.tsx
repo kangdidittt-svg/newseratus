@@ -12,17 +12,55 @@ interface AddProjectPopoverProps {
 
 export default function AddProjectPopover({ isActive, onProjectAdded }: AddProjectPopoverProps) {
   const [open, setOpen] = useState(false);
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Tutup popover jika klik di luar
+  // Auto-close dengan hover detection dan proteksi form
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    if (isDesktop && !open) {
+      setOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isFormDirty) {
+      hoverTimeoutRef.current = setTimeout(() => {
+        setOpen(false);
+      }, 500); // Delay 500ms sebelum menutup untuk mengurangi flicker
+    }
+  };
+
+  // Handle hover untuk area popover
+  const handlePopoverMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  };
+
+  const handlePopoverMouseLeave = () => {
+    if (!isFormDirty) {
+      hoverTimeoutRef.current = setTimeout(() => {
+        setOpen(false);
+      }, 200); // Delay lebih pendek untuk popover
+    }
+  };
+
+  // Tutup popover jika klik di luar (hanya jika form tidak terisi)
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
         popoverRef.current && 
         !popoverRef.current.contains(e.target as Node) &&
         buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node)
+        !buttonRef.current.contains(e.target as Node) &&
+        !isFormDirty
       ) {
         setOpen(false);
       }
@@ -35,14 +73,29 @@ export default function AddProjectPopover({ isActive, onProjectAdded }: AddProje
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [open]);
+  }, [open, isFormDirty]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Handle project added callback
   const handleProjectAdded = () => {
     setOpen(false); // Close popover after successful submission
+    setIsFormDirty(false); // Reset form dirty state
     if (onProjectAdded) {
       onProjectAdded();
     }
+  };
+
+  // Handle form data change to track if form is dirty
+  const handleFormDataChange = (isDirty: boolean) => {
+    setIsFormDirty(isDirty);
   };
 
   // Only show on desktop (min-width: 768px)
@@ -62,7 +115,11 @@ export default function AddProjectPopover({ isActive, onProjectAdded }: AddProje
   }, []);
 
   return (
-    <div className="relative">
+    <div 
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* Tombol Add Project di sidebar */}
       <motion.button
         ref={buttonRef}
@@ -73,11 +130,6 @@ export default function AddProjectPopover({ isActive, onProjectAdded }: AddProje
         }`}
         style={{
           color: isActive ? 'var(--neuro-orange)' : 'var(--neuro-text-primary)'
-        }}
-        onMouseEnter={() => {
-          if (isDesktop) {
-            setOpen(true);
-          }
         }}
         onClick={() => {
           if (isDesktop) {
@@ -96,34 +148,75 @@ export default function AddProjectPopover({ isActive, onProjectAdded }: AddProje
         />
       </motion.button>
 
+      {/* Blur Background Overlay - Exclude sidebar area */}
+      <AnimatePresence>
+        {open && isDesktop && (
+          <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed top-0 right-0 bottom-0 z-40"
+              style={{
+                left: '80px', // Sidebar width is 80px (w-20)
+                backdropFilter: 'blur(4px)',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)'
+              }}
+            />
+        )}
+      </AnimatePresence>
+
+      {/* Invisible bridge untuk mencegah flicker */}
+      {open && isDesktop && (
+        <div className="absolute left-full top-0 w-4 h-full z-40" />
+      )}
+
       {/* Popover Form - Only on desktop */}
       <AnimatePresence>
         {open && isDesktop && (
           <motion.div
             ref={popoverRef}
-            initial={{ opacity: 0, scale: 0.95, x: -10 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.95, x: -10 }}
+            initial={{ opacity: 0, scale: 0.8, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: -20 }}
             transition={{ 
-              duration: 0.3, 
-              ease: [0.2, 0.8, 0.2, 1]
+              type: "spring",
+              stiffness: 300,
+              damping: 25,
+              duration: 0.4
             }}
-            className="absolute left-full top-0 ml-4 w-96 max-h-[80vh] overflow-y-auto z-50"
+            className="absolute left-full top-0 ml-4 w-96 max-h-[60vh] overflow-y-auto z-50"
             style={{
-              transformOrigin: 'left center',
+              transformOrigin: 'left top',
               background: 'var(--neuro-bg)',
-              borderRadius: 'var(--neuro-radius-lg)',
-              boxShadow: '8px 8px 16px rgba(163, 163, 166, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.9)'
+              borderRadius: '20px 20px 20px 8px', // Bubble chat shape
+              boxShadow: '12px 12px 24px rgba(163, 163, 166, 0.4), -12px -12px 24px rgba(255, 255, 255, 0.9)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
             }}
           >
+            {/* Chat bubble tail */}
+            <div 
+              className="absolute -left-2 top-6 w-4 h-4 rotate-45"
+              style={{
+                background: 'var(--neuro-bg)',
+                boxShadow: '-3px -3px 6px rgba(255, 255, 255, 0.9), 3px 3px 6px rgba(163, 163, 166, 0.3)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRight: 'none',
+                borderBottom: 'none'
+              }}
+            />
+            
             {/* Header dengan tombol close */}
             <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--neuro-border)' }}>
               <h3 className="font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>
                 Quick Add Project
               </h3>
               <button
-                onClick={() => setOpen(false)}
-                className="neuro-button p-2 rounded-lg"
+                onClick={() => {
+                  setOpen(false);
+                  setIsFormDirty(false);
+                }}
+                className="neuro-button p-2 rounded-lg hover:scale-110 transition-transform"
                 style={{ minWidth: 'auto' }}
               >
                 <X className="w-4 h-4" style={{ color: 'var(--neuro-text-secondary)' }} />
@@ -132,7 +225,10 @@ export default function AddProjectPopover({ isActive, onProjectAdded }: AddProje
             
             {/* Form Content */}
             <div className="p-4">
-              <AddProjectCompact onProjectAdded={handleProjectAdded} />
+              <AddProjectCompact 
+                onProjectAdded={handleProjectAdded}
+                onFormDataChange={handleFormDataChange}
+              />
             </div>
           </motion.div>
         )}

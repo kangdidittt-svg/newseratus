@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 
 interface AddProjectCompactProps {
   onProjectAdded?: () => void;
+  onFormDataChange?: (isDirty: boolean) => void;
 }
 
-export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactProps) {
+export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: AddProjectCompactProps) {
   const [formData, setFormData] = useState({
     title: '',
     client: '',
@@ -22,6 +23,30 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Check if form has any data (is dirty)
+  const isFormDirty = () => {
+    return formData.title.trim() !== '' || 
+           formData.client.trim() !== '' || 
+           formData.description.trim() !== '' || 
+           formData.budget.trim() !== '' || 
+           formData.deadline.trim() !== '';
+  };
+
+  // Notify parent component when form data changes
+  useEffect(() => {
+    if (onFormDataChange) {
+      onFormDataChange(isFormDirty());
+    }
+  }, [formData, onFormDataChange]);
+
+  // Handle form data changes
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +96,7 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Success Message */}
       {success && (
         <motion.div
@@ -90,7 +115,7 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -114,7 +139,7 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
             type="text"
             required
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) => handleInputChange('title', e.target.value)}
             className="neuro-input w-full px-3 py-2 text-sm transition-all"
             placeholder="Enter project title"
           />
@@ -127,7 +152,7 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
             type="text"
             required
             value={formData.client}
-            onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+            onChange={(e) => handleInputChange('client', e.target.value)}
             className="neuro-input w-full px-3 py-2 text-sm transition-all"
             placeholder="Enter client name"
           />
@@ -138,8 +163,8 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
           <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Description</label>
           <textarea
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={2}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+            rows={1}
             className="neuro-input w-full px-3 py-2 text-sm transition-all resize-none"
             placeholder="Describe your project..."
           />
@@ -152,7 +177,7 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
             <input
               type="number"
               value={formData.budget}
-              onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+              onChange={(e) => handleInputChange('budget', e.target.value)}
               className="neuro-input w-full px-3 py-2 text-sm transition-all"
               placeholder="0.00"
               min="0"
@@ -164,7 +189,7 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
             <input
               type="date"
               value={formData.deadline}
-              onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+              onChange={(e) => handleInputChange('deadline', e.target.value)}
               className="neuro-input w-full px-3 py-2 text-sm transition-all"
             />
           </div>
@@ -176,7 +201,7 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Category</label>
             <select
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              onChange={(e) => handleInputChange('category', e.target.value)}
               className="neuro-select w-full px-3 py-2 text-sm"
               required
             >
@@ -191,7 +216,7 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Priority</label>
             <select
               value={formData.priority}
-              onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+              onChange={(e) => handleInputChange('priority', e.target.value)}
               className="neuro-select w-full px-3 py-2 text-sm"
               required
             >
@@ -207,7 +232,7 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
           <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Status</label>
           <select
             value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            onChange={(e) => handleInputChange('status', e.target.value)}
             className="neuro-select w-full px-3 py-2 text-sm"
             required
           >
@@ -218,11 +243,11 @@ export default function AddProjectCompact({ onProjectAdded }: AddProjectCompactP
         </div>
 
         {/* Submit Button */}
-        <div className="pt-2">
+        <div className="pt-1">
           <motion.button
             type="submit"
             disabled={isSubmitting}
-            className="neuro-button-orange w-full py-3 px-4 font-semibold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="neuro-button-orange w-full py-2 px-4 font-semibold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
             whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
           >

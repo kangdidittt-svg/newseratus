@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Home, FolderOpen, Plus, ChartColumn, Settings } from 'lucide-react';
-import Image from 'next/image';
 import AddProjectPopover from './AddProjectPopover';
 
 interface SidebarProps {
@@ -12,58 +11,6 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
-  const [profileAvatar, setProfileAvatar] = useState<string>('/api/placeholder/150/150');
-
-  // Load profile avatar from API
-  useEffect(() => {
-    loadProfileAvatar();
-    
-    // Set up interval to check for profile updates
-    const interval = setInterval(() => {
-      loadProfileAvatar();
-    }, 30000); // Check every 30 seconds
-    
-    // Listen for storage events (when settings are updated)
-    const handleStorageChange = () => {
-      loadProfileAvatar();
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-  
-  // Add a method to manually refresh avatar (can be called from parent)
-  useEffect(() => {
-    const handleProfileUpdate = () => {
-      loadProfileAvatar();
-    };
-    
-    window.addEventListener('profileUpdated', handleProfileUpdate);
-    
-    return () => {
-      window.removeEventListener('profileUpdated', handleProfileUpdate);
-    };
-  }, []);
-
-  const loadProfileAvatar = async () => {
-    try {
-      const response = await fetch('/api/user/settings', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setProfileAvatar(data.settings?.profile?.avatar || '/api/placeholder/150/150');
-      }
-    } catch (error) {
-      console.error('Error loading profile avatar:', error);
-    }
-  };
 
   const menuItems = [
     {
@@ -123,35 +70,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       className="w-20 bg-var(--neuro-bg) h-screen flex flex-col items-center justify-center p-4 fixed left-0 top-0 z-10"
       style={{ background: 'var(--neuro-bg)' }}
     >
-      {/* Profile Avatar */}
-      <motion.div
-        variants={itemVariants}
-        className="mb-8 flex flex-col items-center"
-      >
-        <motion.div
-          className="relative"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Image
-            src={profileAvatar || '/api/placeholder/150/150'}
-            alt="Profile"
-            width={48}
-            height={48}
-            className="w-12 h-12 rounded-full object-cover border-2 shadow-md"
-            style={{ borderColor: 'var(--neuro-orange)' }}
-            onError={() => {
-              // Handle error if needed
-            }}
-          />
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2" 
-               style={{ 
-                 backgroundColor: 'var(--neuro-success)', 
-                 borderColor: 'var(--neuro-bg)' 
-               }}>
-          </div>
-        </motion.div>
-      </motion.div>
+
 
       {/* Navigation Menu */}
       <motion.nav className="flex flex-col items-center">

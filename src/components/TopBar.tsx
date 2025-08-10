@@ -6,6 +6,7 @@ import {
   Bell
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface TopBarProps {
   user?: {
@@ -33,6 +34,7 @@ export default function TopBar({}: TopBarProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [profileAvatar, setProfileAvatar] = useState<string>('/api/placeholder/150/150');
 
   const currentDate = new Date();
   const formattedDate = currentDate.toLocaleDateString('en-US', {
@@ -82,15 +84,55 @@ export default function TopBar({}: TopBarProps) {
     }
   };
 
-  // Load notifications on component mount
+  // Load profile avatar from API
+  const loadProfileAvatar = async () => {
+    try {
+      const response = await fetch('/api/user/settings', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setProfileAvatar(data.settings?.profile?.avatar || '/api/placeholder/150/150');
+      }
+    } catch (error) {
+      console.error('Error loading profile avatar:', error);
+    }
+  };
+
+  // Load notifications and profile avatar on component mount
   useEffect(() => {
     fetchNotifications();
+    loadProfileAvatar();
     
     // Set up polling for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     
-    return () => clearInterval(interval);
-  }, []);
+    // Set up interval to check for profile updates
+    const profileInterval = setInterval(() => {
+      loadProfileAvatar();
+    }, 30000);
+    
+    // Listen for storage events (when settings are updated)
+    const handleStorageChange = () => {
+      loadProfileAvatar();
+    };
+    
+    const handleProfileUpdate = () => {
+      loadProfileAvatar();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    
+    return () => {
+       clearInterval(interval);
+       clearInterval(profileInterval);
+       window.removeEventListener('storage', handleStorageChange);
+       window.removeEventListener('profileUpdated', handleProfileUpdate);
+     };
+   }, []);
 
   return (
     <motion.div
@@ -246,6 +288,32 @@ export default function TopBar({}: TopBarProps) {
           )}
         </div>
 
+        {/* Profile Avatar */}
+        <div className="relative">
+          <motion.div
+            className="relative"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Image
+              src={profileAvatar || '/api/placeholder/150/150'}
+              alt="Profile"
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-full object-cover border-2 shadow-md cursor-pointer"
+              style={{ borderColor: 'var(--neuro-orange)' }}
+              onError={() => {
+                // Handle error if needed
+              }}
+            />
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2" 
+                 style={{ 
+                   backgroundColor: 'var(--neuro-success)', 
+                   borderColor: 'var(--neuro-bg)' 
+                 }}>
+            </div>
+          </motion.div>
+        </div>
 
       </div>
 

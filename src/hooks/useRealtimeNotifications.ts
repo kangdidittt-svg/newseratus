@@ -1,0 +1,168 @@
+'use client';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  projectTitle?: string;
+  clientName?: string;
+  amount?: number;
+  unread: boolean;
+  time: string;
+}
+
+interface NotificationEvent {
+  type: 'notification' | 'connected' | 'heartbeat' | 'error';
+  data?: Notification;
+  message?: string;
+  unreadCount?: number;
+  timestamp?: number;
+}
+
+export function useRealtimeNotifications() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'reconnecting'>('disconnected');
+  const [isLoading, setIsLoading] = useState(true);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const maxReconnectAttempts = 5;
+
+  // Fetch initial notifications
+  const fetchInitialNotifications = useCallback(async () => {
+    try {
+      const response = await fetch('/api/notifications', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.notifications);
+        setUnreadCount(data.unreadCount);
+      }
+    } catch (error) {
+      console.error('Error fetching initial notifications:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Connect to SSE stream - now handled in useEffect
+  const connectToStream = useCallback(() => {
+    // This function is now handled directly in the useEffect
+    // Keeping for backward compatibility but functionality moved
+    console.log('connectToStream called - handled in useEffect');
+  }, []);
+
+  // Mark notifications as read
+  const markAsRead = useCallback(async (notificationIds?: string[]) => {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ notificationIds })
+      });
+      
+      // Update local state
+      if (notificationIds && notificationIds.length > 0) {
+        setNotifications(prev => 
+          prev.map(notif => 
+            notificationIds.includes(notif.id) 
+              ? { ...notif, unread: false }
+              : notif
+          )
+        );
+        setUnreadCount(prev => Math.max(0, prev - notificationIds.length));
+      } else {
+        // Mark all as read
+        setNotifications(prev => prev.map(notif => ({ ...notif, unread: false })));
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+    }
+  }, []);
+
+  // Request browser notification permission
+  const requestNotificationPermission = useCallback(async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      const permission = await Notification.requestPermission();
+      console.log('🔔 Notification permission:', permission);
+      return permission === 'granted';
+    }
+    return Notification.permission === 'granted';
+  }, []);
+
+  // Initialize notification polling (fallback approach)
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout | null = null;
+    let isActive = true;
+
+    const pollNotifications = async () => {
+      if (!isActive) return;
+      
+      try {
+        setConnectionStatus('connecting');
+        const response = await fetch('/api/notifications');
+        
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications(data.notifications || []);
+          setUnreadCount(data.unreadCount || 0);
+          setConnectionStatus('connected');
+        } else {
+          setConnectionStatus('disconnected');
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        setConnectionStatus('disconnected');
+      }
+    };
+
+    // Initialize
+    fetchInitialNotifications();
+    requestNotificationPermission();
+    
+    // Start polling every 10 seconds
+    pollInterval = setInterval(pollNotifications, 10000);
+    
+    // Initial poll
+    setTimeout(pollNotifications, 1000);
+
+    // Cleanup
+    return () => {
+      isActive = false;
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [fetchInitialNotifications, requestNotificationPermission]);
+
+  // Reconnect when tab becomes visible again
+   useEffect(() => {
+     const handleVisibilityChange = () => {
+       if (document.visibilityState === 'visible' && connectionStatus !== 'connected') {
+         console.log('🔄 Tab became visible, will reconnect automatically...');
+         // Connection will be handled by the main useEffect
+       }
+     };
+
+     document.addEventListener('visibilitychange', handleVisibilityChange);
+     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+   }, [connectionStatus]);
+
+   return {
+     notifications,
+     unreadCount,
+     connectionStatus,
+     markAsRead,
+     isLoading
+   };
+}

@@ -310,10 +310,9 @@ export default function FreelanceDashboard({ onNavigate }: FreelanceDashboardPro
           <RobotAssistant 
             projects={recentProjects} 
             onReminder={(type) => {
-              // Handle different reminder types
-              if (type === 'project') {
-                onNavigate?.('projects');
-              }
+              // Handle different reminder types (project navigation removed to prevent auto redirects)
+              // Only handle break and water reminders now
+              console.log(`Reminder: ${type}`);
             }}
           />
         </motion.div>

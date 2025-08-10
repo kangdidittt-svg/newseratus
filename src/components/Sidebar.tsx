@@ -89,8 +89,8 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
                   <AddProjectPopover 
                     isActive={isActive}
                     onProjectAdded={() => {
-                      // Refresh projects or handle project added
-                      setActiveTab('projects');
+                      // Project added successfully, stay on current page
+                      // No redirect needed
                     }}
                   />
                 ) : (

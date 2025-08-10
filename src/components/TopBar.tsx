@@ -1,12 +1,17 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
-  Bell
+  Bell,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import SwipeableNotification from './SwipeableNotification';
 import Image from 'next/image';
+import ProfilePopover from './ProfilePopover';
+import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications';
 
 interface TopBarProps {
   user?: {
@@ -14,27 +19,76 @@ interface TopBarProps {
     email: string;
     avatar?: string;
   };
+  onNavigateToSettings?: () => void;
 }
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  projectTitle?: string;
-  clientName?: string;
-  amount?: number;
-  unread: boolean;
-  time: string;
-}
-
-export default function TopBar({}: TopBarProps) {
+export default function TopBar({ onNavigateToSettings }: TopBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const [profileAvatar, setProfileAvatar] = useState<string>('/api/placeholder/150/150');
+  
+  // Use realtime notifications hook
+  const {
+    notifications,
+    unreadCount,
+    connectionStatus,
+    isLoading: isLoadingNotifications,
+    markAsRead
+  } = useRealtimeNotifications();
+
+  // Delete notification function
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      const response = await fetch(`/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        console.log('✅ Notification deleted successfully');
+        // Remove notification from local state instead of refreshing
+      } else {
+        console.error('❌ Failed to delete notification');
+      }
+    } catch (error) {
+      console.error('❌ Error deleting notification:', error);
+    }
+  };
+
+  // Connection status indicator
+  const getConnectionStatusDisplay = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return { icon: Wifi, color: 'var(--neuro-green)', text: 'Connected' };
+      case 'connecting':
+        return { icon: WifiOff, color: 'var(--neuro-orange)', text: 'Connecting...' };
+      case 'reconnecting':
+        return { icon: WifiOff, color: 'var(--neuro-orange)', text: 'Reconnecting...' };
+      case 'disconnected':
+      default:
+        return { icon: WifiOff, color: 'var(--neuro-red)', text: 'Disconnected' };
+    }
+  };
+
+  const connectionDisplay = getConnectionStatusDisplay();
+
+  // Test notification function
+  const createTestNotification = async () => {
+    try {
+      const response = await fetch('/api/notifications/test', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        console.log('✅ Test notification created successfully');
+      } else {
+        console.error('❌ Failed to create test notification');
+      }
+    } catch (error) {
+      console.error('❌ Error creating test notification:', error);
+    }
+  };
 
   const currentDate = new Date();
   const formattedDate = currentDate.toLocaleDateString('en-US', {
@@ -44,45 +98,7 @@ export default function TopBar({}: TopBarProps) {
     day: 'numeric'
   });
 
-  // Fetch notifications from API
-  const fetchNotifications = async () => {
-    setIsLoadingNotifications(true);
-    try {
-      const response = await fetch('/api/notifications', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data.notifications);
-        setUnreadCount(data.unreadCount);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setIsLoadingNotifications(false);
-    }
-  };
 
-  // Mark notifications as read
-  const markAsRead = async (notificationIds?: string[]) => {
-    try {
-      await fetch('/api/notifications', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ notificationIds })
-      });
-      
-      // Refresh notifications
-      fetchNotifications();
-    } catch (error) {
-      console.error('Error marking notifications as read:', error);
-    }
-  };
 
   // Load profile avatar from API
   const loadProfileAvatar = async () => {
@@ -101,13 +117,9 @@ export default function TopBar({}: TopBarProps) {
     }
   };
 
-  // Load notifications and profile avatar on component mount
+  // Load profile avatar on component mount
   useEffect(() => {
-    fetchNotifications();
     loadProfileAvatar();
-    
-    // Set up polling for new notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
     
     // Set up interval to check for profile updates
     const profileInterval = setInterval(() => {
@@ -127,7 +139,6 @@ export default function TopBar({}: TopBarProps) {
     window.addEventListener('profileUpdated', handleProfileUpdate);
     
     return () => {
-       clearInterval(interval);
        clearInterval(profileInterval);
        window.removeEventListener('storage', handleStorageChange);
        window.removeEventListener('profileUpdated', handleProfileUpdate);
@@ -191,27 +202,38 @@ export default function TopBar({}: TopBarProps) {
             className="neuro-button p-2 transition-colors relative"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            title={`Notifications (${connectionDisplay.text})`}
           >
-            <Bell className="h-5 w-5" style={{ color: 'var(--neuro-text-primary)' }} />
+            <div className="relative">
+              <Bell className="h-5 w-5" style={{ color: 'var(--neuro-text-primary)' }} />
+              {/* Connection status indicator */}
+              <div 
+                className="absolute -bottom-1 -right-1 w-2 h-2 rounded-full"
+                style={{ backgroundColor: connectionDisplay.color }}
+                title={connectionDisplay.text}
+              />
+            </div>
             {unreadCount > 0 && (
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium"
+                className="absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                style={{ backgroundColor: 'var(--neuro-orange)' }}
               >
-                {unreadCount}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </motion.span>
             )}
           </motion.button>
 
           {/* Notifications Dropdown */}
-          {showNotifications && (
-            <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="neuro-card absolute right-0 mt-2 w-80 py-2 z-50"
-            >
+          <AnimatePresence>
+            {showNotifications && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="neuro-card absolute right-0 mt-2 w-80 py-2 z-50"
+              >
               <div className="px-4 py-2 flex justify-between items-center" style={{ borderBottom: '1px solid var(--neuro-border)' }}>
                 <div>
                   <h3 className="font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Notifications</h3>
@@ -240,80 +262,76 @@ export default function TopBar({}: TopBarProps) {
                   </div>
                 ) : (
                   notifications.map((notification) => (
-                    <motion.div
+                    <SwipeableNotification
                       key={notification.id}
-                      className="px-4 py-3 cursor-pointer border-l-4 transition-colors"
-                      style={{
-                        borderLeftColor: notification.unread ? 'var(--neuro-orange)' : 'transparent',
-                        backgroundColor: notification.unread ? 'var(--neuro-orange-light)' : 'transparent'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--neuro-bg-secondary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = notification.unread ? 'var(--neuro-orange-light)' : 'transparent';
-                      }}
-                      whileHover={{ x: 4 }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                      onClick={() => {
-                        if (notification.unread) {
-                          markAsRead([notification.id]);
-                        }
-                      }}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm" style={{ color: 'var(--neuro-text-primary)' }}>{notification.title}</p>
-                          <p className="text-sm mt-1 leading-relaxed" style={{ color: 'var(--neuro-text-secondary)' }}>{notification.message}</p>
-                          <p className="text-xs mt-2" style={{ color: 'var(--neuro-text-muted)' }}>{notification.time}</p>
-                        </div>
-                        {notification.unread && (
-                          <div className="w-2 h-2 rounded-full mt-1 ml-2 flex-shrink-0" style={{ backgroundColor: 'var(--neuro-orange)' }}></div>
-                        )}
-                      </div>
-                    </motion.div>
+                      notification={notification}
+                      onMarkAsRead={() => markAsRead([notification.id])}
+                      onDelete={() => deleteNotification(notification.id)}
+                    />
                   ))
                 )}
               </div>
               <div className="px-4 py-2" style={{ borderTop: '1px solid var(--neuro-border)' }}>
-                <button 
-                  onClick={() => fetchNotifications()}
-                  className="text-sm font-medium"
-                  style={{ color: 'var(--neuro-orange)' }}
-                >
-                  Refresh notifications
-                </button>
+                <div className="flex items-center justify-between mb-2">
+                  <button 
+                    onClick={() => {
+                      markAsRead();
+                      setShowNotifications(false);
+                    }}
+                    className="text-sm py-2 px-3 rounded-lg transition-colors flex-1 mr-2"
+                    style={{
+                      color: 'var(--neuro-text-secondary)',
+                      backgroundColor: 'transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--neuro-bg-secondary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    Mark all as read
+                  </button>
+
+                 </div>
               </div>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Profile Avatar */}
-        <div className="relative">
-          <motion.div
-            className="relative"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Image
-              src={profileAvatar || '/api/placeholder/150/150'}
-              alt="Profile"
-              width={40}
-              height={40}
-              className="w-10 h-10 rounded-full object-cover border-2 shadow-md cursor-pointer"
-              style={{ borderColor: 'var(--neuro-orange)' }}
-              onError={() => {
-                // Handle error if needed
-              }}
-            />
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2" 
-                 style={{ 
-                   backgroundColor: 'var(--neuro-success)', 
-                   borderColor: 'var(--neuro-bg)' 
-                 }}>
-            </div>
-          </motion.div>
-        </div>
+        <ProfilePopover 
+          userName="User" 
+          userEmail="user@example.com"
+          onNavigateToSettings={onNavigateToSettings}
+        >
+          <div className="relative">
+            <motion.div
+              className="relative"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Image
+                src={profileAvatar || '/api/placeholder/150/150'}
+                alt="Profile"
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-full object-cover border-2 shadow-md cursor-pointer"
+                style={{ borderColor: 'var(--neuro-orange)' }}
+                onError={() => {
+                  // Handle error if needed
+                }}
+              />
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2" 
+                   style={{ 
+                     backgroundColor: 'var(--neuro-success)', 
+                     borderColor: 'var(--neuro-bg)' 
+                   }}>
+              </div>
+            </motion.div>
+          </div>
+        </ProfilePopover>
 
       </div>
 

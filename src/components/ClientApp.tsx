@@ -349,6 +349,7 @@ export default function ClientApp() {
         {/* Top Bar */}
         <TopBar
           user={user || undefined}
+          onNavigateToSettings={() => setActiveTab('settings')}
         />
 
         {/* Page Content */}

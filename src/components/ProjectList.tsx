@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, DollarSign, User, Tag, Clock, Plus, Edit, Trash2, Check, X } from 'lucide-react';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
 
 interface Project {
   id: string;
@@ -28,6 +29,7 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
   const [loading, setLoading] = useState(true);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Project>>({});
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; projectId: string; projectTitle: string }>({ isOpen: false, projectId: '', projectTitle: '' });
 
   useEffect(() => {
     fetchProjects();
@@ -78,8 +80,6 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
   };
 
   const handleDeleteProject = async (projectId: string) => {
-    if (!confirm('Are you sure you want to delete this project?')) return;
-    
     try {
       const response = await fetch(`/api/projects/${projectId}`, {
         method: 'DELETE',
@@ -92,6 +92,19 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
     } catch (error) {
       console.error('Error deleting project:', error);
     }
+  };
+
+  const openDeleteModal = (projectId: string, projectTitle: string) => {
+    setDeleteModal({ isOpen: true, projectId, projectTitle });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, projectId: '', projectTitle: '' });
+  };
+
+  const confirmDelete = () => {
+    handleDeleteProject(deleteModal.projectId);
+    closeDeleteModal();
   };
 
   const handleEditProject = (project: Project) => {
@@ -416,7 +429,7 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
                       </button>
                     )}
                     <button
-                      onClick={() => handleDeleteProject(project.id)}
+                      onClick={() => openDeleteModal(project.id, project.title)}
                       className="neuro-button p-2 transition-colors"
                       style={{ color: 'var(--neuro-text-muted)' }}
                       onMouseEnter={(e) => {
@@ -625,6 +638,17 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
           </motion.div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDelete}
+        title="Delete Project"
+        message={`Are you sure you want to delete "${deleteModal.projectTitle}"? This action cannot be undone and will permanently remove all project data.`}
+        confirmText="Delete Project"
+        cancelText="Cancel"
+      />
     </motion.div>
   );
 }

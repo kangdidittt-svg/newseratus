@@ -92,8 +92,8 @@ const RobotAssistant: React.FC<RobotAssistantProps> = ({ projects, onReminder })
     
     setTimeout(() => setIsActive(false), 3000);
     
-    // Trigger reminder callback
-    const reminderTypes: ('break' | 'water' | 'project')[] = ['break', 'water', 'project'];
+    // Trigger reminder callback (removed auto navigation to prevent unwanted redirects)
+    const reminderTypes: ('break' | 'water')[] = ['break', 'water'];
     const randomType = reminderTypes[Math.floor(Math.random() * reminderTypes.length)];
     onReminder(randomType);
   }, [getProjectReminders, motivationalMessages, onReminder]);

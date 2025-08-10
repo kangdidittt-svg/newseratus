@@ -16,6 +16,7 @@ import {
   LogOut,
   Settings as SettingsIcon
 } from 'lucide-react';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
 
 interface UserSettings {
   profile: {
@@ -34,6 +35,7 @@ interface UserSettings {
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile');
+  const [deleteDataModal, setDeleteDataModal] = useState(false);
   
   // Load settings from API on component mount
   useEffect(() => {
@@ -595,11 +597,7 @@ export default function Settings() {
                 <strong>Tindakan ini tidak dapat dibatalkan.</strong>
               </p>
               <button 
-                onClick={() => {
-                  if (window.confirm('Apakah Anda yakin ingin menghapus semua data? Tindakan ini tidak dapat dibatalkan!')) {
-                    handleClearData();
-                  }
-                }}
+                onClick={() => setDeleteDataModal(true)}
                 className="neuro-button font-inter flex items-center space-x-2"
                 style={{ backgroundColor: 'var(--neuro-error)', color: 'white' }}
               >
@@ -740,6 +738,20 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Delete Data Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteDataModal}
+        onClose={() => setDeleteDataModal(false)}
+        onConfirm={() => {
+          handleClearData();
+          setDeleteDataModal(false);
+        }}
+        title="Hapus Semua Data"
+        message="Apakah Anda yakin ingin menghapus semua data? Tindakan ini akan menghapus semua proyek, pengaturan, dan informasi profil Anda dari database. Tindakan ini tidak dapat dibatalkan!"
+        confirmText="Hapus Semua Data"
+        cancelText="Batal"
+      />
     </div>
   );
 }

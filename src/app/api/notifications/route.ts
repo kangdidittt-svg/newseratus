@@ -1,23 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import { extractToken, verifyToken } from '@/lib/auth';
-import mongoose from 'mongoose';
-
-// Notification schema
-const notificationSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  title: { type: String, required: true },
-  message: { type: String, required: true },
-  type: { type: String, enum: ['project_completed', 'payment_received', 'deadline_reminder', 'general'], default: 'general' },
-  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
-  projectTitle: { type: String },
-  clientName: { type: String },
-  amount: { type: Number },
-  unread: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Notification = mongoose.models.Notification || mongoose.model('Notification', notificationSchema);
+import { Notification } from '@/models/Notification';
 
 // Helper function to authenticate requests
 async function authenticate(request: NextRequest) {
@@ -54,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       notifications: notifications.map(notification => ({
-        id: notification._id,
+        id: notification._id.toString(),
         title: notification.title,
         message: notification.message,
         type: notification.type,

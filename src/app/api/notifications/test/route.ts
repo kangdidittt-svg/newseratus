@@ -56,10 +56,10 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (err) {
-    console.error('Error creating test notification:', err);
-    return NextResponse.json(
-      { error: 'Failed to create test notification' },
-      { status: 500 }
-    );
-  }
+      console.error('Error creating test notification:', err);
+      return NextResponse.json(
+        { error: 'Failed to create test notification' },
+        { status: 500 }
+      );
+    }
 }

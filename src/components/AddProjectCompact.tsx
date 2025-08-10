@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 
@@ -25,20 +25,20 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
   const [success, setSuccess] = useState(false);
 
   // Check if form has any data (is dirty)
-  const isFormDirty = () => {
+  const isFormDirty = useCallback(() => {
     return formData.title.trim() !== '' || 
            formData.client.trim() !== '' || 
            formData.description.trim() !== '' || 
            formData.budget.trim() !== '' || 
            formData.deadline.trim() !== '';
-  };
+  }, [formData.title, formData.client, formData.description, formData.budget, formData.deadline]);
 
   // Notify parent component when form data changes
   useEffect(() => {
     if (onFormDataChange) {
       onFormDataChange(isFormDirty());
     }
-  }, [formData, onFormDataChange, isFormDirty]);
+  }, [onFormDataChange, isFormDirty]);
 
   // Handle form data changes
   const handleInputChange = (field: string, value: string) => {

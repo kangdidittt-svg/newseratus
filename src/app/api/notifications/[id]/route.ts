@@ -6,8 +6,9 @@ import { Notification } from '@/models/Notification';
 // DELETE /api/notifications/[id] - Delete a specific notification
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     // Extract and verify token
     const token = extractToken(request);
@@ -56,8 +57,9 @@ export async function DELETE(
 // PATCH /api/notifications/[id] - Mark notification as read
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     // Extract and verify token
     const token = extractToken(request);

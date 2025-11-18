@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginCard from '@/components/LoginCard';
 
@@ -10,12 +10,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login, user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/dashboard';
 
   useEffect(() => {
     if (user) {
-      router.push('/dashboard');
+      // Jika datang dari halaman yang dilindungi, kembali ke halaman tersebut
+      router.push(redirect);
     }
-  }, [user, router]);
+  }, [user, router, redirect]);
 
   const handleLogin = async (username: string, password: string) => {
     setError('');
@@ -24,7 +27,7 @@ export default function LoginPage() {
     const result = await login(username, password);
     
     if (result.success) {
-      router.push('/dashboard');
+      router.push(redirect);
     } else {
       setError(result.error || 'Login failed');
     }

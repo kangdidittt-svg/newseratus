@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Home, FolderOpen, Plus, ChartColumn } from 'lucide-react';
+import { Home, FolderOpen, Plus, ChartColumn, FileText } from 'lucide-react';
 import AddProjectPopover from './AddProjectPopover';
 
 interface SidebarProps {
@@ -27,6 +27,11 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       id: 'projects',
       label: 'Projects',
       icon: FolderOpen,
+    },
+    {
+      id: 'invoice',
+      label: 'Invoice',
+      icon: FileText,
     },
     {
       id: 'monthly-report',
@@ -70,7 +75,6 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       className="w-20 bg-var(--neuro-bg) h-screen flex flex-col items-center justify-center p-4 fixed left-0 top-0 z-10"
       style={{ background: 'var(--neuro-bg)' }}
     >
-
 
       {/* Navigation Menu */}
       <motion.nav className="flex flex-col items-center">
@@ -116,7 +120,6 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
           })}
         </div>
       </motion.nav>
-
 
     </motion.div>
   );

@@ -212,3 +212,45 @@ select {
     font-size: 0.75rem;
   }
 }
+
+.app-card {
+  background: var(--neuro-bg);
+  border-radius: var(--neuro-radius-lg);
+  box-shadow: var(--neuro-shadow-outset);
+}
+
+.app-input {
+  background: #ffffff;
+  border: 1px solid var(--neuro-border);
+  border-radius: var(--neuro-radius-md);
+  color: var(--neuro-text-primary);
+}
+
+.app-muted {
+  color: var(--neuro-text-muted);
+}
+
+.app-btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #ffffff;
+  border: none;
+  border-radius: var(--neuro-radius-md);
+  box-shadow: var(--neuro-shadow-outset);
+}
+
+.app-btn-primary:hover {
+  filter: brightness(0.95);
+  box-shadow: var(--neuro-shadow-hover);
+}
+
+.app-btn-secondary {
+  background: #ffffff;
+  color: var(--neuro-text-primary);
+  border: 1px solid var(--neuro-border);
+  border-radius: var(--neuro-radius-md);
+  box-shadow: var(--neuro-shadow-outset);
+}
+
+.app-btn-secondary:hover {
+  box-shadow: var(--neuro-shadow-hover);
+}

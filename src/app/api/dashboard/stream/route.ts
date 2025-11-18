@@ -175,12 +175,19 @@ export async function GET(request: NextRequest) {
       }, 10000); // Check every 10 seconds for changes
 
       // Cleanup
+      let cleaned = false;
       const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
         console.log('🔌 Dashboard SSE connection closed for user:', user.userId);
         isActive = false;
         clearInterval(heartbeat);
         clearInterval(pollForChanges);
-        controller.close();
+        try {
+          controller.close();
+        } catch (_) {
+          // controller may already be closed; ignore
+        }
       };
 
       request.signal.addEventListener('abort', cleanup);

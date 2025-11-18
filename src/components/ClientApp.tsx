@@ -16,8 +16,6 @@ interface User {
   avatar?: string;
 }
 
-
-
 export default function ClientApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [user, setUser] = useState<User | null>(null);
@@ -25,7 +23,6 @@ export default function ClientApp() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Removed mobile menu state - sidebar will always be visible
 
   const initializeApp = useCallback(async () => {
     try {
@@ -83,97 +80,12 @@ export default function ClientApp() {
     }
   };
 
-  // const handleLogout = async () => {
-  //   try {
-  //     const response = await fetch('/api/auth/logout', {
-  //       method: 'POST',
-  //       credentials: 'include'
-  //     });
-      
-  //     if (response.ok) {
-  //       // Clear local storage and redirect to login
-  //       localStorage.clear();
-  //       sessionStorage.clear();
-  //       window.location.href = '/login';
-  //     }
-  //   } catch (error) {
-  //     console.error('Error logging out:', error);
-  //   }
-  // };
-
-  // const handleProjectCreate = async (newProject: Omit<Project, 'id' | 'createdAt'>) => {
-  //   try {
-  //     const response = await fetch('/api/projects', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json'
-  //       },
-  //       credentials: 'include',
-  //       body: JSON.stringify(newProject)
-  //     });
-      
-  //     if (response.ok) {
-  //       const createdProject = await response.json();
-  //       const project: Project = {
-  //         id: createdProject._id,
-  //         title: createdProject.title,
-  //         client: createdProject.client,
-  //         status: createdProject.status,
-  //         priority: createdProject.priority,
-  //         budget: createdProject.budget,
-  //         deadline: createdProject.deadline,
-  //         progress: createdProject.progress || 0,
-  //         description: createdProject.description,
-  //         category: createdProject.category,
-  //         createdAt: createdProject.createdAt
-  //       };
-  //       setProjects(prev => [project, ...prev]);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error creating project:', error);
-  //   }
-  // };
-
-  // const handleProjectUpdate = async (updatedProject: Project) => {
-  //   try {
-  //     const response = await fetch(`/api/projects/${updatedProject.id}`, {
-  //       method: 'PUT',
-  //       headers: {
-  //         'Content-Type': 'application/json'
-  //       },
-  //       credentials: 'include',
-  //       body: JSON.stringify(updatedProject)
-  //     });
-      
-  //     if (response.ok) {
-  //       setProjects(prev => 
-  //         prev.map(project => 
-  //           project.id === updatedProject.id ? updatedProject : project
-  //         )
-  //       );
-  //     }
-  //   } catch (error) {
-  //     console.error('Error updating project:', error);
-  //   }
-  // };
-
-  // const handleProjectDelete = async (projectId: string) => {
-  //   try {
-  //     const response = await fetch(`/api/projects/${projectId}`, {
-  //       method: 'DELETE',
-  //       credentials: 'include'
-  //     });
-      
-  //     if (response.ok) {
-  //       setProjects(prev => prev.filter(project => project.id !== projectId));
-  //     }
-  //   } catch (error) {
-  //     console.error('Error deleting project:', error);
-  //   }
-  // };
-
   const handleNavigation = (tab: string) => {
     setActiveTab(tab);
+    // Navigate to the actual page if it's invoice
+    if (tab === 'invoice') {
+      window.location.href = '/invoice/create';
+    }
   };
 
   const renderContent = () => {

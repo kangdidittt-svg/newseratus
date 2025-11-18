@@ -185,7 +185,7 @@ export async function GET(request: NextRequest) {
         clearInterval(pollForChanges);
         try {
           controller.close();
-        } catch (_) {
+        } catch {
           // controller may already be closed; ignore
         }
       };

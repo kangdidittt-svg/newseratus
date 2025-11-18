@@ -110,7 +110,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
         setBilledToName(all[0]?.client || '');
       }
     }
-  }, [selectedProjects, projects]);
+  }, [selectedProjects, projects, billedToName]);
 
   const loadProjects = async () => {
     try {
@@ -215,7 +215,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
           setSuccess(true);
           setTimeout(() => {
             setSuccess(false);
-            onInvoiceCreated && onInvoiceCreated();
+            if (onInvoiceCreated) onInvoiceCreated();
           }, 2500);
           // Reset form
           setSelectedProjects([]);
@@ -259,7 +259,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
           setSuccess(true);
           setTimeout(() => {
             setSuccess(false);
-            onInvoiceCreated && onInvoiceCreated();
+            if (onInvoiceCreated) onInvoiceCreated();
           }, 2500);
         } else {
           const errorData = await response.json().catch(() => ({}));

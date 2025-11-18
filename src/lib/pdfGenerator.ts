@@ -23,7 +23,7 @@ export interface InvoicePDFData {
 /**
  * Generate invoice PDF menggunakan PDFKit
  */
-export function generateInvoicePDF(invoice: InvoicePDFData): Buffer {
+export function generateInvoicePDF(invoice: InvoicePDFData): Promise<Buffer> {
   const doc = new PDFDocument({ margin: 50 });
   const buffers: Buffer[] = [];
 
@@ -91,7 +91,7 @@ export function generateInvoicePDF(invoice: InvoicePDFData): Buffer {
   doc.end();
 
   // Wait for the stream to finish
-  return new Promise<any>((resolve, reject) => {
+  return new Promise<Buffer>((resolve, reject) => {
     doc.on('end', () => {
       const pdfBuffer = Buffer.concat(buffers);
       resolve(pdfBuffer);
@@ -103,7 +103,7 @@ export function generateInvoicePDF(invoice: InvoicePDFData): Buffer {
 /**
  * Generate invoice PDF dengan template yang lebih detail
  */
-export function generateDetailedInvoicePDF(invoice: InvoicePDFData): Buffer {
+export function generateDetailedInvoicePDF(invoice: InvoicePDFData): Promise<Buffer> {
   const doc = new PDFDocument({ margin: 50, size: 'A4' });
   const buffers: Buffer[] = [];
 

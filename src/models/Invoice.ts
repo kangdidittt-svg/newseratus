@@ -113,7 +113,7 @@ InvoiceSchema.index({ status: 1 });
 InvoiceSchema.index({ userId: 1, status: 1 });
 
 // Validasi untuk memastikan total = subtotal + (subtotal * taxPercent / 100)
-InvoiceSchema.pre('save', function(next) {
+InvoiceSchema.pre<IInvoice>('save', function(this: IInvoice, next) {
   const calculatedTotal = this.subtotal + (this.subtotal * this.taxPercent / 100);
   if (Math.abs(this.total - calculatedTotal) > 0.01) {
     return next(new Error('Total amount calculation is incorrect'));
@@ -122,7 +122,7 @@ InvoiceSchema.pre('save', function(next) {
 });
 
 // Validasi untuk memastikan jumlah items.amount = subtotal
-InvoiceSchema.pre('save', function(next) {
+InvoiceSchema.pre<IInvoice>('save', function(this: IInvoice, next) {
   const calculatedSubtotal = this.items.reduce((sum, item) => sum + item.amount, 0);
   if (Math.abs(this.subtotal - calculatedSubtotal) > 0.01) {
     return next(new Error('Subtotal does not match items total'));

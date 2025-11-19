@@ -87,7 +87,8 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
             month: { $month: '$createdAt' }
           },
           earnings: { $sum: { $ifNull: ['$totalEarned', '$budget'] } },
-          hours: { $sum: '$hoursWorked' }
+          hours: { $sum: '$hoursWorked' },
+          projectCount: { $sum: 1 }
         }
       },
       {

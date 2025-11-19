@@ -31,6 +31,7 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Project>>({});
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; projectId: string; projectTitle: string }>({ isOpen: false, projectId: '', projectTitle: '' });
+  const [showCompletedOnly, setShowCompletedOnly] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -324,10 +325,11 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0, scale: showCompletedOnly ? 1.03 : 1 }}
           transition={{ delay: 0.3 }}
-          className="neuro-card p-6"
-        >
+          className="neuro-card p-6 cursor-pointer"
+          onClick={() => setShowCompletedOnly(prev => !prev)}
+          >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium" style={{ color: 'var(--neuro-text-secondary)' }}>Completed</p>
@@ -337,6 +339,7 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
               <Calendar className="h-6 w-6" style={{ color: 'var(--neuro-success)' }} />
             </div>
           </div>
+          
         </motion.div>
 
         <motion.div 
@@ -383,7 +386,7 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project, index) => (
+          {(showCompletedOnly ? projects.filter(p => p.status.toLowerCase() === 'completed') : projects).map((project, index) => (
             <motion.div
               key={project.id}
               initial={{ opacity: 0, y: 20 }}

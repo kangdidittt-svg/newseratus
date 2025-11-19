@@ -102,18 +102,16 @@ export default function NotificationPopover({
 
   // Format time
   const formatTime = (timeString: string) => {
-    try {
-      const date = new Date(timeString);
-      const now = new Date();
-      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-      
-      if (diffInMinutes < 1) return 'Baru saja';
-      if (diffInMinutes < 60) return `${diffInMinutes}m yang lalu`;
-      if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h yang lalu`;
-      return `${Math.floor(diffInMinutes / 1440)}d yang lalu`;
-    } catch {
-      return timeString;
+    const date = new Date(timeString);
+    if (isNaN(date.getTime())) {
+      return timeString || 'Baru saja';
     }
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    if (diffInMinutes < 1) return 'Baru saja';
+    if (diffInMinutes < 60) return `${diffInMinutes}m yang lalu`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h yang lalu`;
+    return `${Math.floor(diffInMinutes / 1440)}d yang lalu`;
   };
 
   return (

@@ -50,10 +50,10 @@ export default function InvoiceHistoryPage() {
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>
                 Riwayat Invoice
               </h1>
-              <p className="mt-2 text-gray-600">Kelola dan export invoice yang telah dibuat</p>
+              <p className="mt-2" style={{ color: 'var(--neuro-text-secondary)' }}>Kelola dan preview invoice yang telah dibuat</p>
             </div>
           </div>
         </div>
@@ -65,10 +65,10 @@ export default function InvoiceHistoryPage() {
         <div className="mt-8 flex justify-center gap-4">
           <button
             onClick={() => router.push('/invoice/create')}
-            className="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-lg hover:from-primary/80 hover:to-accent/80 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2"
+            className="app-btn-secondary px-6 py-3 flex items-center space-x-2"
           >
             <Plus className="h-4 w-4" />
-            <span>Buat Invoice Baru</span>
+            <span style={{ color: 'var(--neuro-text-primary)' }}>Buat Invoice Baru</span>
           </button>
           <button
             onClick={handleRefresh}

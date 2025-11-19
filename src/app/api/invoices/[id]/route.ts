@@ -67,14 +67,6 @@ export const PUT = withAuth(async (request: AuthenticatedRequest, context: { par
     }
 
     const updateData = await request.json();
-    
-    // Only allow updating billedToName for snapshot integrity
-    if (!updateData.billedToName || updateData.billedToName.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Billed to name is required' },
-        { status: 400 }
-      );
-    }
 
     const invoiceObjectId = new mongoose.Types.ObjectId(id);
     
@@ -91,8 +83,29 @@ export const PUT = withAuth(async (request: AuthenticatedRequest, context: { par
       );
     }
 
-    // Update only the billedToName
-    invoice.billedToName = updateData.billedToName.trim();
+    // Update fields: billedToName (optional), status (optional)
+    if (typeof updateData.billedToName === 'string') {
+      const name = updateData.billedToName.trim();
+      if (!name) {
+        return NextResponse.json(
+          { error: 'Billed to name is required' },
+          { status: 400 }
+        );
+      }
+      invoice.billedToName = name;
+    }
+
+    if (typeof updateData.status === 'string') {
+      const allowed = ['pending', 'paid', 'overdue'];
+      if (!allowed.includes(updateData.status)) {
+        return NextResponse.json(
+          { error: 'Invalid status value' },
+          { status: 400 }
+        );
+      }
+      invoice.status = updateData.status as 'pending' | 'paid' | 'overdue';
+    }
+
     await invoice.save();
 
     return NextResponse.json(

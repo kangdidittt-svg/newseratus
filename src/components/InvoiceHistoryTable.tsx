@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Download, Eye, Edit, Check, X, Trash2 } from 'lucide-react';
+import { Eye, Edit, Check, X, Trash2 } from 'lucide-react';
 import InvoicePreviewCard, { InvoiceItem } from './InvoicePreviewCard';
 
 interface Invoice {
@@ -29,8 +29,6 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [editName, setEditName] = useState('');
   const [showPreview, setShowPreview] = useState<Invoice | null>(null);
-  const [isExporting, setIsExporting] = useState<string | null>(null);
-  const [isBulkExporting, setIsBulkExporting] = useState(false);
 
   useEffect(() => {
     fetchInvoices();
@@ -71,68 +69,24 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
     }
   };
 
-  const handleExportPDF = async (invoiceId: string) => {
-    setIsExporting(invoiceId);
-    try {
-      const response = await fetch(`/api/invoices/${invoiceId}/pdf`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+  // Export PDF disabled per request; keeping placeholder for potential future use
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `invoice_${invoiceId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        console.error('Failed to export PDF');
-      }
-    } catch (error) {
-      console.error('Error exporting PDF:', error);
-    } finally {
-      setIsExporting(null);
-    }
-  };
-
-  const handleBulkExport = async () => {
-    if (selectedInvoices.length === 0) return;
-    
-    setIsBulkExporting(true);
+  // Bulk export disabled
+  const markAsPaid = async (invoiceId: string) => {
     try {
-      const response = await fetch('/api/invoices/bulk-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch(`/api/invoices/${invoiceId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ invoiceIds: selectedInvoices })
+        body: JSON.stringify({ status: 'paid' })
       });
-
       if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `invoices_${new Date().toISOString().split('T')[0]}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        // Clear selection after export
-        setSelectedInvoices([]);
+        setInvoices(prev => prev.map(inv => inv._id === invoiceId ? { ...inv, status: 'paid' } : inv));
       } else {
-        console.error('Failed to export bulk PDF');
+        console.error('Failed to mark as paid');
       }
     } catch (error) {
-      console.error('Error exporting bulk PDF:', error);
-    } finally {
-      setIsBulkExporting(false);
+      console.error('Error updating status:', error);
     }
   };
 
@@ -239,27 +193,7 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
           <h1 className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>Invoice History</h1>
           <p className="mt-1 app-muted">Manage and export your invoices</p>
         </div>
-        {selectedInvoices.length > 0 && (
-          <motion.button
-            onClick={handleBulkExport}
-            disabled={isBulkExporting}
-            className="app-btn-primary flex items-center space-x-2 px-6 py-3"
-            whileHover={{ scale: isBulkExporting ? 1 : 1.02 }}
-            whileTap={{ scale: isBulkExporting ? 1 : 0.98 }}
-          >
-            {isBulkExporting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Exporting...</span>
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4" />
-                <span>Export Selected ({selectedInvoices.length})</span>
-              </>
-            )}
-          </motion.button>
-        )}
+        
       </div>
 
       {invoices.length === 0 ? (
@@ -388,16 +322,13 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleExportPDF(invoice._id)}
-                          disabled={isExporting === invoice._id}
-                          className="app-btn-secondary disabled:opacity-50"
-                          title="Export PDF"
+                          onClick={() => markAsPaid(invoice._id)}
+                          className="app-btn-secondary"
+                          title="Tandai sebagai Paid"
+                          disabled={invoice.status === 'paid'}
+                          style={{ color: invoice.status === 'paid' ? 'var(--neuro-text-muted)' : 'var(--neuro-success)' }}
                         >
-                          {isExporting === invoice._id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2" style={{ borderColor: 'var(--neuro-primary)' }}></div>
-                          ) : (
-                            <Download className="h-4 w-4" />
-                          )}
+                          <Check className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteInvoice(invoice._id)}

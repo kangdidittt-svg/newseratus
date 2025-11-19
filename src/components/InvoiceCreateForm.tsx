@@ -15,6 +15,7 @@ interface Project {
   hourlyRate?: number;
   hoursWorked?: number;
   totalEarned?: number;
+  status?: 'active' | 'completed' | 'pending' | 'on-hold' | string;
 }
 
 interface InvoiceCreateFormProps {
@@ -227,16 +228,17 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
           setError(errorData.error || 'Failed to create invoice');
         }
       } else {
-        // Batch mode: generate satu file PDF gabungan dari semua project terpilih
+        // Batch mode: generate satu file invoice gabungan dari semua project terpilih (tersimpan + unduh PDF)
         const all = selectedProjects
           .map(id => projects.find(p => p._id === id))
           .filter(Boolean) as Project[];
         const clients = all.map(p => p.client);
-        const response = await fetch('/api/invoices/combined-pdf', {
+        const createRes = await fetch('/api/invoices/combined', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
+            primaryProjectId: selectedProjects[0],
             billedToName: billedToName.trim(),
             items,
             taxPercent,
@@ -245,25 +247,34 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
             clients
           })
         });
-
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `Combined_Invoice_${new Date().toISOString().split('T')[0]}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
+        
+        if (createRes.ok) {
+          const { invoice } = await createRes.json();
+          const pdfRes = await fetch(`/api/invoices/${invoice._id}/pdf`, {
+            method: 'POST',
+            credentials: 'include'
+          });
+          if (pdfRes.ok) {
+            const blob = await pdfRes.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `invoice_${invoice._id}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          } else {
+            setError('Failed to export PDF');
+          }
           setSuccess(true);
           setTimeout(() => {
             setSuccess(false);
             if (onInvoiceCreated) onInvoiceCreated();
           }, 2500);
         } else {
-          const errorData = await response.json().catch(() => ({}));
-          setError(errorData.error || 'Failed to generate combined PDF');
+          const errorData = await createRes.json().catch(() => ({}));
+          setError(errorData.error || 'Failed to create combined invoice');
         }
         // Reset form
         setSelectedProjects([]);
@@ -346,7 +357,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
               Pilih Project (bisa lebih dari satu) *
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {projects.map((project) => {
+              {projects.filter(p => (p.status || '').toLowerCase() !== 'completed').map((project) => {
                 const checked = selectedProjects.includes(project._id);
                 return (
                   <label key={project._id} className="app-card p-3 flex items-center space-x-3 cursor-pointer">

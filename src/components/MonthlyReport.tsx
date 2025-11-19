@@ -15,7 +15,6 @@ import {
 } from 'recharts';
 import {
   DollarSign,
-  Clock,
   FolderOpen,
   CheckCircle,
   Download,
@@ -37,7 +36,8 @@ interface DashboardStats {
 interface MonthlyEarning {
   _id: { year: number; month: number };
   earnings: number;
-  hours: number;
+  hours?: number;
+  projectCount?: number;
 }
 
 export default function MonthlyReport() {
@@ -77,19 +77,13 @@ export default function MonthlyReport() {
     if (!monthlyEarnings || monthlyEarnings.length === 0) {
       // Return default data for current month if no data available
       const currentMonth = new Date().toLocaleString('default', { month: 'short' });
-      return [{
-        month: currentMonth,
-        earnings: stats?.totalEarnings || 0,
-        hours: stats?.totalHours || 0,
-        projects: stats?.totalProjects || 0
-      }];
+      return [{ month: currentMonth, earnings: stats?.totalEarnings || 0, projects: stats?.totalProjects || 0 }];
     }
     
     return monthlyEarnings.map(item => ({
       month: new Date(item._id.year, item._id.month - 1).toLocaleString('default', { month: 'short' }),
       earnings: item.earnings || 0,
-      hours: item.hours || 0,
-      projects: Math.floor(item.earnings / (stats?.averageHourlyRate || 1) / (item.hours || 1)) || 1 // Estimate projects based on earnings and hours
+      projects: item.projectCount ?? 0
     }));
   };
 
@@ -236,28 +230,12 @@ Generated on: ${new Date().toLocaleDateString()}
           </div>
         </motion.div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="p-6 rounded-xl neuro-card font-inter"
-          style={{ background: 'var(--neuro-bg)' }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium" style={{ color: 'var(--neuro-text-secondary)' }}>Total Hours</p>
-              <p className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>{stats?.totalHours}h</p>
-              <p className="text-xs mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>${stats?.averageHourlyRate}/hour avg</p>
-            </div>
-            <div className="h-12 w-12 rounded-lg flex items-center justify-center neuro-icon">
-              <Clock className="h-6 w-6" style={{ color: 'var(--neuro-orange)' }} />
-            </div>
-          </div>
-        </motion.div>
+        
       </div>
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Monthly Earnings Trend */}
         {/* Monthly Earnings Trend */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -309,8 +287,8 @@ Generated on: ${new Date().toLocaleDateString()}
           style={{ background: 'var(--neuro-bg)' }}
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Hours by Month</h3>
-            <Clock className="h-5 w-5" style={{ color: 'var(--neuro-orange)' }} />
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Projects by Month</h3>
+            <FolderOpen className="h-5 w-5" style={{ color: 'var(--neuro-orange)' }} />
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -319,7 +297,7 @@ Generated on: ${new Date().toLocaleDateString()}
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip 
-                  formatter={(value) => [value, 'Hours']}
+                  formatter={(value) => [value, 'Projects']}
                   labelFormatter={(label) => `Month: ${label}`}
                   contentStyle={{ 
                     backgroundColor: '#fff', 
@@ -328,7 +306,7 @@ Generated on: ${new Date().toLocaleDateString()}
                   }}
                 />
                 <Bar 
-                  dataKey="hours" 
+                  dataKey="projects" 
                   fill="var(--neuro-orange)" 
                   radius={[4, 4, 0, 0]}
                   animationBegin={0}
@@ -372,10 +350,7 @@ Generated on: ${new Date().toLocaleDateString()}
                 <span className="mr-2" style={{ color: 'var(--neuro-orange)' }}>✓</span>
                 Maintained {stats?.activeProjects} active projects
               </li>
-              <li className="flex items-start">
-                <span className="mr-2" style={{ color: 'var(--neuro-orange)' }}>✓</span>
-                Worked {stats?.totalHours} hours total
-              </li>
+              
             </ul>
           </div>
           
@@ -397,10 +372,7 @@ Generated on: ${new Date().toLocaleDateString()}
                 <span>Average project value:</span>
                 <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>${stats?.totalProjects ? Math.round(stats?.totalEarnings / stats?.totalProjects) : 0}</span>
               </li>
-              <li className="flex justify-between">
-                <span>Hours per project:</span>
-                <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>{stats?.totalProjects ? Math.round(stats?.totalHours / stats?.totalProjects) : 0}h</span>
-              </li>
+              
             </ul>
           </div>
         </div>

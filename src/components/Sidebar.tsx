@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Home, FolderOpen, Plus, ChartColumn, FileText } from 'lucide-react';
+import { Home, FolderOpen, Plus, ChartColumn, FileText, Library, Settings } from 'lucide-react';
 import AddProjectPopover from './AddProjectPopover';
 
 interface SidebarProps {
@@ -29,6 +29,11 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       icon: FolderOpen,
     },
     {
+      id: 'studio-library',
+      label: 'Studio Library',
+      icon: Library,
+    },
+    {
       id: 'invoice',
       label: 'Invoice',
       icon: FileText,
@@ -37,6 +42,11 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       id: 'monthly-report',
       label: 'Reports',
       icon: ChartColumn,
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: Settings,
     },
   ];
 

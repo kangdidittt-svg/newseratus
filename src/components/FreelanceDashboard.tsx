@@ -12,7 +12,7 @@ import {
   Plus
 } from 'lucide-react';
 import EdinburghClock from './EdinburghClock';
-import RobotAssistant from './RobotAssistant';
+// Removed RobotAssistant and SmartSummaryPanel per user request
 import { useRealtimeDashboard, triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
 import { triggerNotificationRefresh } from '../hooks/useNotificationRefresh';
 
@@ -234,6 +234,8 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
             </button>
           </div>
         </div>
+
+        {/* Smart Summary Panel removed */}
       </div>
 
       {/* Stats Cards and Clock Layout */}
@@ -325,26 +327,7 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
         </motion.div>
         </div>
         
-        {/* Robot Assistant */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 flex items-center justify-center"
-          style={{
-            background: 'transparent',
-            borderRadius: '16px',
-            backdropFilter: 'blur(10px)'
-          }}
-        >
-          <RobotAssistant 
-            projects={recentProjects} 
-            onReminder={(type) => {
-              // Handle different reminder types (project navigation removed to prevent auto redirects)
-              // Only handle break and water reminders now
-              console.log(`Reminder: ${type}`);
-            }}
-          />
-        </motion.div>
+        {/* Robot Assistant removed */}
       </div>
 
       {/* Recent Projects and Edinburgh Clock */}

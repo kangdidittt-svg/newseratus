@@ -1,172 +1,86 @@
-import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Invoice from '@/models/Invoice';
-import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
-import mongoose from 'mongoose';
+import { NextResponse } from 'next/server'
+import connectDB from '@/lib/mongodb'
+import Invoice from '@/models/Invoice'
+import { withAuth, AuthenticatedRequest } from '@/lib/middleware'
+import mongoose from 'mongoose'
 
-// GET /api/invoices/:id - Get single invoice by ID
+// GET /api/invoices/[id] - Get a specific invoice
 export const GET = withAuth(async (request: AuthenticatedRequest, context: { params: Promise<{ id: string }> }) => {
-  const { params } = await context;
   try {
-    await connectDB();
-    
-    const { id } = await params;
-    const userObjectId = new mongoose.Types.ObjectId(request.user?.userId);
-    
-    // Validate invoice ID
+    await connectDB()
+    const { id } = await context.params
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: 'Invalid invoice ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid invoice ID' }, { status: 400 })
     }
 
-    const invoiceObjectId = new mongoose.Types.ObjectId(id);
-    
-    // Find invoice that belongs to user
-    const invoice = await Invoice.findOne({
-      _id: invoiceObjectId,
-      userId: userObjectId
-    }).lean();
-
+    const invoice = await Invoice.findOne({ _id: id, userId: request.user?.userId })
     if (!invoice) {
-      return NextResponse.json(
-        { error: 'Invoice not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
     }
 
-    return NextResponse.json(
-      { invoice },
-      { status: 200 }
-    );
+    return NextResponse.json({ invoice }, { status: 200 })
   } catch (error) {
-    console.error('Get invoice error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Get invoice error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-});
+})
 
-// PUT /api/invoices/:id - Update invoice (client name only)
+// PUT /api/invoices/[id] - Update basic fields (status, billedToName)
 export const PUT = withAuth(async (request: AuthenticatedRequest, context: { params: Promise<{ id: string }> }) => {
-  const { params } = await context;
   try {
-    await connectDB();
-    
-    const { id } = await params;
-    const userObjectId = new mongoose.Types.ObjectId(request.user?.userId);
-    
-    // Validate invoice ID
+    await connectDB()
+    const { id } = await context.params
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: 'Invalid invoice ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid invoice ID' }, { status: 400 })
     }
 
-    const updateData = await request.json();
+    const body = await request.json()
 
-    const invoiceObjectId = new mongoose.Types.ObjectId(id);
-    
-    // Find invoice that belongs to user
-    const invoice = await Invoice.findOne({
-      _id: invoiceObjectId,
-      userId: userObjectId
-    });
-
-    if (!invoice) {
-      return NextResponse.json(
-        { error: 'Invoice not found' },
-        { status: 404 }
-      );
+    const updateData: Record<string, unknown> = {}
+    if (typeof body.status === 'string') {
+      updateData.status = body.status
+    }
+    if (typeof body.billedToName === 'string') {
+      updateData.billedToName = body.billedToName.trim()
     }
 
-    // Update fields: billedToName (optional), status (optional)
-    if (typeof updateData.billedToName === 'string') {
-      const name = updateData.billedToName.trim();
-      if (!name) {
-        return NextResponse.json(
-          { error: 'Billed to name is required' },
-          { status: 400 }
-        );
-      }
-      invoice.billedToName = name;
+    const updated = await Invoice.findOneAndUpdate(
+      { _id: id, userId: request.user?.userId },
+      updateData,
+      { new: true, runValidators: true }
+    )
+
+    if (!updated) {
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
     }
 
-    if (typeof updateData.status === 'string') {
-      const allowed = ['pending', 'paid', 'overdue'];
-      if (!allowed.includes(updateData.status)) {
-        return NextResponse.json(
-          { error: 'Invalid status value' },
-          { status: 400 }
-        );
-      }
-      invoice.status = updateData.status as 'pending' | 'paid' | 'overdue';
-    }
-
-    await invoice.save();
-
-    return NextResponse.json(
-      {
-        message: 'Invoice updated successfully',
-        invoice: {
-          _id: invoice._id,
-          invoiceNumber: invoice.invoiceNumber,
-          projectId: invoice.projectId,
-          projectTitle: invoice.projectTitle,
-          billedToName: invoice.billedToName,
-          items: invoice.items,
-          subtotal: invoice.subtotal,
-          taxPercent: invoice.taxPercent,
-          total: invoice.total,
-          status: invoice.status,
-          createdAt: invoice.createdAt,
-          updatedAt: invoice.updatedAt
-        }
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: 'Invoice updated', invoice: updated }, { status: 200 })
   } catch (error) {
-    console.error('Update invoice error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Update invoice error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-});
+})
 
-// DELETE /api/invoices/:id - Delete invoice
+// DELETE /api/invoices/[id] - Delete an invoice
 export const DELETE = withAuth(async (request: AuthenticatedRequest, context: { params: Promise<{ id: string }> }) => {
-  const { params } = await context;
   try {
-    await connectDB();
-    const { id } = await params;
-    const userObjectId = new mongoose.Types.ObjectId(request.user?.userId);
+    await connectDB()
+    const { id } = await context.params
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: 'Invalid invoice ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid invoice ID' }, { status: 400 })
     }
-    const invoiceObjectId = new mongoose.Types.ObjectId(id);
-    const deleted = await Invoice.findOneAndDelete({
-      _id: invoiceObjectId,
-      userId: userObjectId
-    });
+
+    const deleted = await Invoice.findOneAndDelete({ _id: id, userId: request.user?.userId })
     if (!deleted) {
-      return NextResponse.json(
-        { error: 'Invoice not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
     }
-    return NextResponse.json({ message: 'Invoice deleted' }, { status: 200 });
+
+    return NextResponse.json({ message: 'Invoice deleted' }, { status: 200 })
   } catch (error) {
-    console.error('Delete invoice error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Delete invoice error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-});
+})

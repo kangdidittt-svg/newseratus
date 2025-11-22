@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
@@ -18,16 +18,46 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
     description: '',
     budget: '',
     deadline: '',
-    status: 'active',
+    status: 'ongoing',
     priority: 'medium',
-    category: 'web-development'
+    category: 'web-development',
+    workTypeId: '',
+    complexityId: ''
   });
+  const [workTypes, setWorkTypes] = useState<Array<{_id: string, name: string, category?: string}>>([]);
+  const [complexityLevels, setComplexityLevels] = useState<Array<{_id: string, name: string}>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [isLoadingPopup, setIsLoadingPopup] = useState(false);
   const [successData, setSuccessData] = useState({ title: '', message: '' });
+
+  // Fetch work types and complexity levels
+  useEffect(() => {
+    const fetchMasterData = async () => {
+      try {
+        const [workTypesRes, complexityRes] = await Promise.all([
+          fetch('/api/work-types'),
+          fetch('/api/complexity-levels')
+        ]);
+
+        if (workTypesRes.ok) {
+          const workTypesData = await workTypesRes.json();
+          setWorkTypes(Array.isArray(workTypesData) ? workTypesData : (workTypesData.workTypes || []));
+        }
+
+        if (complexityRes.ok) {
+          const complexityData = await complexityRes.json();
+          setComplexityLevels(Array.isArray(complexityData) ? complexityData : (complexityData.complexityLevels || []));
+        }
+      } catch (error) {
+        console.error('Error fetching master data:', error);
+      }
+    };
+
+    fetchMasterData();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +77,9 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
         credentials: 'include',
         body: JSON.stringify({
           ...formData,
-          budget: formData.budget ? parseFloat(formData.budget) : 0
+          budget: formData.budget ? parseFloat(formData.budget) : 0,
+          workTypeId: formData.workTypeId || undefined,
+          complexityId: formData.complexityId || undefined
         }),
       });
 
@@ -104,7 +136,9 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
           deadline: '',
           status: 'active',
           priority: 'medium',
-          category: 'web-development'
+          category: 'web-development',
+          workTypeId: '',
+          complexityId: ''
         });
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
@@ -276,6 +310,62 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
             </div>
           </div>
 
+          {/* Sub Kategori (Design) and Complexity */}
+          {formData.category === 'design' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Sub Kategori (Design)</label>
+                <select
+                  value={formData.workTypeId}
+                  onChange={(e) => setFormData({ ...formData, workTypeId: e.target.value })}
+                  className="neuro-select w-full px-4 py-2"
+                >
+                  <option value="">Pilih Sub Kategori</option>
+                  {workTypes
+                    .filter((wt) => (wt.category || '').toLowerCase() === 'design')
+                    .map((workType) => (
+                      <option key={workType._id} value={workType._id}>
+                        {workType.name}
+                      </option>
+                    ))}
+                  {/* Fallback static options */}
+                  {workTypes.length === 0 && (
+                    <>
+                      <option value="tracing">Tracing</option>
+                      <option value="layout">Layout</option>
+                      <option value="illustration">Illustration</option>
+                      <option value="logo">Logo</option>
+                    </>
+                  )}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Complexity</label>
+                <select
+                  value={formData.complexityId}
+                  onChange={(e) => setFormData({ ...formData, complexityId: e.target.value })}
+                  className="neuro-select w-full px-4 py-2"
+                >
+                  <option value="">Pilih Tingkat Kesulitan</option>
+                  {complexityLevels
+                    .filter((c) => ['easy', 'medium', 'hard'].includes((c.name || '').toLowerCase()))
+                    .map((complexity) => (
+                      <option key={complexity._id} value={complexity._id}>
+                        {complexity.name}
+                      </option>
+                    ))}
+                  {complexityLevels.length === 0 && (
+                    <>
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </>
+                  )}
+                </select>
+              </div>
+            </div>
+          )}
+
           {/* Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -286,8 +376,7 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
                 className="neuro-select w-full px-4 py-2"
                 required
               >
-                <option value="active">🔵 Active</option>
-                <option value="on-hold">🟡 On Hold</option>
+                <option value="ongoing">🔵 Ongoing</option>
                 <option value="completed">🟢 Completed</option>
               </select>
             </div>

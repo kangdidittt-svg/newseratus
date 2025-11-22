@@ -12,12 +12,14 @@ interface Project {
   client: string;
   description: string;
   category: string;
-  status: 'active' | 'completed' | 'pending' | 'on-hold';
+  status: 'ongoing' | 'completed';
   priority: 'low' | 'medium' | 'high';
   budget: number;
   deadline: string;
   progress: number;
   createdAt: string;
+  masterLink?: string;
+  masterNotes?: string;
 }
 
 interface ProjectListProps {
@@ -29,7 +31,7 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [editFormData, setEditFormData] = useState<Partial<Project>>({});
+  const [editFormData, setEditFormData] = useState<Partial<Project> & { noMasterFile?: boolean }>({});
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; projectId: string; projectTitle: string }>({ isOpen: false, projectId: '', projectTitle: '' });
   const [showCompletedOnly, setShowCompletedOnly] = useState(false);
 
@@ -57,18 +59,26 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
           description: string;
           category: string;
           createdAt: string;
+          masterLink?: string;
+          masterNotes?: string;
         }) => ({
           id: project._id || project.id,
           title: project.title,
           client: project.client,
-          status: project.status,
+          status: (
+            project.status === 'active' ||
+            project.status === 'on-hold' ||
+            project.status === 'in progress'
+          ) ? 'ongoing' : (project.status as 'ongoing' | 'completed'),
           priority: project.priority,
           budget: project.budget,
           deadline: project.deadline,
           progress: project.progress || 0,
           description: project.description,
           category: project.category,
-          createdAt: project.createdAt
+          createdAt: project.createdAt,
+          masterLink: project.masterLink,
+          masterNotes: project.masterNotes
         })) || [];
         setProjects(projectsData);
       } else {
@@ -119,7 +129,10 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
       status: project.status,
       priority: project.priority,
       budget: project.budget,
-      deadline: project.deadline
+      deadline: project.deadline,
+      masterLink: project.masterLink,
+      masterNotes: project.masterNotes,
+      noMasterFile: !project.masterLink
     });
   };
 
@@ -133,39 +146,94 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
     console.log('Form data:', editFormData);
     
     try {
-      const response = await fetch(`/api/projects/${editingProject.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(editFormData)
-      });
-      
-      console.log('Response status:', response.status);
-      
-      if (response.ok) {
-        const updatedProject = await response.json();
-        console.log('Updated project:', updatedProject);
-        
-        setProjects(projects.map(p => 
-          p.id === editingProject.id ? updatedProject.project : p
-        ));
-        setEditingProject(null);
-        setEditFormData({});
-        
-        // Trigger dashboard refresh
-        triggerDashboardRefresh('project-updated');
-        
-        // Refresh projects list
-        fetchProjects();
-        
-        alert('Project updated successfully!');
-      } else {
-        const errorData = await response.json();
-        console.error('Update failed:', errorData);
-        alert('Failed to update project: ' + (errorData.error || 'Unknown error'));
+      // Enforce master link when setting status to completed
+      const wantsCompleted = editFormData.status === 'completed';
+      const hasMasterLink = !!editFormData.masterLink && editFormData.masterLink.trim().length > 0;
+      const skipMaster = !!editFormData.noMasterFile;
+
+      if (wantsCompleted && !hasMasterLink && !skipMaster) {
+        alert('Masukkan link Master File atau centang "Tanpa master file" sebelum menyelesaikan project.');
+        return;
       }
+
+      // Update master files first if provided
+      if (editFormData.masterLink !== undefined || editFormData.masterNotes !== undefined) {
+        const respMaster = await fetch(`/api/projects/${editingProject.id}/master-files`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            masterLink: editFormData.masterLink,
+            masterNotes: editFormData.masterNotes
+          })
+        });
+        if (!respMaster.ok) {
+          const err = await respMaster.json().catch(() => ({ error: 'Unknown error' }));
+          alert('Gagal menyimpan Master File (link): ' + (err.error || 'Unknown error') + ' — melanjutkan dengan metode alternatif.');
+          // fallback: akan disimpan melalui update fields umum di bawah
+        }
+      }
+
+      // Prepare update payload excluding status if we will handle completion via studio endpoint
+      const { status: _status, noMasterFile: _noMasterFile, ...otherFields } = editFormData;
+
+      // Update other fields
+      if (Object.keys(otherFields).length > 0) {
+        const responseFields = await fetch(`/api/projects/${editingProject.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(otherFields)
+        });
+        if (!responseFields.ok) {
+          const errorData = await responseFields.json();
+          alert('Failed to update project fields: ' + (errorData.error || 'Unknown error'));
+          return;
+        }
+      }
+
+      // Handle completion via studio-library endpoint to set completedAt
+      if (wantsCompleted) {
+        const responseComplete = await fetch(`/api/projects/${editingProject.id}/studio-library`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ confirm: skipMaster })
+        });
+
+        const dataComplete = await responseComplete.json();
+        if (dataComplete && dataComplete.confirmRequired) {
+          alert('Master link belum terdeteksi di server. Isi link atau centang "Tanpa master file" untuk melanjutkan.');
+          return;
+        }
+        if (!responseComplete.ok) {
+          // Gracefully handle already completed case
+          if (responseComplete.status === 400 && (dataComplete?.error || '').toLowerCase().includes('already')) {
+            // continue as success
+          } else {
+            if (dataComplete && dataComplete.confirmRequired) {
+              alert('Master link belum terdeteksi di server. Isi link atau centang "Tanpa master file" untuk melanjutkan.');
+            } else {
+              alert('Gagal memindahkan ke Studio Library: ' + (dataComplete.error || 'Unknown error'));
+            }
+            return;
+          }
+        }
+
+        // Optimistically update local state to completed
+        setProjects(prev => prev.map(p =>
+          p.id === editingProject.id
+            ? { ...p, status: 'completed' as const }
+            : p
+        ));
+      }
+
+      // Refresh list and UI
+      setEditingProject(null);
+      setEditFormData({});
+      triggerDashboardRefresh('project-updated');
+      fetchProjects();
+      alert('Project updated successfully!');
     } catch (error) {
       console.error('Error updating project:', error);
       alert('Error updating project: ' + (error as Error).message);
@@ -173,28 +241,10 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
   };
 
   const handleMarkAsComplete = async (projectId: string) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ status: 'completed' })
-      });
-      
-      if (response.ok) {
-        const updatedProject = await response.json();
-        setProjects(projects.map(p => 
-          p.id === projectId ? updatedProject.project : p
-        ));
-        
-        // Trigger dashboard refresh
-        triggerDashboardRefresh('project-completed');
-      }
-    } catch (error) {
-      console.error('Error marking project as complete:', error);
-    }
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    // Open edit modal and preset status to completed to enforce master link requirement
+    handleEditProject({ ...project, status: 'completed' });
   };
 
   const closeEditModal = () => {
@@ -212,11 +262,8 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'pending': return { color: 'var(--neuro-warning)', backgroundColor: 'var(--neuro-warning-light)' };
-      case 'in progress': return { color: 'var(--neuro-info)', backgroundColor: 'var(--neuro-info-light)' };
-      case 'active': return { color: 'var(--neuro-info)', backgroundColor: 'var(--neuro-info-light)' };
+      case 'ongoing': return { color: 'var(--neuro-info)', backgroundColor: 'var(--neuro-info-light)' };
       case 'completed': return { color: 'var(--neuro-success)', backgroundColor: 'var(--neuro-success-light)' };
-      case 'on-hold': return { color: 'var(--neuro-error)', backgroundColor: 'var(--neuro-error-light)' };
       default: return { color: 'var(--neuro-text-muted)', backgroundColor: 'var(--neuro-bg-secondary)' };
     }
   };
@@ -257,7 +304,7 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
 
   // Calculate stats
   const totalProjects = projects.length;
-  const activeProjects = projects.filter(p => p.status.toLowerCase() === 'active' || p.status.toLowerCase() === 'in progress').length;
+  const activeProjects = projects.filter(p => p.status.toLowerCase() === 'ongoing').length;
   const completedProjects = projects.filter(p => p.status.toLowerCase() === 'completed').length;
   const pendingProjects = projects.filter(p => p.status.toLowerCase() === 'pending').length;
 
@@ -579,14 +626,12 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
                 <div>
                   <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Status</label>
                   <select
-                    value={editFormData.status || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as 'active' | 'completed' | 'pending' | 'on-hold' })}
+                    value={editFormData.status || 'ongoing'}
+                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as 'ongoing' | 'completed' })}
                     className="neuro-select w-full px-4 py-2"
                   >
-                    <option value="active">Active</option>
+                    <option value="ongoing">Ongoing</option>
                     <option value="completed">Completed</option>
-                    <option value="on-hold">On Hold</option>
-                    <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
               </div>
@@ -627,6 +672,30 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
                   onChange={(e) => setEditFormData({ ...editFormData, deadline: e.target.value })}
                   className="neuro-input w-full px-4 py-2"
                 />
+              </div>
+
+              {/* Master Files */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Master File Link</label>
+                  <input
+                    type="url"
+                    value={editFormData.masterLink || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, masterLink: e.target.value })}
+                    className="neuro-input w-full px-4 py-2"
+                    placeholder="https://drive.google.com/..."
+                  />
+                  <p className="text-xs mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>Wajib diisi jika status diubah ke Completed</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="noMasterFile"
+                    type="checkbox"
+                    checked={!!editFormData.noMasterFile}
+                    onChange={(e) => setEditFormData({ ...editFormData, noMasterFile: e.target.checked })}
+                  />
+                  <label htmlFor="noMasterFile" className="text-sm" style={{ color: 'var(--neuro-text-primary)' }}>Tanpa master file</label>
+                </div>
               </div>
             </div>
 

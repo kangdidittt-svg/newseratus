@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Sidebar from '@/components/Sidebar';
@@ -15,20 +15,9 @@ interface TopBarUser {
 }
 
 export default function SettingsPage() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('settings');
-
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login');
-      } else {
-        setIsLoading(false);
-      }
-    }
-  }, [user, loading, router]);
 
   const handleNavigation = (tab: string) => {
     setActiveTab(tab);
@@ -41,13 +30,7 @@ export default function SettingsPage() {
     }
   };
 
-  if (loading || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--neuro-bg)' }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--neuro-orange)' }}></div>
-      </div>
-    );
-  }
+  // Render settings directly without blocking on loading
 
   return (
     <div className="min-h-screen bg-gray-50">

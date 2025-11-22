@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
+import GlobalSearchCommandPalette from '@/components/GlobalSearchCommandPalette';
+import StudioRobot from '@/components/StudioRobot';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -61,6 +63,8 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased min-h-screen relative`} suppressHydrationWarning={true}>
         <AuthProvider>
           <div id="root" className="relative z-10">{children}</div>
+          <GlobalSearchCommandPalette />
+          <StudioRobot />
         </AuthProvider>
         <script
           dangerouslySetInnerHTML={{

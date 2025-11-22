@@ -7,7 +7,11 @@ import TopBar from './TopBar';
 import FreelanceDashboard from './FreelanceDashboard';
 import ProjectList from './ProjectList';
 import AddProject from './AddProject';
+import AddProjectStudio from './AddProjectStudio';
+import InvoiceHistoryTable from './InvoiceHistoryTable';
 import MonthlyReport from './MonthlyReport';
+import Settings from './Settings';
+import StudioLibrary from '@/app/studio-library/page';
 
 interface User {
   id: string;
@@ -82,10 +86,6 @@ export default function ClientApp() {
 
   const handleNavigation = (tab: string) => {
     setActiveTab(tab);
-    // Navigate to the actual page if it's invoice
-    if (tab === 'invoice') {
-      window.location.href = '/invoice/create';
-    }
   };
 
   const renderContent = () => {
@@ -168,10 +168,52 @@ export default function ClientApp() {
             variants={pageVariants}
             transition={pageTransition}
           >
-            <AddProject onProjectAdded={() => {
+            <AddProjectStudio onProjectAdded={() => {
               setActiveTab('dashboard');
               setDashboardRefreshTrigger(prev => prev + 1);
             }} />
+          </motion.div>
+        );
+
+      case 'studio-library':
+        return (
+          <motion.div
+            key="studio-library"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            <StudioLibrary />
+          </motion.div>
+        );
+
+      case 'invoice':
+        return (
+          <motion.div
+            key="invoice"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            <InvoiceHistoryTable />
+          </motion.div>
+        );
+
+      case 'settings':
+        return (
+          <motion.div
+            key="settings"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            <Settings />
           </motion.div>
         );
       default:
@@ -260,6 +302,7 @@ export default function ClientApp() {
           </AnimatePresence>
         </main>
       </div>
+
     </div>
   );
 }

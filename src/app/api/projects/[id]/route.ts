@@ -114,6 +114,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       );
     }
 
+    // Normalize legacy status values if present
+    if (updateData.status === 'active' || updateData.status === 'on-hold') {
+      updateData.status = 'ongoing';
+    }
+
     const project = await Project.findOneAndUpdate(
       {
         _id: params.id,

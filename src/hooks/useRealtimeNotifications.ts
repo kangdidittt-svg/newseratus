@@ -121,7 +121,7 @@ export function useRealtimeNotifications() {
       
       try {
         setConnectionStatus('connecting');
-        const response = await fetch('/api/notifications');
+        const response = await fetch('/api/notifications', { credentials: 'include' });
         
         if (response.ok) {
           const data = await response.json();

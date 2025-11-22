@@ -68,6 +68,11 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     await connectDB();
     
     const projectData = await request.json();
+
+    // Normalize legacy status values
+    if (projectData.status === 'active' || projectData.status === 'on-hold') {
+      projectData.status = 'ongoing';
+    }
     
     // Validate required fields
     if (!projectData.title || !projectData.client || !projectData.category) {

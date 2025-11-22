@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, Edit, Check, X, Trash2 } from 'lucide-react';
+import { Eye, Edit, Check, X, Trash2, FileText } from 'lucide-react';
 import InvoicePreviewCard, { InvoiceItem } from './InvoicePreviewCard';
+import InvoiceCreateForm from './InvoiceCreateForm';
 
 interface Invoice {
   _id: string;
@@ -29,6 +30,8 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [editName, setEditName] = useState('');
   const [showPreview, setShowPreview] = useState<Invoice | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     fetchInvoices();
@@ -90,17 +93,21 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
     }
   };
 
-  const handleDeleteInvoice = async (invoiceId: string) => {
-    const confirmed = window.confirm('Hapus invoice ini? Tindakan ini tidak dapat dibatalkan.');
-    if (!confirmed) return;
+  const handleDeleteInvoice = (invoiceId: string) => {
+    setDeleteTargetId(invoiceId);
+  };
+
+  const confirmDeleteInvoice = async () => {
+    if (!deleteTargetId) return;
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
+      const response = await fetch(`/api/invoices/${deleteTargetId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
       if (response.ok) {
-        setInvoices(prev => prev.filter(inv => inv._id !== invoiceId));
-        setSelectedInvoices(prev => prev.filter(id => id !== invoiceId));
+        setInvoices(prev => prev.filter(inv => inv._id !== deleteTargetId));
+        setSelectedInvoices(prev => prev.filter(id => id !== deleteTargetId));
+        setDeleteTargetId(null);
       } else {
         console.error('Failed to delete invoice');
       }
@@ -193,7 +200,16 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
           <h1 className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>Invoice History</h1>
           <p className="mt-1 app-muted">Manage and export your invoices</p>
         </div>
-        
+        <div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="neuro-button-orange px-4 py-2 flex items-center gap-2"
+            title="Create Invoice"
+          >
+            <FileText className="h-4 w-4" />
+            Create Invoice
+          </button>
+        </div>
       </div>
 
       {invoices.length === 0 ? (
@@ -262,38 +278,16 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
                       {invoice.projectTitle}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {editingInvoice?._id === invoice._id ? (
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="text"
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="app-input px-2 py-1 text-sm"
-                          />
-                          <button
-                            onClick={saveEditName}
-                            className="text-green-600 hover:text-green-800"
-                          >
-                            <Check className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={cancelEdit}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          <span>{invoice.billedToName}</span>
-                          <button
-                            onClick={() => handleEditName(invoice)}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        <span>{invoice.billedToName}</span>
+                        <button
+                          onClick={() => handleEditName(invoice)}
+                          className="text-blue-600 hover:text-blue-800"
+                          title="Edit Client Name"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm" style={{ color: 'var(--neuro-text-primary)' }}>
                       {invoice.subtotal.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}
@@ -350,24 +344,93 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
 
       {/* Preview Modal */}
       {showPreview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--neuro-bg)', color: 'var(--neuro-text-primary)' }}>
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold">Invoice Preview</h2>
-                <button
-                  onClick={() => setShowPreview(null)}
-                  className="app-btn-secondary px-3 py-1"
-                >
-                  ✕
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="neuro-card p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>Invoice Preview</h2>
+              <button
+                onClick={() => setShowPreview(null)}
+                className="neuro-button px-3 py-1"
+              >
+                ✕
+              </button>
+            </div>
+            <InvoicePreviewCard invoice={{
+              ...showPreview,
+              createdAt: new Date(showPreview.createdAt),
+              items: showPreview.items || []
+            }} />
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingInvoice && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="neuro-card p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Edit Client Name</h2>
+              <button className="neuro-button p-2" onClick={cancelEdit}>
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm mb-1" style={{ color: 'var(--neuro-text-secondary)' }}>Client Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="neuro-input w-full"
+                  placeholder="Enter client name"
+                />
+              </div>
+              <div className="flex gap-2 mt-2">
+                <button onClick={saveEditName} className="neuro-button-orange flex-1 px-3 py-2 flex items-center justify-center gap-2">
+                  <Check className="h-4 w-4" />
+                  Simpan
+                </button>
+                <button onClick={cancelEdit} className="neuro-button flex-1 px-3 py-2">
+                  Batal
                 </button>
               </div>
-              <InvoicePreviewCard invoice={{
-                ...showPreview,
-                createdAt: new Date(showPreview.createdAt),
-                items: showPreview.items || []
-              }} />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deleteTargetId && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="neuro-card p-6 w-full max-w-sm">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Hapus Invoice?</h3>
+              <p className="text-sm" style={{ color: 'var(--neuro-text-secondary)' }}>Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={confirmDeleteInvoice} className="neuro-button-orange flex-1 px-3 py-2 flex items-center justify-center gap-2">
+                <Trash2 className="h-4 w-4" />
+                Hapus
+              </button>
+              <button onClick={() => setDeleteTargetId(null)} className="neuro-button flex-1 px-3 py-2">
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Invoice Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="neuro-card p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Create Invoice</h2>
+              <button className="neuro-button p-2" onClick={() => setShowCreateModal(false)}>
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <InvoiceCreateForm onInvoiceCreated={() => { setShowCreateModal(false); fetchInvoices(); }} />
           </div>
         </div>
       )}

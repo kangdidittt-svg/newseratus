@@ -4,7 +4,7 @@ export interface IProject extends Document {
   title: string;
   description?: string;
   client: string;
-  status: 'active' | 'completed' | 'on-hold' | 'cancelled';
+  status: 'ongoing' | 'completed';
   priority: 'low' | 'medium' | 'high';
   category: string;
   startDate: Date;
@@ -16,6 +16,11 @@ export interface IProject extends Document {
   userId: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  completedAt?: Date;
+  masterLink?: string;
+  masterNotes?: string;
+  workTypeId?: mongoose.Types.ObjectId;
+  complexityId?: mongoose.Types.ObjectId;
 }
 
 const ProjectSchema: Schema = new Schema(
@@ -39,8 +44,8 @@ const ProjectSchema: Schema = new Schema(
     },
     status: {
       type: String,
-      enum: ['active', 'completed', 'on-hold', 'cancelled'],
-      default: 'active'
+      enum: ['ongoing', 'completed'],
+      default: 'ongoing'
     },
     priority: {
       type: String,
@@ -82,6 +87,25 @@ const ProjectSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'User ID is required']
+    },
+    completedAt: {
+      type: Date
+    },
+    masterLink: {
+      type: String,
+      trim: true
+    },
+    masterNotes: {
+      type: String,
+      trim: true
+    },
+    workTypeId: {
+      type: Schema.Types.ObjectId,
+      ref: 'WorkType'
+    },
+    complexityId: {
+      type: Schema.Types.ObjectId,
+      ref: 'ComplexityLevel'
     }
   },
   {

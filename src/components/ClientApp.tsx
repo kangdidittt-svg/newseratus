@@ -12,6 +12,7 @@ import InvoiceHistoryTable from './InvoiceHistoryTable';
 import MonthlyReport from './MonthlyReport';
 import Settings from './Settings';
 import StudioLibrary from '@/app/studio-library/page';
+import TodoPage from '@/app/todo/page';
 
 interface User {
   id: string;
@@ -186,6 +187,20 @@ export default function ClientApp() {
             transition={pageTransition}
           >
             <StudioLibrary />
+          </motion.div>
+        );
+
+      case 'todo':
+        return (
+          <motion.div
+            key="todo"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            <TodoPage />
           </motion.div>
         );
 

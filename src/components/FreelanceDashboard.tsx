@@ -9,7 +9,11 @@ import {
   Calendar,
   User,
   AlertCircle,
-  Plus
+  Plus,
+  CheckSquare,
+  Check,
+  CalendarDays,
+  StickyNote
 } from 'lucide-react';
 import EdinburghClock from './EdinburghClock';
 // Removed RobotAssistant and SmartSummaryPanel per user request
@@ -26,6 +30,8 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [todayTodos, setTodayTodos] = useState<{ _id: string; title: string; status: 'pending'|'done'; notes?: string }[]>([]);
+  const [expandedTodoIds, setExpandedTodoIds] = useState<Set<string>>(new Set());
 
   const [formData, setFormData] = useState({
     title: '',
@@ -45,6 +51,71 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
       refreshDashboard();
     }
   }, [refreshTrigger, refreshDashboard]);
+
+  // Fetch today's todos on mount and on event
+  useEffect(() => {
+    const loadToday = async () => {
+      try {
+        const res = await fetch('/api/todos?filter=today', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setTodayTodos((data.todos || []).map((t: { _id: string; title: string; status: 'pending'|'done'; notes?: string }) => ({ _id: t._id, title: t.title, status: t.status, notes: t.notes })));
+        }
+      } catch (e) {
+        console.error('Load today todos error', e);
+      }
+    };
+    loadToday();
+    const handler = () => loadToday();
+    window.addEventListener('todos:updated', handler);
+    const interval = setInterval(handler, 5 * 60 * 1000);
+    return () => { window.removeEventListener('todos:updated', handler); clearInterval(interval); };
+  }, []);
+
+  const todayStr = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const addDaysStr = (base: string, days: number) => {
+    const d = new Date(base);
+    d.setDate(d.getDate() + days);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const markDone = async (id: string) => {
+    try {
+      const res = await fetch(`/api/todos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: 'done' })
+      });
+      if (res.ok) {
+        setTodayTodos(prev => prev.map(t => t._id === id ? { ...t, status: 'done' } : t));
+        window.dispatchEvent(new Event('todos:updated'));
+      }
+    } catch (e) {
+      console.error('Mark done error', e);
+    }
+  };
+
+  const moveToTomorrow = async (id: string) => {
+    try {
+      const tomorrow = addDaysStr(todayStr(), 1);
+      const res = await fetch(`/api/todos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ dueDateStr: tomorrow, status: 'pending' })
+      });
+      if (res.ok) {
+        setTodayTodos(prev => prev.filter(t => t._id !== id));
+        window.dispatchEvent(new Event('todos:updated'));
+      }
+    } catch (e) {
+      console.error('Move to tomorrow error', e);
+    }
+  };
 
   // Removed useEffect dependency on showModal to prevent conflicts
 
@@ -326,12 +397,103 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
           </div>
         </motion.div>
         </div>
-        
+        {/* Edinburgh Clock moved up to top-right */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5 }}
+          className="neuro-card p-0 relative flex items-center justify-center h-full"
+          style={{
+            background: 'linear-gradient(135deg, var(--neuro-bg-primary), var(--neuro-bg-secondary))',
+            overflow: 'hidden'
+          }}
+        >
+          <EdinburghClock />
+        </motion.div>
+
         {/* Robot Assistant removed */}
       </div>
 
       {/* Recent Projects and Edinburgh Clock */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+        {/* Today Tasks */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+          className="lg:col-span-1 neuro-card p-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <CheckSquare className="w-5 h-5" style={{ color: 'var(--neuro-text-secondary)' }} />
+              <span className="font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Today Tasks</span>
+            </div>
+            <button className="neuro-button px-3 py-1" onClick={() => onNavigate && onNavigate('todo')}>Manage</button>
+          </div>
+          <div className="space-y-0 divide-y" style={{ borderColor: 'var(--neuro-border)' }}>
+            {todayTodos.length === 0 ? (
+              <div
+                className="rounded-md p-4"
+                style={{ backgroundColor: 'var(--neuro-warning-light)', color: 'var(--neuro-warning)' }}
+              >
+                <div className="flex items-start gap-3">
+                  <CheckSquare className="w-5 h-5" style={{ color: 'var(--neuro-warning)' }} />
+                  <div className="text-sm">
+                    list kerjaan hari ini kosong nih , kamu lupa bikin atau jangan jangan gada kerjaan, yok semnagatttt
+                  </div>
+                </div>
+              </div>
+            ) : todayTodos.slice(0, 6).map(t => (
+              <div key={t._id} className="px-2 py-2">
+                <button
+                  className="w-full text-left flex items-center justify-between rounded-md transition hover:neuro-card-pressed"
+                  onClick={() => setExpandedTodoIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(t._id)) next.delete(t._id); else next.add(t._id);
+                    return next;
+                  })}
+                >
+                  <span className="text-sm" style={{ color: 'var(--neuro-text-primary)' }}>{t.title}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="neuro-button px-2 py-1"
+                      title="Selesai"
+                      onClick={(e) => { e.stopPropagation(); markDone(t._id); }}
+                      style={{ color: 'var(--neuro-success)' }}
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      className="neuro-button px-2 py-1"
+                      title="Pindah besok"
+                      onClick={(e) => { e.stopPropagation(); moveToTomorrow(t._id); }}
+                      style={{ color: 'var(--neuro-warning)' }}
+                    >
+                      <CalendarDays className="h-4 w-4" />
+                    </button>
+                    <span className={`text-xs px-2 py-1 rounded-full ${t.status === 'done' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{t.status.toUpperCase()}</span>
+                  </div>
+                </button>
+                {t.notes && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: expandedTodoIds.has(t._id) ? 'auto' : 0, opacity: expandedTodoIds.has(t._id) ? 1 : 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-2 pt-2" style={{ borderTop: '1px solid var(--neuro-border)' }}>
+                      <div className="flex items-center gap-2">
+                        <StickyNote className="h-4 w-4" style={{ color: 'var(--neuro-text-secondary)' }} />
+                        <span className="text-xs font-semibold" style={{ color: 'var(--neuro-text-secondary)' }}>Notes</span>
+                      </div>
+                      <div className="text-sm whitespace-pre-line app-muted mt-1">{t.notes}</div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            ))}
+          </div>
+        </motion.div>
         {/* Recent Projects */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -406,184 +568,7 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
           </div>
         </motion.div>
 
-        {/* Edinburgh Clock */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.6 }}
-          className="neuro-card p-0 relative flex items-center justify-center h-full"
-          style={{
-            background: 'linear-gradient(135deg, var(--neuro-bg-primary), var(--neuro-bg-secondary))',
-            overflow: 'hidden',
-            minHeight: '100%'
-          }}
-        >
-          <EdinburghClock />
-
-          {/* Add Project Form Modal */}
-           <div 
-             className={`fixed inset-0 z-50 ${showAddProjectModal ? 'block' : 'hidden'}`}
-             style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-             onClick={closeModal}
-           >
-             <div className="flex items-center justify-center min-h-screen p-4" onClick={(e) => e.stopPropagation()}>
-               <div
-                 className="bg-white rounded-lg shadow-2xl border border-gray-200 p-6 max-h-[80vh] overflow-y-auto w-full max-w-md"
-                 onClick={(e) => e.stopPropagation()}
-               >
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-gray-800">
-                    Add New Project
-                  </h3>
-                  <button
-                    onClick={closeModal}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-
-                <form onSubmit={handleAddProject} className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Project Title *
-                      </label>
-                      <input
-                        type="text"
-                        name="title"
-                        value={formData.title}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter project title"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Client Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="client"
-                        value={formData.client}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter client name"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700">
-                      Description
-                    </label>
-                    <textarea
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                      placeholder="Describe your project..."
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Budget ($)
-                      </label>
-                      <input
-                        type="number"
-                        name="budget"
-                        value={formData.budget}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="0.01"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="0.00"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Priority
-                      </label>
-                      <select
-                        name="priority"
-                        value={formData.priority}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="urgent">Urgent</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Category
-                      </label>
-                      <select
-                        name="category"
-                        value={formData.category}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="web-development">Web Development</option>
-                        <option value="mobile-app">Mobile App</option>
-                        <option value="design">Design</option>
-                        <option value="consulting">Consulting</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Deadline
-                      </label>
-                      <input
-                        type="date"
-                        name="deadline"
-                        value={formData.deadline}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end space-x-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={closeModal}
-                      className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onNavigate?.('add-project')}
-                      className="neuro-button-orange px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add New Project</span>
-                    </button>
-                  </div>
-                </form>
-               </div>
-             </div>
-           </div>
-
-
-        </motion.div>
+        {/* Edinburgh Clock removed from here */}
       </div>
 
 

@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Home, FolderOpen, Plus, ChartColumn, FileText, Library, Settings } from 'lucide-react';
+import { Home, FolderOpen, Plus, ChartColumn, FileText, Library, Settings, CheckSquare } from 'lucide-react';
+// import { useRouter } from 'next/navigation';
 import AddProjectPopover from './AddProjectPopover';
 
 interface SidebarProps {
@@ -11,6 +12,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+  // const router = useRouter();
 
   const menuItems = [
     {
@@ -22,6 +24,11 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       id: 'dashboard',
       label: 'Dashboard',
       icon: Home,
+    },
+    {
+      id: 'todo',
+      label: 'To Do List',
+      icon: CheckSquare,
     },
     {
       id: 'projects',
@@ -117,7 +124,13 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
                     style={{
                       color: isActive ? 'var(--neuro-orange)' : 'var(--neuro-text-primary)'
                     }}
-                    onClick={() => setActiveTab(item.id)}
+                    onClick={() => {
+                      if (item.id === 'todo') {
+                        setActiveTab('todo');
+                      } else {
+                        setActiveTab(item.id);
+                      }
+                    }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     title={item.label}

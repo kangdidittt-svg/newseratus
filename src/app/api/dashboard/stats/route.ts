@@ -13,9 +13,9 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     // Get project statistics
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const totalProjects = await Project.countDocuments({ userId: userObjectId });
-    const activeProjects = await Project.countDocuments({ userId: userObjectId, status: 'active' });
+    const activeProjects = await Project.countDocuments({ userId: userObjectId, status: { $in: ['ongoing', 'active', 'in progress'] } });
     const completedProjects = await Project.countDocuments({ userId: userObjectId, status: 'completed' });
-    const onHoldProjects = await Project.countDocuments({ userId: userObjectId, status: 'on-hold' });
+    const onHoldProjects = await Project.countDocuments({ userId: userObjectId, status: { $in: ['on-hold', 'paused'] } });
 
     // Get total earnings from completed projects
     const earningsResult = await Project.aggregate([
@@ -61,11 +61,12 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       .lean();
 
     // Get projects by status for chart
+    const cancelledProjects = await Project.countDocuments({ userId: userObjectId, status: 'cancelled' });
     const projectsByStatus = [
       { name: 'Active', value: activeProjects },
       { name: 'Completed', value: completedProjects },
       { name: 'On Hold', value: onHoldProjects },
-      { name: 'Cancelled', value: await Project.countDocuments({ userId: userObjectId, status: 'cancelled' }) }
+      { name: 'Cancelled', value: cancelledProjects }
     ];
 
     // Get monthly earnings (last 6 months)

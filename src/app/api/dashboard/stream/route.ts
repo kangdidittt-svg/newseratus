@@ -31,9 +31,9 @@ async function getDashboardStats(userId: string) {
   
   // Calculate stats
   const totalProjects = projects.length;
-  const activeProjects = projects.filter(p => p.status === 'active').length;
+  const activeProjects = projects.filter(p => ['ongoing', 'active', 'in progress'].includes(p.status as string)).length;
   const completedProjects = projects.filter(p => p.status === 'completed').length;
-  const onHoldProjects = projects.filter(p => p.status === 'on-hold').length;
+  const onHoldProjects = projects.filter(p => ['on-hold', 'paused'].includes(p.status as string)).length;
   
   const totalEarnings = projects
     .filter(p => p.status === 'completed')

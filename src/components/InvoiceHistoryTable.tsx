@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, Edit, Check, X, Trash2, FileText } from 'lucide-react';
+import { Eye, Edit, Check, X, Trash2, FileText, Download } from 'lucide-react';
 import InvoicePreviewCard, { InvoiceItem } from './InvoicePreviewCard';
 import InvoiceCreateForm from './InvoiceCreateForm';
+import InvoiceDownloadButton from './InvoiceDownloadButton';
 
 interface Invoice {
   _id: string;
@@ -315,6 +316,13 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
                         >
                           <Eye className="h-4 w-4" />
                         </button>
+                        <InvoiceDownloadButton
+                          fileName={`invoice-${invoice.invoiceNumber}.pdf`}
+                          targetId={`invoice-preview-${invoice._id}`}
+                          className="app-btn-secondary"
+                        >
+                          <Download className="h-4 w-4" />
+                        </InvoiceDownloadButton>
                         <button
                           onClick={() => markAsPaid(invoice._id)}
                           className="app-btn-secondary"
@@ -434,6 +442,22 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
           </div>
         </div>
       )}
+
+      {/* Hidden Previews for Download */}
+      <div style={{ position: 'fixed', left: -10000, top: -10000, opacity: 0, pointerEvents: 'none' }}>
+        {invoices.map((inv) => (
+          <div key={`hidden-${inv._id}`} className="w-[900px]">
+            <InvoicePreviewCard
+              invoice={{
+                ...inv,
+                createdAt: new Date(inv.createdAt),
+                items: inv.items || []
+              }}
+              containerId={`invoice-preview-${inv._id}`}
+            />
+          </div>
+        ))}
+      </div>
     </motion.div>
   );
 }

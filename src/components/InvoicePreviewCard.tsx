@@ -24,13 +24,14 @@ export interface InvoicePreviewData {
 interface InvoicePreviewCardProps {
   invoice: InvoicePreviewData;
   className?: string;
+  containerId?: string;
 }
 
-export default function InvoicePreviewCard({ invoice, className = '' }: InvoicePreviewCardProps) {
+export default function InvoicePreviewCard({ invoice, className = '', containerId }: InvoicePreviewCardProps) {
   const taxAmount = invoice.subtotal * (invoice.taxPercent / 100);
 
   return (
-    <div className={`neuro-card p-6 ${className}`} style={{ color: 'var(--neuro-text-primary)' }}>
+    <div id={containerId || 'invoice-preview'} className={`neuro-card p-6 ${className}`} style={{ color: 'var(--neuro-text-primary)' }}>
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div>

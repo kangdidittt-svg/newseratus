@@ -445,13 +445,25 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
               </div>
             ) : todayTodos.slice(0, 6).map(t => (
               <div key={t._id} className="px-2 py-2">
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   className="w-full text-left flex items-center justify-between rounded-md transition hover:neuro-card-pressed"
                   onClick={() => setExpandedTodoIds(prev => {
                     const next = new Set(prev);
                     if (next.has(t._id)) next.delete(t._id); else next.add(t._id);
                     return next;
                   })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpandedTodoIds(prev => {
+                        const next = new Set(prev);
+                        if (next.has(t._id)) next.delete(t._id); else next.add(t._id);
+                        return next;
+                      });
+                    }
+                  }}
                 >
                   <span className="text-sm" style={{ color: 'var(--neuro-text-primary)' }}>{t.title}</span>
                   <div className="flex items-center gap-2">
@@ -473,7 +485,7 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
                     </button>
                     <span className={`text-xs px-2 py-1 rounded-full ${t.status === 'done' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{t.status.toUpperCase()}</span>
                   </div>
-                </button>
+                </div>
                 {t.notes && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}

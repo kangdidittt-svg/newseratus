@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface DashboardStats {
   totalProjects: number;
@@ -39,10 +39,16 @@ export function useRealtimeDashboard() {
     error: null
   });
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [refreshing, setRefreshing] = useState(false);
+  const lastHashRef = useRef<string>('');
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = useCallback(async (opts?: { silent?: boolean }) => {
     try {
-      setDashboardData(prev => ({ ...prev, loading: true, error: null }));
+      if (!opts?.silent) {
+        setDashboardData(prev => ({ ...prev, loading: true, error: null }));
+      } else {
+        setRefreshing(true);
+      }
       
       const response = await fetch('/api/dashboard/stats', {
         credentials: 'include'
@@ -50,12 +56,18 @@ export function useRealtimeDashboard() {
       
       if (response.ok) {
         const data = await response.json();
-        setDashboardData({
-          stats: data.stats,
-          recentProjects: data.recentProjects || [],
-          loading: false,
-          error: null
-        });
+        const hash = JSON.stringify({ s: data.stats, r: (data.recentProjects || []).map((p: { _id: string }) => p._id) });
+        if (hash !== lastHashRef.current) {
+          lastHashRef.current = hash;
+          setDashboardData({
+            stats: data.stats,
+            recentProjects: data.recentProjects || [],
+            loading: false,
+            error: null
+          });
+        } else {
+          setDashboardData(prev => ({ ...prev, loading: false }));
+        }
       } else {
         setDashboardData(prev => ({
           ...prev,
@@ -71,6 +83,7 @@ export function useRealtimeDashboard() {
         error: 'Network error occurred'
       }));
     }
+    setRefreshing(false);
   }, []);
 
   // Setup SSE connection for real-time updates
@@ -93,11 +106,11 @@ export function useRealtimeDashboard() {
         }
         
         try {
-          await fetchDashboardData();
+          await fetchDashboardData({ silent: true });
         } catch (error) {
           console.error('Polling fallback error:', error);
         }
-      }, 120000); // Poll every 2 minutes as fallback (reduced frequency)
+      }, 180000);
       
       // Store interval for cleanup
       reconnectTimeout = pollInterval as NodeJS.Timeout;
@@ -128,17 +141,21 @@ export function useRealtimeDashboard() {
           
           if (data.type === 'dashboard_update') {
             console.log('📊 Dashboard data updated via SSE:', data.reason || 'manual');
-            setDashboardData({
-              stats: data.data.stats,
-              recentProjects: data.data.recentProjects,
-              loading: false,
-              error: null
-            });
+            const hash = JSON.stringify({ s: data.data.stats, r: (data.data.recentProjects || []).map((p: { _id: string }) => p._id) });
+            if (hash !== lastHashRef.current) {
+              lastHashRef.current = hash;
+              setDashboardData({
+                stats: data.data.stats,
+                recentProjects: data.data.recentProjects,
+                loading: false,
+                error: null
+              });
+            }
           } else if (data.type === 'connected') {
             console.log('🔌 Dashboard SSE connection confirmed');
             // Fetch initial data if not already loaded
             if (!dashboardData.stats) {
-              fetchDashboardData();
+              fetchDashboardData({ silent: true });
             }
           } else if (data.type === 'error') {
             console.error('❌ Dashboard SSE server error:', data.message);
@@ -224,8 +241,8 @@ export function useRealtimeDashboard() {
       console.log('📡 Dashboard SSE disconnected, using fallback polling');
       interval = setInterval(() => {
         console.log('🔄 Dashboard: Fallback polling triggered');
-        fetchDashboardData();
-      }, 120000); // 2 minute fallback polling (reduced frequency)
+        fetchDashboardData({ silent: true });
+      }, 180000);
     }
 
     return () => {
@@ -238,7 +255,8 @@ export function useRealtimeDashboard() {
   return {
     ...dashboardData,
     connectionStatus,
-    refreshDashboard: fetchDashboardData
+    refreshDashboard: () => fetchDashboardData({ silent: true }),
+    refreshing
   };
 }
 

@@ -13,7 +13,8 @@ import {
   CheckSquare,
   Check,
   CalendarDays,
-  StickyNote
+  StickyNote,
+  ChevronDown
 } from 'lucide-react';
 import EdinburghClock from './EdinburghClock';
 // Removed RobotAssistant and SmartSummaryPanel per user request
@@ -30,8 +31,9 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [todayTodos, setTodayTodos] = useState<{ _id: string; title: string; status: 'pending'|'done'; notes?: string }[]>([]);
+  const [todayTodos, setTodayTodos] = useState<{ _id: string; title: string; status: 'pending'|'done'; notes?: string; projectId?: string; projectTitle?: string }[]>([]);
   const [expandedTodoIds, setExpandedTodoIds] = useState<Set<string>>(new Set());
+  const [collapsedProjectIds, setCollapsedProjectIds] = useState<Set<string>>(new Set());
 
   const [formData, setFormData] = useState({
     title: '',
@@ -59,7 +61,14 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
         const res = await fetch('/api/todos?filter=today', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
-          setTodayTodos((data.todos || []).map((t: { _id: string; title: string; status: 'pending'|'done'; notes?: string }) => ({ _id: t._id, title: t.title, status: t.status, notes: t.notes })));
+          setTodayTodos((data.todos || []).map((t: { _id: string; title: string; status: 'pending'|'done'; notes?: string; projectId?: { _id: string; title: string } | string }) => ({
+            _id: t._id,
+            title: t.title,
+            status: t.status,
+            notes: t.notes,
+            projectId: typeof t.projectId === 'object' ? t.projectId?._id : (typeof t.projectId === 'string' ? t.projectId : undefined),
+            projectTitle: typeof t.projectId === 'object' ? (t.projectId as { _id: string; title: string }).title : undefined
+          })));
         }
       } catch (e) {
         console.error('Load today todos error', e);
@@ -430,7 +439,7 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
             </div>
             <button className="neuro-button px-3 py-1" onClick={() => onNavigate && onNavigate('todo')}>Manage</button>
           </div>
-          <div className="space-y-0 divide-y" style={{ borderColor: 'var(--neuro-border)' }}>
+          <div className="space-y-4">
             {todayTodos.length === 0 ? (
               <div
                 className="rounded-md p-4"
@@ -443,67 +452,106 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
                   </div>
                 </div>
               </div>
-            ) : todayTodos.slice(0, 6).map(t => (
-              <div key={t._id} className="px-2 py-2">
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className="w-full text-left flex items-center justify-between rounded-md transition hover:neuro-card-pressed"
-                  onClick={() => setExpandedTodoIds(prev => {
-                    const next = new Set(prev);
-                    if (next.has(t._id)) next.delete(t._id); else next.add(t._id);
-                    return next;
-                  })}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setExpandedTodoIds(prev => {
+            ) : (
+              (() => {
+                const groups = new Map<string, { title: string; items: typeof todayTodos }>();
+                todayTodos.slice(0, 200).forEach(t => {
+                  const key = t.projectId || 'none';
+                  const title = t.projectTitle || 'No Project';
+                  const g = groups.get(key);
+                  if (g) g.items.push(t); else groups.set(key, { title, items: [t] });
+                });
+                const entries = Array.from(groups.entries());
+                return entries.map(([key, group]) => (
+                  <div key={key} className="space-y-2">
+                    <button
+                      className="w-full flex items-center justify-between"
+                      onClick={() => setCollapsedProjectIds(prev => {
                         const next = new Set(prev);
-                        if (next.has(t._id)) next.delete(t._id); else next.add(t._id);
+                        if (next.has(key)) next.delete(key); else next.add(key);
                         return next;
-                      });
-                    }
-                  }}
-                >
-                  <span className="text-sm" style={{ color: 'var(--neuro-text-primary)' }}>{t.title}</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      className="neuro-button px-2 py-1"
-                      title="Selesai"
-                      onClick={(e) => { e.stopPropagation(); markDone(t._id); }}
-                      style={{ color: 'var(--neuro-success)' }}
+                      })}
                     >
-                      <Check className="h-4 w-4" />
-                    </button>
-                    <button
-                      className="neuro-button px-2 py-1"
-                      title="Pindah besok"
-                      onClick={(e) => { e.stopPropagation(); moveToTomorrow(t._id); }}
-                      style={{ color: 'var(--neuro-warning)' }}
-                    >
-                      <CalendarDays className="h-4 w-4" />
-                    </button>
-                    <span className={`text-xs px-2 py-1 rounded-full ${t.status === 'done' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{t.status.toUpperCase()}</span>
-                  </div>
-                </div>
-                {t.notes && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: expandedTodoIds.has(t._id) ? 'auto' : 0, opacity: expandedTodoIds.has(t._id) ? 1 : 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-2 pt-2" style={{ borderTop: '1px solid var(--neuro-border)' }}>
-                      <div className="flex items-center gap-2">
-                        <StickyNote className="h-4 w-4" style={{ color: 'var(--neuro-text-secondary)' }} />
-                        <span className="text-xs font-semibold" style={{ color: 'var(--neuro-text-secondary)' }}>Notes</span>
+                      <div className="flex items-center gap-2 app-muted text-xs">
+                        <FolderOpen className="h-4 w-4" />
+                        <span>{group.title}</span>
                       </div>
-                      <div className="text-sm whitespace-pre-line app-muted mt-1">{t.notes}</div>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            ))}
+                      <ChevronDown className={`h-4 w-4 transition ${collapsedProjectIds.has(key) ? '-rotate-90' : 'rotate-0'}`} />
+                    </button>
+                    <motion.div
+                      initial={{ height: 'auto', opacity: 1 }}
+                      animate={{ height: collapsedProjectIds.has(key) ? 0 : 'auto', opacity: collapsedProjectIds.has(key) ? 0 : 1 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-0 divide-y" style={{ borderColor: 'var(--neuro-border)' }}>
+                        {group.items.map(t => (
+                        <div key={t._id} className="px-2 py-2">
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            className="w-full text-left flex items-center justify-between rounded-md transition hover:neuro-card-pressed"
+                            onClick={() => setExpandedTodoIds(prev => {
+                              const next = new Set(prev);
+                              if (next.has(t._id)) next.delete(t._id); else next.add(t._id);
+                              return next;
+                            })}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setExpandedTodoIds(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(t._id)) next.delete(t._id); else next.add(t._id);
+                                  return next;
+                                });
+                              }
+                            }}
+                          >
+                            <span className="text-sm" style={{ color: 'var(--neuro-text-primary)' }}>{t.title}</span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                className="neuro-button px-2 py-1"
+                                title="Selesai"
+                                onClick={(e) => { e.stopPropagation(); markDone(t._id); }}
+                                style={{ color: 'var(--neuro-success)' }}
+                              >
+                                <Check className="h-4 w-4" />
+                              </button>
+                              <button
+                                className="neuro-button px-2 py-1"
+                                title="Pindah besok"
+                                onClick={(e) => { e.stopPropagation(); moveToTomorrow(t._id); }}
+                                style={{ color: 'var(--neuro-warning)' }}
+                              >
+                                <CalendarDays className="h-4 w-4" />
+                              </button>
+                              <span className={`text-xs px-2 py-1 rounded-full ${t.status === 'done' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{t.status.toUpperCase()}</span>
+                            </div>
+                          </div>
+                          {t.notes && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: expandedTodoIds.has(t._id) ? 'auto' : 0, opacity: expandedTodoIds.has(t._id) ? 1 : 0 }}
+                              transition={{ duration: 0.25 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-2 pt-2" style={{ borderTop: '1px solid var(--neuro-border)' }}>
+                                <div className="flex items-center gap-2">
+                                  <StickyNote className="h-4 w-4" style={{ color: 'var(--neuro-text-secondary)' }} />
+                                  <span className="text-xs font-semibold" style={{ color: 'var(--neuro-text-secondary)' }}>Notes</span>
+                                </div>
+                                <div className="text-sm whitespace-pre-line app-muted mt-1">{t.notes}</div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </div>
+                ));
+              })()
+            )}
           </div>
         </motion.div>
         {/* Recent Projects */}

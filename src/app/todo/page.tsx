@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { CheckSquare, Edit, Trash2, Undo2, Plus } from 'lucide-react';
+import { CheckSquare, Edit, Trash2, Undo2, Plus, Check } from 'lucide-react';
 
 interface ProjectOption {
   _id: string;
@@ -278,6 +278,23 @@ export default function TodoPage() {
     }
   };
 
+  const markDone = async (id: string) => {
+    try {
+      const res = await fetch(`/api/todos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: 'done' })
+      });
+      if (res.ok) {
+        setTodos(prev => prev.map(t => t._id === id ? { ...t, status: 'done' } : t));
+        window.dispatchEvent(new Event('todos:updated'));
+      }
+    } catch (e) {
+      console.error('Mark done error', e);
+    }
+  };
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--neuro-bg)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -363,6 +380,9 @@ export default function TodoPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {filter === 'all' && todo.status !== 'done' && (
+                        <button className="app-btn-secondary" onClick={() => markDone(todo._id)} title="Mark done"><Check className="h-4 w-4" /></button>
+                      )}
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${todo.priority === 'high' ? 'bg-red-100 text-red-700' : todo.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{todo.priority.toUpperCase()}</span>
                       <button className="app-btn-secondary" onClick={() => startEdit(todo)} title="Edit"><Edit className="h-4 w-4" /></button>
                       <button className="app-btn-secondary" onClick={() => deleteTodo(todo)} title="Delete"><Trash2 className="h-4 w-4" /></button>

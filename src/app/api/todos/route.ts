@@ -47,7 +47,10 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
         break;
     }
 
-    const todos = await Todo.find(query).sort({ status: 1, order: 1, dueDateStr: 1, createdAt: -1 }).lean();
+    const todos = await Todo.find(query)
+      .sort({ status: 1, order: 1, dueDateStr: 1, createdAt: -1 })
+      .populate('projectId', 'title')
+      .lean();
     return NextResponse.json({ todos }, { status: 200 });
   } catch (error) {
     console.error('GET todos error:', error);

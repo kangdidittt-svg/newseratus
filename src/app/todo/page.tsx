@@ -164,6 +164,37 @@ export default function TodoPage() {
     }
   };
 
+  const addToday = async () => {
+    const today = todayStr();
+    if (!form.title.trim()) return;
+    try {
+      if (editing) {
+        const res = await fetch(`/api/todos/${editing._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ ...form, dueDateStr: today })
+        });
+        if (res.ok) {
+          setEditing(null);
+        }
+      } else {
+        const res = await fetch('/api/todos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ ...form, dueDateStr: today })
+        });
+        if (!res.ok) return;
+      }
+      setForm({ title: '', projectId: undefined, notes: '', dueDateStr: todayStr(), priority: 'medium' });
+      fetchTodos(filter);
+      window.dispatchEvent(new Event('todos:updated'));
+    } catch (e) {
+      console.error('Add today error', e);
+    }
+  };
+
   const toggleDone = async (todo: TodoItem) => {
     try {
       const res = await fetch(`/api/todos/${todo._id}`, {
@@ -301,6 +332,7 @@ export default function TodoPage() {
               </div>
               <div className="mt-4 flex gap-2">
                 <button className="app-btn-primary" onClick={editing ? saveEdit : submitForm}>{editing ? 'Save Changes' : 'Add Task'}</button>
+                <button className="app-btn-secondary" onClick={addToday}>{editing ? 'Save for Today' : 'Add for Today'}</button>
                 <button className="app-btn-secondary" onClick={addTomorrow}>Add for Tomorrow</button>
               </div>
             </div>

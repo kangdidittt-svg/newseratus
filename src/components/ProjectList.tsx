@@ -55,6 +55,7 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
     try {
       const params = new URLSearchParams();
       if (filterStatus) params.set('status', filterStatus);
+      params.set('limit', 'all');
       const response = await fetch(`/api/projects?${params.toString()}`, {
         credentials: 'include'
       });
@@ -79,9 +80,7 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
           id: project._id || project.id,
           title: project.title,
           client: project.client,
-          status: ((project.status || '').toLowerCase() === 'completed' || (project.status || '').toLowerCase() === 'cancelled')
-            ? 'completed'
-            : 'ongoing',
+          status: (project.status || '').toLowerCase(),
           priority: project.priority,
           budget: project.budget,
           deadline: project.deadline,
@@ -274,9 +273,18 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'ongoing': return { color: 'var(--neuro-info)', backgroundColor: 'var(--neuro-info-light)' };
-      case 'completed': return { color: 'var(--neuro-success)', backgroundColor: 'var(--neuro-success-light)' };
-      default: return { color: 'var(--neuro-text-muted)', backgroundColor: 'var(--neuro-bg-secondary)' };
+      case 'ongoing':
+      case 'active':
+      case 'in progress':
+      case 'pending':
+      case 'on-hold':
+        return { color: 'var(--neuro-info)', backgroundColor: 'var(--neuro-info-light)' };
+      case 'completed':
+        return { color: 'var(--neuro-success)', backgroundColor: 'var(--neuro-success-light)' };
+      case 'cancelled':
+        return { color: 'var(--neuro-error)', backgroundColor: 'var(--neuro-error-light)' };
+      default:
+        return { color: 'var(--neuro-text-muted)', backgroundColor: 'var(--neuro-bg-secondary)' };
     }
   };
 
@@ -316,7 +324,7 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
 
   // Calculate stats
   const totalProjects = projects.length;
-  const activeProjects = projects.filter(p => p.status.toLowerCase() === 'ongoing').length;
+  const activeProjects = projects.filter(p => p.status.toLowerCase() !== 'completed' && p.status.toLowerCase() !== 'cancelled').length;
   const completedProjects = projects.filter(p => p.status.toLowerCase() === 'completed').length;
   const pendingProjects = projects.filter(p => p.status.toLowerCase() === 'pending').length;
 
@@ -344,6 +352,37 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
             <span>Add New Project</span>
           </motion.button>
         )}
+      </div>
+
+      {/* Filters */}
+      <div className="neuro-card p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="text-xs" style={{ color: 'var(--neuro-text-secondary)' }}>Status</label>
+            <select
+              className="neuro-input w-full mt-1 px-3 py-2"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="">Semua</option>
+              <option value="ongoing">Aktif/Ongoing</option>
+              <option value="completed">Selesai</option>
+              <option value="cancelled">Dibatalkan</option>
+              <option value="pending">Pending</option>
+              <option value="on-hold">On Hold</option>
+              <option value="in progress">In Progress</option>
+              <option value="active">Active</option>
+            </select>
+          </div>
+          <div className="flex items-end">
+            <button
+              className="neuro-button px-4 py-2"
+              onClick={() => { setLoading(true); fetchProjects(); }}
+            >
+              Terapkan Filter
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}

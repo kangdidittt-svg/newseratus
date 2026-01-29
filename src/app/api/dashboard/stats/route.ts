@@ -16,6 +16,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     const activeProjects = await Project.countDocuments({ userId: userObjectId, status: { $in: ['ongoing', 'active', 'in progress'] } });
     const completedProjects = await Project.countDocuments({ userId: userObjectId, status: 'completed' });
     const onHoldProjects = await Project.countDocuments({ userId: userObjectId, status: { $in: ['on-hold', 'paused'] } });
+    const pendingProjectsCount = await Project.countDocuments({ userId: userObjectId, status: 'pending' });
 
     // Get total earnings from completed projects
     const earningsResult = await Project.aggregate([
@@ -40,9 +41,14 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     const totalEarnings = earningsResult[0]?.totalEarnings || 0;
     const totalHours = earningsResult[0]?.totalHours || 0;
 
-    // Get total pending payments from non-completed projects
+    // Get total pending payments from active/ongoing projects
     const pendingPaymentsResult = await Project.aggregate([
-      { $match: { userId: userObjectId, status: { $ne: 'completed' } } },
+      { 
+        $match: { 
+          userId: userObjectId, 
+          status: { $in: ['ongoing', 'active', 'in progress', 'pending', 'on-hold'] } 
+        } 
+      },
       {
         $group: {
           _id: null,
@@ -104,6 +110,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
           activeProjects,
           completedProjects,
           onHoldProjects,
+          pendingProjectsCount,
           totalEarnings,
           totalHours,
           averageHourlyRate: totalHours > 0 ? totalEarnings / totalHours : 0,

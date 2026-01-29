@@ -19,11 +19,23 @@ interface Project {
   updatedAt: string;
 }
 
+interface ProjectStats {
+  totalProjects: number;
+  activeProjects: number;
+  completedProjects: number;
+  onHoldProjects: number;
+  pendingProjectsCount: number;
+  totalEarnings: number;
+  totalHours: number;
+  totalPendingPayments: number;
+}
+
 export default function ProjectListPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<ProjectStats | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -31,7 +43,22 @@ export default function ProjectListPage() {
       return;
     }
     fetchProjects();
+    fetchStats();
   }, [user, router]);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/dashboard/stats', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -122,24 +149,26 @@ export default function ProjectListPage() {
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-sm">
-              <div className="text-2xl font-bold text-purple-600">{projects.length}</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {stats ? stats.totalProjects : projects.length}
+              </div>
               <div className="text-sm text-gray-600">Total Project</div>
             </div>
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-sm">
               <div className="text-2xl font-bold text-cyan-600">
-                {projects.filter(p => p.status.toLowerCase() === 'active' || p.status.toLowerCase() === 'in progress').length}
+                {stats ? stats.activeProjects : projects.filter(p => p.status.toLowerCase() === 'active' || p.status.toLowerCase() === 'in progress').length}
               </div>
               <div className="text-sm text-gray-600">Aktif</div>
             </div>
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-sm">
               <div className="text-2xl font-bold text-pink-600">
-                {projects.filter(p => p.status.toLowerCase() === 'completed').length}
+                {stats ? stats.completedProjects : projects.filter(p => p.status.toLowerCase() === 'completed').length}
               </div>
               <div className="text-sm text-gray-600">Selesai</div>
             </div>
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-sm">
               <div className="text-2xl font-bold text-purple-600">
-                {projects.filter(p => p.status.toLowerCase() === 'pending').length}
+                {stats ? (stats.pendingProjectsCount || 0) : projects.filter(p => p.status.toLowerCase() === 'pending').length}
               </div>
               <div className="text-sm text-gray-600">Pending</div>
             </div>

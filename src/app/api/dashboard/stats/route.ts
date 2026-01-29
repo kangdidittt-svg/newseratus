@@ -13,7 +13,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     // Get project statistics
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const totalProjects = await Project.countDocuments({ userId: userObjectId });
-    const activeProjects = await Project.countDocuments({ userId: userObjectId, status: { $in: ['ongoing', 'active', 'in progress'] } });
+    const activeProjects = await Project.countDocuments({ userId: userObjectId, status: { $nin: ['completed', 'cancelled'] } });
     const completedProjects = await Project.countDocuments({ userId: userObjectId, status: 'completed' });
     const onHoldProjects = await Project.countDocuments({ userId: userObjectId, status: { $in: ['on-hold', 'paused'] } });
     const pendingProjectsCount = await Project.countDocuments({ userId: userObjectId, status: 'pending' });
@@ -41,12 +41,11 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     const totalEarnings = earningsResult[0]?.totalEarnings || 0;
     const totalHours = earningsResult[0]?.totalHours || 0;
 
-    // Get total pending payments from active/ongoing projects
     const pendingPaymentsResult = await Project.aggregate([
       { 
         $match: { 
           userId: userObjectId, 
-          status: { $in: ['ongoing', 'active', 'in progress', 'pending', 'on-hold'] } 
+          status: { $nin: ['completed', 'cancelled'] } 
         } 
       },
       {

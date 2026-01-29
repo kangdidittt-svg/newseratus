@@ -36,6 +36,10 @@ export default function ProjectListPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<ProjectStats | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [filterMonth, setFilterMonth] = useState<string>('');
+  const [filterStart, setFilterStart] = useState<string>('');
+  const [filterEnd, setFilterEnd] = useState<string>('');
 
   useEffect(() => {
     if (!user) {
@@ -62,7 +66,13 @@ export default function ProjectListPage() {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('/api/projects', {
+      const params = new URLSearchParams();
+      params.set('limit', 'all');
+      if (filterStatus) params.set('status', filterStatus);
+      if (filterMonth) params.set('month', filterMonth);
+      if (filterStart) params.set('start', filterStart);
+      if (filterEnd) params.set('end', filterEnd);
+      const response = await fetch(`/api/projects?${params.toString()}`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -89,6 +99,7 @@ export default function ProjectListPage() {
       case 'pending': return 'text-primary bg-primary/20';
       case 'in progress': return 'text-accent bg-accent/20';
       case 'active': return 'text-accent bg-accent/20';
+      case 'ongoing': return 'text-accent bg-accent/20';
       case 'completed': return 'text-secondary bg-secondary/20';
       case 'on-hold': return 'text-primary bg-primary/20';
       default: return 'text-primary bg-primary/20';
@@ -145,7 +156,61 @@ export default function ProjectListPage() {
               <p className="mt-2 text-gray-600">Semua project yang telah dibuat</p>
             </div>
           </div>
-          
+
+          {/* Filter */}
+          <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-sm mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <label className="text-xs text-gray-500">Status</label>
+                <select
+                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="">Semua</option>
+                  <option value="ongoing">Aktif/Ongoing</option>
+                  <option value="completed">Selesai</option>
+                  <option value="cancelled">Dibatalkan</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Bulan</label>
+                <input
+                  type="month"
+                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+                  value={filterMonth}
+                  onChange={(e) => setFilterMonth(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Tanggal Mulai</label>
+                <input
+                  type="date"
+                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+                  value={filterStart}
+                  onChange={(e) => setFilterStart(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Tanggal Akhir</label>
+                <input
+                  type="date"
+                  className="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+                  value={filterEnd}
+                  onChange={(e) => setFilterEnd(e.target.value)}
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={() => { setLoading(true); fetchProjects(); }}
+                  className="w-full bg-gradient-to-r from-primary to-accent text-white px-4 py-2 rounded-lg hover:from-primary/80 hover:to-accent/80 transition-all duration-200 shadow-sm"
+                >
+                  Terapkan Filter
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-sm">
@@ -256,15 +321,15 @@ export default function ProjectListPage() {
 
                   {/* Progress Bar (visual representation based on status) */}
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${
                         project.status.toLowerCase() === 'completed' ? 'bg-green-500 w-full' :
-                        project.status.toLowerCase() === 'in progress' || project.status.toLowerCase() === 'active' ? 'bg-blue-500 w-3/4' :
+                        project.status.toLowerCase() === 'in progress' || project.status.toLowerCase() === 'active' || project.status.toLowerCase() === 'ongoing' ? 'bg-blue-500 w-3/4' :
                         project.status.toLowerCase() === 'pending' ? 'bg-yellow-500 w-1/4' :
                         'bg-gray-400 w-1/2'
                       }`}
-                    ></div>
-                  </div>
+                  ></div>
+                </div>
                 </div>
               </div>
             ))}

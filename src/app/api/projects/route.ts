@@ -20,26 +20,58 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     const status = searchParams.get('status');
     const category = searchParams.get('category');
     const priority = searchParams.get('priority');
+    const month = searchParams.get('month');
+    const start = searchParams.get('start');
+    const end = searchParams.get('end');
+    const rawLimit = searchParams.get('limit') || '10';
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const skip = (page - 1) * limit;
+    const limit = rawLimit === 'all' ? 0 : parseInt(rawLimit);
+    const skip = limit === 0 ? 0 : (page - 1) * limit;
 
     // Build filter
     const userObjectId = new mongoose.Types.ObjectId(request.user?.userId);
     const filter: ProjectFilter = { userId: userObjectId };
-    if (status) filter.status = status;
+    if (status) {
+      const s = status.toLowerCase();
+      if (['active', 'in progress', 'pending', 'on-hold', 'ongoing'].includes(s)) {
+        filter.status = 'ongoing';
+      } else {
+        filter.status = status;
+      }
+    }
     if (category) filter.category = category;
     if (priority) filter.priority = priority;
 
-    // Get projects with pagination
-    const projects = await Project.find(filter)
+    const dateFilter: { createdAt?: { $gte?: Date; $lte?: Date } } = {};
+    if (month) {
+      const [y, m] = month.split('-').map(Number);
+      if (!isNaN(y) && !isNaN(m)) {
+        const startMonth = new Date(y, m - 1, 1);
+        const endMonth = new Date(y, m, 0, 23, 59, 59, 999);
+        dateFilter.createdAt = { $gte: startMonth, $lte: endMonth };
+      }
+    } else if (start || end) {
+      const startDate = start ? new Date(start) : undefined;
+      const endDate = end ? new Date(new Date(end).setHours(23, 59, 59, 999)) : undefined;
+      if (startDate && endDate) {
+        dateFilter.createdAt = { $gte: startDate, $lte: endDate };
+      } else if (startDate) {
+        dateFilter.createdAt = { $gte: startDate };
+      } else if (endDate) {
+        dateFilter.createdAt = { $lte: endDate };
+      }
+    }
+
+    const query: ProjectFilter & { createdAt?: { $gte?: Date; $lte?: Date } } = { ...filter, ...(Object.keys(dateFilter).length ? dateFilter : {}) };
+
+    const projects = await Project.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
     // Get total count for pagination
-    const total = await Project.countDocuments(filter);
+    const total = await Project.countDocuments(query);
 
     return NextResponse.json(
       {
@@ -48,7 +80,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
           page,
           limit,
           total,
-          pages: Math.ceil(total / limit)
+          pages: limit === 0 ? 1 : Math.ceil(total / limit)
         }
       },
       { status: 200 }

@@ -358,9 +358,19 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
                 {stats?.activeProjects || 0}
               </p>
             </div>
-            <div className="neuro-card w-12 h-12 flex items-center justify-center">
+            <button
+              className="neuro-card w-12 h-12 flex items-center justify-center"
+              title="Lihat Active Projects"
+              onClick={() => {
+                onNavigate?.('projects');
+                try {
+                  const ev = new CustomEvent('projects:setFilter', { detail: { status: 'ongoing' } });
+                  window.dispatchEvent(ev);
+                } catch {}
+              }}
+            >
               <TrendingUp className="w-6 h-6" style={{ color: 'var(--neuro-success)' }} />
-            </div>
+            </button>
           </div>
         </motion.div>
 

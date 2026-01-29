@@ -30,6 +30,7 @@ interface ProjectListProps {
 export default function ProjectList({ refreshTrigger, onAddProject }: ProjectListProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<string>('');
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Project> & { noMasterFile?: boolean }>({});
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; projectId: string; projectTitle: string }>({ isOpen: false, projectId: '', projectTitle: '' });
@@ -37,11 +38,24 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
 
   useEffect(() => {
     fetchProjects();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, filterStatus]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<{ status?: string }>;
+      if (ce.detail?.status) {
+        setFilterStatus(ce.detail.status);
+      }
+    };
+    window.addEventListener('projects:setFilter', handler);
+    return () => window.removeEventListener('projects:setFilter', handler);
+  }, []);
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('/api/projects', {
+      const params = new URLSearchParams();
+      if (filterStatus) params.set('status', filterStatus);
+      const response = await fetch(`/api/projects?${params.toString()}`, {
         credentials: 'include'
       });
       if (response.ok) {

@@ -221,7 +221,7 @@ export default function ProjectListPage() {
             </div>
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-sm">
               <div className="text-2xl font-bold text-cyan-600">
-                {stats ? stats.activeProjects : projects.filter(p => p.status.toLowerCase() === 'active' || p.status.toLowerCase() === 'in progress').length}
+                {stats ? stats.activeProjects : projects.filter(p => p.status.toLowerCase() !== 'completed' && p.status.toLowerCase() !== 'cancelled').length}
               </div>
               <div className="text-sm text-gray-600">Aktif</div>
             </div>

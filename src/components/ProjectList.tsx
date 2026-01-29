@@ -79,11 +79,9 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
           id: project._id || project.id,
           title: project.title,
           client: project.client,
-          status: (
-            project.status === 'active' ||
-            project.status === 'on-hold' ||
-            project.status === 'in progress'
-          ) ? 'ongoing' : (project.status as 'ongoing' | 'completed'),
+          status: ((project.status || '').toLowerCase() === 'completed' || (project.status || '').toLowerCase() === 'cancelled')
+            ? 'completed'
+            : 'ongoing',
           priority: project.priority,
           budget: project.budget,
           deadline: project.deadline,

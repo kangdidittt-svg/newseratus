@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 
 interface ProjectFilter {
   userId: mongoose.Types.ObjectId;
-  status?: string;
+  status?: string | { $nin: string[] };
   category?: string;
   priority?: string;
 }
@@ -33,8 +33,8 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     const filter: ProjectFilter = { userId: userObjectId };
     if (status) {
       const s = status.toLowerCase();
-      if (['active', 'in progress', 'pending', 'on-hold', 'ongoing'].includes(s)) {
-        filter.status = 'ongoing';
+      if (s === 'ongoing' || s === 'active') {
+        filter.status = { $nin: ['completed', 'cancelled'] };
       } else {
         filter.status = status;
       }

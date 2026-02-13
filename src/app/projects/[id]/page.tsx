@@ -1,14 +1,10 @@
-'use client';
-
-import { use } from 'react';
 import ProjectDetail from '@/components/ProjectDetail';
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 export default function ProjectDetailPage({ params }: PageProps) {
-  const { id } = use(params);
-  
+  const { id } = params;
   return <ProjectDetail projectId={id} />;
 }

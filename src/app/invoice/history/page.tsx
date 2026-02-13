@@ -37,23 +37,23 @@ export default function InvoiceHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
+        <div className="mb-6 md:mb-8">
+          <div className="flex items-center gap-4 mb-3 md:mb-4">
             <button
-              onClick={() => router.push('/invoice/create')}
-              className="p-2 text-gray-600 hover:text-primary hover:bg-white rounded-lg transition-all duration-200 shadow-sm"
-              title="Kembali ke Buat Invoice"
+              onClick={() => router.push('/dashboard')}
+              className="neuro-button px-3 py-2 rounded-full"
+              title="Kembali ke Dashboard"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div>
-              <h1 className="text-3xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>
+              <h1 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>
                 Riwayat Invoice
               </h1>
-              <p className="mt-2" style={{ color: 'var(--neuro-text-secondary)' }}>Kelola dan preview invoice yang telah dibuat</p>
+              <p className="mt-1 md:mt-2 text-sm md:text-base" style={{ color: 'var(--neuro-text-secondary)' }}>Kelola dan preview invoice yang telah dibuat</p>
             </div>
           </div>
         </div>
@@ -62,17 +62,19 @@ export default function InvoiceHistoryPage() {
         <InvoiceHistoryTable refreshTrigger={refreshTrigger} />
 
         {/* Navigation */}
-        <div className="mt-8 flex justify-center gap-4">
+        <div className="mt-6 md:mt-8 flex flex-col md:flex-row justify-center gap-3 md:gap-4">
           <button
             onClick={() => router.push('/invoice/create')}
-            className="app-btn-secondary px-6 py-3 flex items-center space-x-2"
+            className="px-6 py-3 rounded-full flex items-center justify-center gap-2"
+            style={{ backgroundColor: 'var(--neuro-orange)', color: '#fff' }}
           >
             <Plus className="h-4 w-4" />
-            <span style={{ color: 'var(--neuro-text-primary)' }}>Buat Invoice Baru</span>
+            <span>Buat Invoice Baru</span>
           </button>
           <button
             onClick={handleRefresh}
-            className="bg-white/70 backdrop-blur-sm text-gray-700 px-6 py-3 rounded-lg hover:bg-white transition-all duration-200 shadow-lg hover:shadow-xl border border-white/20 flex items-center space-x-2"
+            className="px-6 py-3 rounded-full flex items-center justify-center gap-2"
+            style={{ backgroundColor: '#fff', border: '1px solid var(--neuro-border)', color: 'var(--neuro-text-primary)' }}
           >
             <FileText className="h-4 w-4" />
             <span>Refresh</span>

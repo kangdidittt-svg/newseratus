@@ -64,7 +64,9 @@ export default function RootLayout({
         <AuthProvider>
           <div id="root" className="relative z-10">{children}</div>
           <GlobalSearchCommandPalette />
-          <StudioRobot />
+          <div className="hidden md:block">
+            <StudioRobot />
+          </div>
         </AuthProvider>
         <script
           dangerouslySetInnerHTML={{

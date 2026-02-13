@@ -222,7 +222,86 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
           </div>
         </div>
       ) : (
-        <div className="app-card overflow-hidden">
+        <>
+        {/* Mobile list (clean, flat) */}
+        <div className="md:hidden space-y-3">
+          {invoices.map((invoice) => (
+            <div key={invoice._id} className="bg-white border rounded-xl p-4" style={{ borderColor: 'var(--neuro-border)' }}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-sm app-muted">Invoice #</div>
+                  <div className="text-base font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>{invoice.invoiceNumber}</div>
+                </div>
+                <span 
+                  className="px-3 py-1 rounded-full text-xs font-medium"
+                  style={getStatusColor(invoice.status)}
+                >
+                  {invoice.status.toUpperCase()}
+                </span>
+              </div>
+              <div className="mt-2 text-sm" style={{ color: 'var(--neuro-text-primary)' }}>
+                <div className="flex items-center justify-between">
+                  <span className="app-muted">Project</span>
+                  <span>{invoice.projectTitle}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="app-muted">Client</span>
+                  <span>{invoice.billedToName}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="app-muted">Total</span>
+                  <span>{invoice.total.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="app-muted">Date</span>
+                  <span>{formatDate(invoice.createdAt)}</span>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowPreview(invoice)}
+                    className="px-4 py-2 rounded-full"
+                    style={{ backgroundColor: 'var(--neuro-orange)', color: '#fff' }}
+                    title="View Invoice"
+                  >
+                    Preview
+                  </button>
+                  <InvoiceDownloadButton
+                    fileName={`invoice-${invoice.invoiceNumber}.pdf`}
+                    targetId={`invoice-preview-${invoice._id}`}
+                    className="px-4 py-2 rounded-full"
+                  >
+                    Download
+                  </InvoiceDownloadButton>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => markAsPaid(invoice._id)}
+                    className="px-3 py-2 rounded-full"
+                    disabled={invoice.status === 'paid'}
+                    style={{
+                      backgroundColor: '#fff',
+                      border: '1px solid var(--neuro-border)',
+                      color: invoice.status === 'paid' ? 'var(--neuro-text-muted)' : 'var(--neuro-success)'
+                    }}
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteInvoice(invoice._id)}
+                    className="px-3 py-2 rounded-full"
+                    style={{ backgroundColor: '#fff', border: '1px solid var(--neuro-border)', color: 'var(--neuro-error)' }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Desktop table */}
+        <div className="hidden md:block app-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -348,6 +427,7 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
             </table>
           </div>
         </div>
+        </>
       )}
 
       {/* Preview Modal */}

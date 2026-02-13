@@ -20,9 +20,11 @@ interface TopBarProps {
     email: string;
     avatar?: string;
   };
+  hideSearch?: boolean;
+  hideNotifications?: boolean;
 }
 
-export default function TopBar({}: TopBarProps) {
+export default function TopBar({ hideSearch, hideNotifications }: TopBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [profileAvatar, setProfileAvatar] = useState<string>('/api/placeholder/150/150');
   const [userData, setUserData] = useState<{ username: string; email: string } | null>(null);
@@ -197,6 +199,7 @@ export default function TopBar({}: TopBarProps) {
       </div>
 
       {/* Center Section - Search */}
+      {!hideSearch && (
       <div className="flex-1 max-w-md mx-4">
         <motion.div
           className="relative"
@@ -220,10 +223,12 @@ export default function TopBar({}: TopBarProps) {
           />
         </motion.div>
       </div>
+      )}
 
       {/* Right Section */}
       <div className="flex items-center space-x-3">
         {/* Notifications with Popover */}
+        {!hideNotifications && (
         <NotificationPopover
           notifications={notifications}
           unreadCount={unreadCount}
@@ -259,6 +264,7 @@ export default function TopBar({}: TopBarProps) {
             )}
           </motion.button>
         </NotificationPopover>
+        )}
 
         {/* Profile Avatar */}
         <ProfilePopover 

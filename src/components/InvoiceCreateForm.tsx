@@ -485,11 +485,11 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
           </div>
 
           {/* Action Buttons */}
-          <div className="flex space-x-4">
+          <div className="flex flex-col md:flex-row gap-3">
             <button
               type="button"
               onClick={() => setShowPreview(true)}
-              className="app-btn-secondary flex items-center space-x-2 px-6 py-3"
+              className="app-btn-secondary flex items-center justify-center gap-2 px-6 py-3 w-full md:w-auto rounded-xl"
               disabled={items.length === 0}
             >
               <Eye className="h-4 w-4" />
@@ -497,7 +497,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
             </button>
             <button
               type="submit"
-              className="app-btn-primary flex items-center justify-center space-x-2 px-6 py-4 text-base font-semibold flex-1"
+              className="neuro-button-orange flex items-center justify-center gap-2 px-6 py-4 text-base font-semibold w-full md:flex-1 rounded-xl"
               disabled={isSubmitting || selectedProjects.length === 0 || items.length === 0}
             >
               {isSubmitting ? (
@@ -508,7 +508,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
               ) : (
                 <>
                   <FileText className="h-4 w-4" />
-              <span>{isBatch ? 'Create Combined PDF' : 'Create Invoice'}</span>
+                  <span>{isBatch ? 'Create Combined PDF' : 'Create Invoice'}</span>
                 </>
               )}
             </button>

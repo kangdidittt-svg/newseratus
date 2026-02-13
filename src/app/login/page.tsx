@@ -36,7 +36,7 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--neuro-bg)' }}>
+    <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'var(--neuro-bg)' }}>
       <LoginCard 
         onSubmit={handleLogin}
         loading={loading}

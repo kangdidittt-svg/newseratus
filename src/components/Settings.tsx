@@ -45,6 +45,7 @@ interface AdminUser {
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile');
+  const [isMobile, setIsMobile] = useState(false);
   const [deleteDataModal, setDeleteDataModal] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>('user');
   const [settings, setSettings] = useState<UserSettings>({
@@ -87,6 +88,14 @@ export default function Settings() {
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
+  // Detect mobile at mount and on resize (must be before any conditional returns)
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Load settings from API on component mount
   useEffect(() => {
     loadSettings();
@@ -468,7 +477,7 @@ export default function Settings() {
             alt="Profile"
             width={128}
             height={128}
-            className="w-32 h-32 rounded-full object-cover border-4 shadow-lg"
+            className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 md:shadow-lg"
             style={{ borderColor: 'var(--neuro-bg)' }}
           />
           <label className="absolute bottom-0 right-0 neuro-button-orange p-2 rounded-full cursor-pointer">
@@ -498,8 +507,8 @@ export default function Settings() {
       className="space-y-8"
     >
 
-      {/* Notification Settings */}
-      <div>
+      {/* Notification Settings (hidden on mobile for cleaner UI) */}
+      <div className="hidden md:block">
         <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
           <Bell className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
           Notifications
@@ -932,19 +941,30 @@ export default function Settings() {
   );
 
   const renderTabContent = () => {
-    switch (activeTab) {
-      case 'profile':
-        return renderProfileTab();
-      case 'preferences':
-        return renderPreferencesTab();
-      case 'security':
-        return renderSecurityTab();
-      case 'system':
-        return renderSystemTab();
-      case 'admin':
-        return renderAdminTab();
-      default:
-        return renderProfileTab();
+    if (isMobile) {
+      return (
+        <div className="space-y-8">
+          {renderProfileTab()}
+          {renderPreferencesTab()}
+          {renderSecurityTab()}
+          {renderSystemTab()}
+        </div>
+      );
+    } else {
+      switch (activeTab) {
+        case 'profile':
+          return renderProfileTab();
+        case 'preferences':
+          return renderPreferencesTab();
+        case 'security':
+          return renderSecurityTab();
+        case 'system':
+          return renderSystemTab();
+        case 'admin':
+          return renderAdminTab();
+        default:
+          return renderProfileTab();
+      }
     }
   };
 
@@ -961,22 +981,22 @@ export default function Settings() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Settings</h1>
-        <p className="font-inter mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>Manage your account settings and preferences</p>
+      <div className="mb-6 md:mb-8 px-1">
+        <h1 className="text-2xl md:text-3xl font-bold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Settings</h1>
+        <p className="font-inter mt-1 text-sm md:text-base" style={{ color: 'var(--neuro-text-secondary)' }}>Manage your account settings and preferences</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar */}
-        <div className="lg:w-64">
-          <nav className="space-y-2">
+        <div className={`lg:w-64 ${isMobile ? 'hidden' : ''}`}>
+          <nav className="space-y-2 overflow-x-auto md:overflow-visible -mx-1 px-1 md:mx-0 md:px-0 flex md:block gap-2">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <motion.button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-300 font-inter ${
+                  className={`flex-shrink-0 md:shrink w-auto md:w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-300 font-inter ${
                     activeTab === tab.id
                       ? 'neuro-card-pressed'
                       : 'neuro-card hover:neuro-card-hover'
@@ -999,17 +1019,17 @@ export default function Settings() {
 
         {/* Content */}
         <div className="flex-1">
-          <div className="neuro-card p-8">
+          <div className="neuro-card p-4 md:p-8 rounded-2xl">
             {renderTabContent()}
             
             {/* Save Button */}
-            <div className="mt-8 pt-6" style={{ borderTop: '1px solid var(--neuro-border)' }}>
-              <div className="flex items-center justify-between">
+            <div className="mt-6 md:mt-8 pt-6" style={{ borderTop: '1px solid var(--neuro-border)' }}>
+              <div className="flex items-center md:justify-between flex-col md:flex-row gap-3">
                 {saveMessage && (
                   <motion.p
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="text-sm font-inter"
+                    className="text-sm font-inter w-full md:w-auto text-center md:text-left"
                     style={{
                       color: saveMessage.includes('Error') ? 'var(--neuro-error)' : 'var(--neuro-success)'
                     }}
@@ -1020,7 +1040,7 @@ export default function Settings() {
                 <motion.button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="neuro-button-orange px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 ml-auto font-inter"
+                  className="neuro-button-orange w-full md:w-auto px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 md:ml-auto font-inter rounded-xl"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >

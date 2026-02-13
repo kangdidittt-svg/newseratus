@@ -255,6 +255,52 @@
   }
 }
 
+/* Mobile flat UI: remove floating shadows and transforms */
+@media (max-width: 768px) {
+  .neuro-card,
+  .app-card {
+    box-shadow: none !important;
+    transform: none !important;
+    background: #ffffff !important;
+    border: 1px solid var(--neuro-border) !important;
+  }
+
+  .neuro-card:hover,
+  .app-card:hover {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .neuro-button,
+  .neuro-button-orange,
+  .app-btn-primary,
+  .app-btn-secondary {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .app-btn-primary {
+    background: linear-gradient(135deg, var(--neuro-orange), var(--neuro-orange-light)) !important;
+    color: #ffffff !important;
+    border: none !important;
+  }
+
+  .app-btn-secondary {
+    background: #ffffff !important;
+    color: var(--neuro-text-primary) !important;
+    border: 1px solid var(--neuro-border) !important;
+  }
+
+  .neuro-input,
+  .app-input,
+  .neuro-select,
+  .app-select {
+    box-shadow: none !important;
+    background: #ffffff !important;
+    border: 1px solid var(--neuro-border) !important;
+  }
+}
+
 /* Robot Assistant Styles */
 .neuro-button-small {
   background: var(--neuro-bg);

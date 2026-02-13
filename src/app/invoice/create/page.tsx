@@ -42,11 +42,11 @@ export default function CreateInvoicePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
+        <div className="mb-6 md:mb-8">
+          <div className="flex items-center gap-4 mb-3 md:mb-4">
             <button
               onClick={() => router.push('/dashboard')}
               className="p-2 text-gray-600 hover:text-primary hover:bg-white rounded-lg transition-all duration-200 shadow-sm"
@@ -55,10 +55,10 @@ export default function CreateInvoicePage() {
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Buat Invoice
               </h1>
-              <p className="mt-2 text-gray-600">Buat invoice profesional dari project yang ada</p>
+              <p className="mt-1 md:mt-2 text-gray-600 text-sm md:text-base">Buat invoice profesional dari project yang ada</p>
             </div>
           </div>
         </div>

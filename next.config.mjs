@@ -1,11 +1,10 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   serverExternalPackages: ['mongoose'],
-  webpack: (config: any) => {
+  webpack: (config) => {
     config.externals.push({
       'utf-8-validate': 'commonjs utf-8-validate',
-      'bufferutil': 'commonjs bufferutil',
+      bufferutil: 'commonjs bufferutil',
     });
     return config;
   },
@@ -17,7 +16,6 @@ const nextConfig: NextConfig = {
   images: {
     domains: ['localhost'],
   },
-  // PWA Configuration
   async headers() {
     return [
       {
@@ -47,3 +45,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+

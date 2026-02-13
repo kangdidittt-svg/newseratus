@@ -23,12 +23,12 @@ export default function LoginCard({ onSubmit, loading, error }: LoginCardProps) 
 
   return (
     <motion.div
-      className="w-full max-w-md mx-auto"
+      className="w-full max-w-sm md:max-w-md mx-auto"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
     >
-      <div className="neuro-card p-8">
+      <div className="neuro-card p-6 md:p-8">
         {/* Header */}
         <motion.div
           className="text-center mb-8"
@@ -84,12 +84,12 @@ export default function LoginCard({ onSubmit, loading, error }: LoginCardProps) 
                 onChange={(e) => setUsername(e.target.value)}
                 onFocus={() => setFocusedField('username')}
                 onBlur={() => setFocusedField(null)}
-                className="neuro-input w-full font-inter relative z-0"
+                className="neuro-input w-full font-inter relative z-0 text-base"
                 style={{ 
                   paddingLeft: '3rem', 
                   paddingRight: '1rem', 
-                  paddingTop: '0.75rem', 
-                  paddingBottom: '0.75rem',
+                  paddingTop: '0.9rem', 
+                  paddingBottom: '0.9rem',
                   ...(focusedField === 'username' ? { boxShadow: '0 0 0 2px var(--neuro-orange-light)' } : {})
                 }}
                 placeholder="Enter your username"
@@ -118,12 +118,12 @@ export default function LoginCard({ onSubmit, loading, error }: LoginCardProps) 
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
-                className="neuro-input w-full font-inter relative z-0"
+                className="neuro-input w-full font-inter relative z-0 text-base"
                 style={{
                   paddingLeft: '3rem',
                   paddingRight: '3rem', 
-                  paddingTop: '0.75rem',
-                  paddingBottom: '0.75rem',
+                  paddingTop: '0.9rem',
+                  paddingBottom: '0.9rem',
                   ...(focusedField === 'password' ? { boxShadow: '0 0 0 2px var(--neuro-orange-light)' } : {})
                 }}
                 placeholder="Enter your password"
@@ -158,7 +158,7 @@ export default function LoginCard({ onSubmit, loading, error }: LoginCardProps) 
           >
             <motion.button
               type="submit"
-              className="neuro-button-orange w-full py-3 px-4 flex items-center justify-center space-x-2 font-medium font-inter"
+              className="neuro-button-orange w-full py-3.5 px-4 flex items-center justify-center space-x-2 font-semibold font-inter rounded-xl"
               disabled={loading}
               whileHover={{ scale: loading ? 1 : 1.02 }}
               whileTap={{ scale: loading ? 1 : 0.98 }}

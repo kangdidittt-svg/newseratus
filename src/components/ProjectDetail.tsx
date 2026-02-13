@@ -7,8 +7,6 @@ import {
   User, 
   Tag, 
   ArrowLeft, 
-  Archive, 
-  RotateCcw,
   ExternalLink,
   Copy,
   Save,
@@ -54,6 +52,8 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   const [masterLink, setMasterLink] = useState('');
   const [masterNotes, setMasterNotes] = useState('');
   const [editingMaster, setEditingMaster] = useState(false);
+  const [editBudget, setEditBudget] = useState<string>('');
+  const [editStatus, setEditStatus] = useState<'ongoing' | 'completed'>('ongoing');
   const router = useRouter();
   const USD_TO_IDR = 16000;
 
@@ -64,13 +64,15 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
 
   const fetchProject = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}`);
+      const response = await fetch(`/api/projects/${projectId}`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         const proj = data.project || data;
         setProject(proj);
         setMasterLink(proj.masterLink || '');
         setMasterNotes(proj.masterNotes || '');
+        setEditBudget(typeof proj.budget === 'number' ? String(proj.budget) : '');
+        setEditStatus((proj.status as 'ongoing' | 'completed') || 'ongoing');
       }
     } catch (error) {
       console.error('Error fetching project:', error);
@@ -79,23 +81,22 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
     }
   };
 
-  const moveToStudioLibrary = async () => {
+  const updateProject = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/studio-library`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+      const payload: Partial<Project> = {};
+      if (editBudget !== '') payload.budget = Number(editBudget);
+      if (editStatus) payload.status = editStatus;
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
       });
-
       if (response.ok) {
-        const data = await response.json();
-        if (data.warning) {
-          setShowStudioConfirm(true);
-        } else {
-          fetchProject();
-        }
+        await fetchProject();
       }
     } catch (error) {
-      console.error('Error moving to studio library:', error);
+      console.error('Error updating project:', error);
     }
   };
 
@@ -183,57 +184,22 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => router.push('/studio-library')}
+            onClick={() => router.push('/dashboard')}
             className="neuro-button px-3 py-2 flex items-center gap-2"
           >
             <ArrowLeft className="h-5 w-5" />
             Kembali
           </button>
 
-          {/* Studio Library Actions */}
+          {/* Update Actions */}
           <div className="flex gap-3">
-            {project.status === 'ongoing' && (
-              <button
-                onClick={moveToStudioLibrary}
-                className="neuro-button-orange px-4 py-2 flex items-center gap-2"
-              >
-                <Archive className="h-4 w-4" />
-                Move to Studio Library
-              </button>
-            )}
-            {project.status === 'completed' && (
-              <>
-                <div className="px-4 py-2 rounded-lg flex items-center gap-2" style={{ background: 'var(--neuro-success-light)', color: 'var(--neuro-success)' }}>
-                  <Archive className="h-4 w-4" />
-                  Archived in Studio Library
-                </div>
-                <button
-                  onClick={returnToActive}
-                  className="neuro-button px-4 py-2 flex items-center gap-2"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Return to Active
-                </button>
-                {project.masterLink && (
-                  <>
-                    <button
-                      onClick={() => window.open(project.masterLink!, '_blank')}
-                      className="neuro-button px-4 py-2 flex items-center gap-2"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      Master Files
-                    </button>
-                    <button
-                      onClick={() => copyToClipboard(project.masterLink!)}
-                      className="neuro-button px-4 py-2 flex items-center gap-2"
-                    >
-                      <Copy className="h-4 w-4" />
-                      Copy Link
-                    </button>
-                  </>
-                )}
-              </>
-            )}
+            <button
+              onClick={updateProject}
+              className="neuro-button-orange px-4 py-2 flex items-center gap-2 rounded-xl"
+            >
+              <Save className="h-4 w-4" />
+              Update
+            </button>
           </div>
         </div>
 
@@ -325,32 +291,38 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Status Info */}
+            {/* Status & Edit */}
             <div className="neuro-card p-6">
-              <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--neuro-text-primary)' }}>Status</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--neuro-text-secondary)' }}>Status</span>
-                  <span className={`text-xs font-medium`}>
-                    <span className="px-2 py-1 rounded-full" style={{ background: project.status === 'completed' ? 'var(--neuro-success-light)' : 'var(--neuro-blue-light)', color: project.status === 'completed' ? 'var(--neuro-success)' : 'var(--neuro-blue)' }}>
-                      {project.status === 'ongoing' ? 'On Going' : 'Completed'}
-                    </span>
-                  </span>
+              <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--neuro-text-primary)' }}>Status & Budget</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm mb-1" style={{ color: 'var(--neuro-text-secondary)' }}>Status</label>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value as 'ongoing' | 'completed')}
+                    className="neuro-select w-full"
+                  >
+                    <option value="ongoing">On Going</option>
+                    <option value="completed">Completed</option>
+                  </select>
                 </div>
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--neuro-text-secondary)' }}>Priority</span>
-                  <span className={`text-xs font-medium`}>
-                    <span className="px-2 py-1 rounded-full" style={{ background: project.priority === 'high' ? 'var(--neuro-error-light)' : project.priority === 'medium' ? 'var(--neuro-warning-light)' : 'var(--neuro-bg-secondary)', color: project.priority === 'high' ? 'var(--neuro-error)' : project.priority === 'medium' ? 'var(--neuro-warning)' : 'var(--neuro-text-secondary)' }}>
-                      {project.priority.charAt(0).toUpperCase() + project.priority.slice(1)}
-                    </span>
-                  </span>
+                <div>
+                  <label className="block text-sm mb-1" style={{ color: 'var(--neuro-text-secondary)' }}>Budget (USD)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editBudget}
+                    onChange={(e) => setEditBudget(e.target.value)}
+                    className="neuro-input w-full"
+                    placeholder="0.00"
+                  />
                 </div>
-                {project.completedAt && (
-                  <div className="flex justify-between">
-                    <span style={{ color: 'var(--neuro-text-secondary)' }}>Completed</span>
-                    <span className="text-sm" style={{ color: 'var(--neuro-text-primary)' }}>{new Date(project.completedAt).toLocaleDateString('id-ID')}</span>
-                  </div>
-                )}
+                <button
+                  onClick={updateProject}
+                  className="neuro-button-orange w-full px-4 py-3 rounded-xl font-semibold"
+                >
+                  Update
+                </button>
               </div>
             </div>
 

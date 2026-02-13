@@ -96,6 +96,7 @@ export default function ProfilePopover({ children, userName, userEmail }: Profil
       <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onClick={() => setIsOpen(prev => !prev)}
         className="cursor-pointer"
       >
         {children}

@@ -26,6 +26,7 @@ export default function NewProjectPage() {
     title: '',
     client: '',
     description: '',
+    category: 'website',
     priority: 'Medium',
     budget: '',
     deadline: '',
@@ -175,8 +176,8 @@ export default function NewProjectPage() {
                 <ArrowLeft className="h-6 w-6" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Project Baru</h1>
-                <p className="text-gray-600">Tambahkan project baru untuk client Anda</p>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Project Baru</h1>
+                <p className="text-gray-600 text-sm md:text-base">Tambahkan project baru untuk client Anda</p>
               </div>
             </div>
           </div>
@@ -184,9 +185,9 @@ export default function NewProjectPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <div className="bg-white rounded-2xl shadow-sm border">
+          <div className="p-4 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Nama Project */}
@@ -199,7 +200,7 @@ export default function NewProjectPage() {
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
                       errors.title ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
                     placeholder="Masukkan nama project"
@@ -219,7 +220,7 @@ export default function NewProjectPage() {
                     name="client"
                     value={formData.client}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
                       errors.client ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
                     placeholder="Masukkan nama client"
@@ -228,6 +229,25 @@ export default function NewProjectPage() {
                     <p className="mt-1 text-sm text-red-600">{errors.client}</p>
                   )}
                 </div>
+              </div>
+
+              {/* Kategori */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kategori
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                >
+                  <option value="website">Website</option>
+                  <option value="mobile-app">Mobile App</option>
+                  <option value="branding">Branding</option>
+                  <option value="e-commerce">E-Commerce</option>
+                  <option value="api">API</option>
+                </select>
               </div>
 
               {/* Deskripsi */}
@@ -240,7 +260,7 @@ export default function NewProjectPage() {
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                   placeholder="Deskripsi detail tentang project (opsional)"
                 />
               </div>
@@ -255,7 +275,7 @@ export default function NewProjectPage() {
                     name="priority"
                     value={formData.priority}
                     onChange={handleInputChange}
-                    className="neuro-select w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                    className="neuro-select w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -275,7 +295,7 @@ export default function NewProjectPage() {
                       name="budget"
                       value={formData.budget}
                       onChange={handleInputChange}
-                      className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                      className={`w-full pl-8 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors ${
                         errors.budget ? 'border-red-300 bg-red-50' : 'border-gray-300'
                       }`}
                       min="0"
@@ -297,7 +317,7 @@ export default function NewProjectPage() {
                     name="status"
                     value={formData.status}
                     onChange={handleInputChange}
-                    className="neuro-select w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                    className="neuro-select w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                   >
                     <option value="pending">Pending</option>
                     <option value="on-progress">On Progress</option>
@@ -315,16 +335,16 @@ export default function NewProjectPage() {
                   name="deadline"
                   value={formData.deadline}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                 />
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex gap-4 pt-6">
+              <div className="flex flex-col md:flex-row gap-3 md:gap-4 pt-4 md:pt-6">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-medium"
+                  className="flex-1 neuro-button-orange px-6 py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold"
                 >
                   {isSubmitting ? (
                     <>
@@ -341,7 +361,7 @@ export default function NewProjectPage() {
                 
                 <Link
                   href="/dashboard"
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center font-medium"
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center font-medium"
                 >
                   Batal
                 </Link>

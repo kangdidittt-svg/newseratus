@@ -278,7 +278,7 @@ export const TasksPage: React.FC<{ isMobile: boolean }> = ({ isMobile }) => {
           title="Pending" 
           value={tasks.filter(t => t.status === 'pending').length} 
           icon={<Clock size={24} />} 
-          color="yellow" 
+          color="orange" 
         />
         <StatCard 
           title="In Progress" 

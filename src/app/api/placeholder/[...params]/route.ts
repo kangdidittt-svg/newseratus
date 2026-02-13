@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ params: string[] }> }) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const resolvedParams = await params;
+  void request;
+  void (await params);
   
   // Create a simple base64 PNG placeholder (1x1 gray pixel)
   const base64PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI9jU77zgAAAABJRU5ErkJggg==';

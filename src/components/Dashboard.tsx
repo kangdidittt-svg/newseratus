@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { MobileLayout, DesktopLayout } from './layout/ResponsiveLayout';
+import { MobileLayout } from './layout/ResponsiveLayout';
+import { DesktopLayout } from './layout/DesktopLayout';
 import { MobileDashboard } from './MobileDashboard';
 import { DesktopDashboard } from './DesktopDashboard';
 
@@ -21,7 +22,7 @@ export default function Dashboard() {
 
       {/* Desktop Layout */}
       <DesktopLayout activeTab={activeTab} onTabChange={handleTabChange}>
-        <DesktopDashboard onNavigate={handleTabChange} />
+        <DesktopDashboard />
       </DesktopLayout>
     </>
   );

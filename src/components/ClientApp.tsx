@@ -6,7 +6,6 @@ import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import FreelanceDashboard from './FreelanceDashboard';
 import ProjectList from './ProjectList';
-import AddProject from './AddProject';
 import AddProjectStudio from './AddProjectStudio';
 import InvoiceHistoryTable from './InvoiceHistoryTable';
 import MonthlyReport from './MonthlyReport';

@@ -10,12 +10,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft } from 'lucide-react';
 import { useEffect } from 'react';
 
-interface TopBarUser {
-  name: string;
-  email: string;
-  avatar?: string;
-}
-
 export default function SettingsPage() {
   const { user } = useAuth();
   const router = useRouter();

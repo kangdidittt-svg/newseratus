@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, Calendar, DollarSign, Users, Clock, CheckCircle, Plus, Filter, FolderOpen } from 'lucide-react';
+import { Search, Bell, DollarSign, Users, CheckCircle, Plus, Filter, FolderOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { StatCard } from './ui/StatCard';

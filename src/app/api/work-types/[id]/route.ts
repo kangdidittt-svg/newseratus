@@ -29,6 +29,7 @@ export const PUT = withAuth(async (request: AuthenticatedRequest, { params }: { 
 // DELETE work type (soft delete)
 export const DELETE = withAuth(async (request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
+    void request;
     const { id } = await params;
     
     const workType = await WorkType.findByIdAndUpdate(

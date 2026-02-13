@@ -234,7 +234,7 @@ export const InvoicesPage: React.FC<{ isMobile: boolean }> = ({ isMobile }) => {
           title="Pending" 
           value={`$${invoices.filter(i => i.status === 'pending').reduce((sum, i) => sum + i.amount, 0).toLocaleString()}`} 
           icon={<Clock size={24} />} 
-          color="yellow" 
+          color="orange" 
         />
         <StatCard 
           title="Overdue" 

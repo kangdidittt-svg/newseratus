@@ -126,6 +126,7 @@ export default function NewProjectPage() {
           title: '',
           client: '',
           description: '',
+          category: 'website',
           priority: 'Medium',
           budget: '',
           deadline: '',

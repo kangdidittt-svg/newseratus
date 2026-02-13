@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Edit, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { Plus, Edit, ToggleLeft, ToggleRight } from 'lucide-react';
 import ModernCard from '@/components/ModernCard';
 
 interface WorkType {

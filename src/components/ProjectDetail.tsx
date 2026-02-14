@@ -54,6 +54,8 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
   const [editingMaster, setEditingMaster] = useState(false);
   const [editBudget, setEditBudget] = useState<string>('');
   const [editStatus, setEditStatus] = useState<'ongoing' | 'completed'>('ongoing');
+  const [confirmComplete, setConfirmComplete] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const router = useRouter();
   const USD_TO_IDR = 16000;
 
@@ -81,7 +83,7 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
     }
   };
 
-  const updateProject = async () => {
+  const doUpdate = async () => {
     try {
       const payload: Partial<Project> = {};
       if (editBudget !== '') payload.budget = Number(editBudget);
@@ -94,9 +96,20 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
       });
       if (response.ok) {
         await fetchProject();
+        setToast({ type: 'success', text: 'Project berhasil diperbarui' });
+        setTimeout(()=>setToast(null), 2000);
       }
     } catch (error) {
       console.error('Error updating project:', error);
+      setToast({ type: 'error', text: 'Gagal memperbarui project' });
+      setTimeout(()=>setToast(null), 2000);
+    }
+  };
+  const updateProject = async () => {
+    if (project && project.status !== 'completed' && editStatus === 'completed') {
+      setConfirmComplete(true);
+    } else {
+      await doUpdate();
     }
   };
 
@@ -316,6 +329,9 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                     className="neuro-input w-full"
                     placeholder="0.00"
                   />
+                  <div className="mt-1 text-sm" style={{ color: 'var(--neuro-text-secondary)' }}>
+                    Estimasi: {new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format((Number(editBudget||0))*16000)}
+                  </div>
                 </div>
                 <button
                   onClick={updateProject}
@@ -448,6 +464,23 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
           </div>
         )}
       </div>
+      {confirmComplete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+          <div className="bg-white rounded-xl p-6 w-80">
+            <div className="font-semibold text-gray-900 mb-2">Selesaikan Project?</div>
+            <p className="text-sm text-gray-600 mb-4">Apakah Anda yakin ingin mengubah status menjadi Completed?</p>
+            <div className="flex gap-2">
+              <button className="flex-1 px-4 py-2 rounded-lg border" onClick={()=>setConfirmComplete(false)}>Batal</button>
+              <button className="flex-1 px-4 py-2 rounded-lg text-white" style={{ backgroundColor: 'var(--neuro-orange)' }} onClick={async ()=>{ setConfirmComplete(false); await doUpdate(); }}>Ya, Selesaikan</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white" style={{ backgroundColor: toast.type==='success' ? '#10B981' : '#EF4444' }}>
+          {toast.text}
+        </div>
+      )}
     </div>
   );
 }

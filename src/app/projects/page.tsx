@@ -42,6 +42,12 @@ export default function ProjectListPage() {
   const [filterEnd, setFilterEnd] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [perPage, setPerPage] = useState<number>(10);
+  const [showActions, setShowActions] = useState(false);
+  const [actionProject, setActionProject] = useState<Project | null>(null);
+  const [confirmComplete, setConfirmComplete] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const longPressRef = (typeof window !== 'undefined') ? { current: null as any } : { current: null as any };
 
   useEffect(() => {
     if (!user) {
@@ -89,11 +95,18 @@ export default function ProjectListPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('id-ID', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
+  };
+  const usdToIdr = (usd?: number) => {
+    const rate = 16000;
+    const amount = typeof usd === 'number' ? usd : 0;
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount * rate);
   };
 
   const getStatusColor = (status: string) => {
@@ -323,13 +336,16 @@ export default function ProjectListPage() {
           </div>
         ) : (
           <div className="grid gap-3 md:gap-6">
-            {paginated.map((project) => (
+          {paginated.map((project) => (
               <div key={project._id}>
                 {/* Mobile simple item */}
                 <div
                   className="md:hidden bg-white border rounded-xl p-4 cursor-pointer"
                   style={{ borderColor: 'var(--neuro-border)' }}
                   onClick={() => router.push(`/projects/${project._id}`)}
+                  onContextMenu={(e)=>{e.preventDefault(); setActionProject(project); setShowActions(true);}}
+                  onTouchStart={(e)=>{longPressRef.current = setTimeout(()=>{ setActionProject(project); setShowActions(true);}, 450);}}
+                  onTouchEnd={(e)=>{ if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; }}}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -415,6 +431,7 @@ export default function ProjectListPage() {
                         <div>
                           <span className="text-xs text-gray-500">Budget</span>
                           <p className="text-sm font-medium">${project.budget.toLocaleString()}</p>
+                          <p className="text-xs text-gray-500">{usdToIdr(project.budget)}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -448,6 +465,64 @@ export default function ProjectListPage() {
                 </div>
               </div>
             ))}
+            {/* Action Sheet - Mobile */}
+            {showActions && actionProject && (
+              <div className="md:hidden fixed inset-0 z-50" onClick={()=>setShowActions(false)}>
+                <div className="absolute inset-0 bg-black/30"></div>
+                <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 space-y-2" onClick={(e)=>e.stopPropagation()}>
+                  <div className="text-center font-semibold text-gray-900 mb-1">{actionProject.title}</div>
+                  <button className="w-full px-4 py-3 rounded-full" style={{ backgroundColor: 'var(--neuro-orange)', color: '#fff' }} onClick={()=>{router.push(`/projects/${actionProject._id}`); setShowActions(false);}}>Edit</button>
+                  <button className="w-full px-4 py-3 rounded-full border" style={{ borderColor: 'var(--neuro-border)' }} onClick={()=>{ setConfirmComplete(true); setShowActions(false);}}>Mark as Complete</button>
+                  <button className="w-full px-4 py-3 rounded-full border text-red-600" style={{ borderColor: 'var(--neuro-border)' }} onClick={()=>{ setConfirmDelete(true); setShowActions(false);}}>Delete</button>
+                  <button className="w-full px-4 py-3 rounded-full border" style={{ borderColor: 'var(--neuro-border)' }} onClick={()=>setShowActions(false)}>Batal</button>
+                </div>
+              </div>
+            )}
+            {/* Confirm Complete */}
+            {confirmComplete && actionProject && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+                <div className="bg-white rounded-xl p-5 w-80">
+                  <div className="font-semibold text-gray-900 mb-2">Tandai selesai?</div>
+                  <p className="text-sm text-gray-600 mb-4">Apakah Anda yakin ingin mengubah status project menjadi Completed?</p>
+                  <div className="flex gap-2">
+                    <button className="flex-1 px-4 py-2 rounded-lg border" onClick={()=>setConfirmComplete(false)}>Batal</button>
+                    <button className="flex-1 px-4 py-2 rounded-lg text-white" style={{ backgroundColor: 'var(--neuro-orange)' }} onClick={async ()=>{ 
+                      try{
+                        await fetch(`/api/projects/${actionProject._id}`,{method:'PUT',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({status:'completed'})});
+                        setToast({type:'success', text:'Project ditandai selesai'});
+                        fetchProjects();
+                      }catch(e){ setToast({type:'error', text:'Gagal memperbarui project'}); }
+                      setConfirmComplete(false);
+                    }}>Ya, Selesai</button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Confirm Delete */}
+            {confirmDelete && actionProject && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+                <div className="bg-white rounded-xl p-5 w-80">
+                  <div className="font-semibold text-gray-900 mb-2">Hapus project?</div>
+                  <p className="text-sm text-gray-600 mb-4">Tindakan ini tidak dapat dibatalkan.</p>
+                  <div className="flex gap-2">
+                    <button className="flex-1 px-4 py-2 rounded-lg border" onClick={()=>setConfirmDelete(false)}>Batal</button>
+                    <button className="flex-1 px-4 py-2 rounded-lg text-white" style={{ backgroundColor: 'var(--neuro-orange)' }} onClick={async ()=>{ 
+                      try{
+                        await fetch(`/api/projects/${actionProject._id}`,{method:'DELETE',credentials:'include'});
+                        setToast({type:'success', text:'Project dihapus'});
+                        fetchProjects();
+                      }catch(e){ setToast({type:'error', text:'Gagal menghapus project'}); }
+                      setConfirmDelete(false);
+                    }}>Hapus</button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {toast && (
+              <div className="fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white" style={{ backgroundColor: toast.type==='success' ? '#10B981' : '#EF4444' }} onAnimationEnd={()=>{}}>
+                {toast.text}
+              </div>
+            )}
             {/* Pagination */}
             <div className="flex items-center justify-between mt-2 md:mt-4">
               <div className="text-sm text-gray-600">

@@ -118,6 +118,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (updateData.status === 'active' || updateData.status === 'on-hold') {
       updateData.status = 'ongoing';
     }
+    if (updateData.priority) {
+      updateData.priority = String(updateData.priority).toLowerCase();
+    }
 
     const project = await Project.findOneAndUpdate(
       {
@@ -174,11 +177,13 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       { status: 200 }
     );
   } catch (error) {
+    if (error instanceof mongoose.Error.ValidationError) {
+      const firstKey = Object.keys(error.errors)[0];
+      const msg = firstKey ? error.errors[firstKey].message : 'Validation error';
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
     console.error('Update project error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 

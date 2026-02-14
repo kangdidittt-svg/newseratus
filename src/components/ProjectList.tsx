@@ -264,11 +264,18 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('id-ID', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
+  };
+  const usdToIdr = (usd?: number) => {
+    const rate = 16000;
+    const amount = typeof usd === 'number' ? usd : 0;
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount * rate);
   };
 
   const getStatusColor = (status: string) => {
@@ -566,19 +573,26 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
                 {/* Budget */}
                 <div className="flex items-center mb-4" style={{ color: 'var(--neuro-text-secondary)' }}>
                   <DollarSign className="h-4 w-4 mr-2" style={{ color: 'var(--neuro-text-muted)' }} />
-                  <span className="font-semibold text-lg" style={{ color: 'var(--neuro-success)' }}>
-                    ${project.budget.toLocaleString()}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-lg" style={{ color: 'var(--neuro-success)' }}>
+                      ${project.budget.toLocaleString()}
+                    </span>
+                    <span className="text-xs" style={{ color: 'var(--neuro-text-muted)' }}>
+                      {usdToIdr(project.budget)}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Description */}
                 <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--neuro-text-secondary)' }}>{project.description}</p>
 
-                {/* Deadline */}
-                <div className="flex items-center text-sm" style={{ color: 'var(--neuro-text-muted)' }}>
-                  <Calendar className="h-4 w-4 mr-2" style={{ color: 'var(--neuro-text-muted)' }} />
-                  <span>Due: {formatDate(project.deadline)}</span>
-                </div>
+                {/* Deadline (hide when invalid; show date only) */}
+                {formatDate(project.deadline) !== '—' && (
+                  <div className="flex items-center text-sm" style={{ color: 'var(--neuro-text-muted)' }}>
+                    <Calendar className="h-4 w-4 mr-2" style={{ color: 'var(--neuro-text-muted)' }} />
+                    <span>{formatDate(project.deadline)}</span>
+                  </div>
+                )}
               </div>
 
               {/* Progress Bar */}
@@ -711,6 +725,9 @@ export default function ProjectList({ refreshTrigger, onAddProject }: ProjectLis
                     className="neuro-input w-full px-4 py-2"
                     placeholder="Enter budget"
                   />
+                  <div className="mt-1 text-xs" style={{ color: 'var(--neuro-text-secondary)' }}>
+                    Estimasi: {usdToIdr(editFormData.budget)}
+                  </div>
                 </div>
               </div>
 

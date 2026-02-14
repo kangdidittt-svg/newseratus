@@ -7,6 +7,8 @@ import { MobileNav } from './ui/MobileNav';
 import EdinburghClock from './EdinburghClock';
 import ProfilePopover from './ProfilePopover';
 import { useRealtimeDashboard } from '@/hooks/useRealtimeDashboard';
+import NotificationPopover from './NotificationPopover';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import { useRouter } from 'next/navigation';
 
 interface Project {
@@ -26,9 +28,16 @@ interface Task {
 
 export const MobileDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [showNotifications, setShowNotifications] = useState(false);
   const { stats, recentProjects } = useRealtimeDashboard();
   const router = useRouter();
+  const {
+    notifications,
+    unreadCount,
+    connectionStatus,
+    isLoading: isLoadingNotifications,
+    markAsRead,
+    refreshNotifications
+  } = useRealtimeNotifications();
 
   const projects: Project[] = useMemo(() => {
     return (recentProjects || []).slice(0, 5).map((p, idx) => ({
@@ -40,11 +49,7 @@ export const MobileDashboard: React.FC = () => {
     }));
   }, [recentProjects]);
 
-  const notifications = [
-    { id: 1, message: 'Project deadline approaching', time: '2 hours ago' },
-    { id: 2, message: 'New task assigned to you', time: '4 hours ago' },
-    { id: 3, message: 'Invoice payment received', time: '1 day ago' },
-  ];
+  // notifications now come from useRealtimeNotifications via NotificationPopover
 
   const renderDashboard = () => (
     <div className="space-y-6">
@@ -134,13 +139,19 @@ export const MobileDashboard: React.FC = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-900">ProjectHub</h1>
           <div className="flex items-center space-x-3">
-            <button 
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 text-gray-600 hover:text-gray-900"
+            <NotificationPopover
+              notifications={notifications}
+              unreadCount={unreadCount}
+              isLoading={isLoadingNotifications}
+              connectionStatus={connectionStatus}
+              onMarkAsRead={() => markAsRead()}
+              onDelete={async () => true}
             >
-              <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full"></span>
-            </button>
+              <button className="relative p-2 text-gray-600 hover:text-gray-900">
+                <Bell size={20} />
+                {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full"></span>}
+              </button>
+            </NotificationPopover>
             <ProfilePopover>
               <button className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">JD</span>
@@ -148,22 +159,6 @@ export const MobileDashboard: React.FC = () => {
             </ProfilePopover>
           </div>
         </div>
-        
-        {showNotifications && (
-          <div className="absolute top-16 right-4 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-            <div className="p-4 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900">Notifications</h3>
-            </div>
-            <div className="max-h-64 overflow-y-auto">
-              {notifications.map((notification) => (
-                <div key={notification.id} className="p-4 border-b border-gray-50 hover:bg-gray-50">
-                  <p className="text-sm text-gray-900">{notification.message}</p>
-                  <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="px-4 py-6">

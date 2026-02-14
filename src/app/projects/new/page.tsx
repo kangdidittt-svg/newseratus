@@ -26,15 +26,16 @@ export default function NewProjectPage() {
     title: '',
     client: '',
     description: '',
-    category: 'website',
-    priority: 'Medium',
+    category: 'web-development',
+    priority: 'medium',
     budget: '',
     deadline: '',
-    status: 'pending'
+    status: 'ongoing'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [serverError, setServerError] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -75,6 +76,7 @@ export default function NewProjectPage() {
     }
 
     setIsSubmitting(true);
+    setServerError('');
     
     try {
       const response = await fetch('/api/projects', {
@@ -82,10 +84,12 @@ export default function NewProjectPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           title: formData.title,
           client: formData.client,
           description: formData.description,
+          category: formData.category,
           priority: formData.priority,
           budget: formData.budget ? parseFloat(formData.budget) : undefined,
           deadline: formData.deadline || undefined,
@@ -126,11 +130,11 @@ export default function NewProjectPage() {
           title: '',
           client: '',
           description: '',
-          category: 'website',
-          priority: 'Medium',
+          category: 'web-development',
+          priority: 'medium',
           budget: '',
           deadline: '',
-          status: 'pending'
+          status: 'ongoing'
         });
         
         // Redirect to dashboard after 2 seconds
@@ -138,12 +142,16 @@ export default function NewProjectPage() {
           router.push('/dashboard');
         }, 2000);
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Gagal menambahkan project');
+        let msg = 'Gagal menambahkan project';
+        try {
+          const errorData = await response.json();
+          msg = errorData.error || errorData.message || msg;
+        } catch {}
+        setServerError(msg);
+        throw new Error(msg);
       }
     } catch (error) {
       console.error('Error adding project:', error);
-      alert('Terjadi kesalahan saat menambahkan project');
     } finally {
       setIsSubmitting(false);
     }
@@ -189,6 +197,11 @@ export default function NewProjectPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         <div className="bg-white rounded-2xl shadow-sm border">
           <div className="p-4 md:p-8">
+            {serverError && (
+              <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'var(--neuro-error-light)', color: 'var(--neuro-error)', border: '1px solid var(--neuro-error)' }}>
+                {serverError}
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Nama Project */}
@@ -243,11 +256,10 @@ export default function NewProjectPage() {
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                 >
-                  <option value="website">Website</option>
+                  <option value="web-development">Web Development</option>
                   <option value="mobile-app">Mobile App</option>
-                  <option value="branding">Branding</option>
-                  <option value="e-commerce">E-Commerce</option>
-                  <option value="api">API</option>
+                  <option value="design">Design</option>
+                  <option value="consulting">Consulting</option>
                 </select>
               </div>
 
@@ -278,9 +290,9 @@ export default function NewProjectPage() {
                     onChange={handleInputChange}
                     className="neuro-select w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                   >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
                   </select>
                 </div>
 
@@ -314,15 +326,15 @@ export default function NewProjectPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Status
                   </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="neuro-select w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="on-progress">On Progress</option>
-                  </select>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  className="neuro-select w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                >
+                  <option value="ongoing">On Going</option>
+                  <option value="completed">Completed</option>
+                </select>
                 </div>
               </div>
 

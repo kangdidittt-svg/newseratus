@@ -105,6 +105,9 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     if (projectData.status === 'active' || projectData.status === 'on-hold') {
       projectData.status = 'ongoing';
     }
+    if (projectData.priority) {
+      projectData.priority = String(projectData.priority).toLowerCase();
+    }
     
     // Validate required fields
     if (!projectData.title || !projectData.client || !projectData.category) {
@@ -131,10 +134,12 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof mongoose.Error.ValidationError) {
+      const firstKey = Object.keys(error.errors)[0];
+      const msg = firstKey ? error.errors[firstKey].message : 'Validation error';
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
     console.error('Create project error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

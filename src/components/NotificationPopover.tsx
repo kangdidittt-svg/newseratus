@@ -41,6 +41,14 @@ export default function NotificationPopover({
   const popoverRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Auto-open on hover with delay
   const handleMouseEnter = () => {
@@ -48,7 +56,7 @@ export default function NotificationPopover({
       clearTimeout(timeoutRef.current);
     }
     // Immediate open on hover
-    setIsOpen(true);
+    if (!isMobile) setIsOpen(true);
   };
 
   const handleMouseLeave = () => {
@@ -56,9 +64,11 @@ export default function NotificationPopover({
       clearTimeout(timeoutRef.current);
     }
     // Delay close to allow moving to popover
-    timeoutRef.current = setTimeout(() => {
-      setIsOpen(false);
-    }, 300);
+    if (!isMobile) {
+      timeoutRef.current = setTimeout(() => {
+        setIsOpen(false);
+      }, 300);
+    }
   };
 
   // Handle click outside
@@ -128,9 +138,109 @@ export default function NotificationPopover({
         {children}
       </div>
 
-      {/* Popover */}
+      {/* Mobile Sheet */}
       <AnimatePresence>
-        {isOpen && (
+        {isMobile && isOpen && (
+          <motion.div
+            className="fixed inset-0 z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0 bg-black/40" onClick={() => setIsOpen(false)} />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-orange-500" />
+                  <span className="font-semibold">Notifikasi</span>
+                  {unreadCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-xs text-white" style={{ backgroundColor: 'var(--neuro-orange)' }}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+                <button className="px-3 py-1 rounded-full border text-sm" onClick={() => setIsOpen(false)}>Tutup</button>
+              </div>
+              <div className="text-xs text-gray-500 mb-3">
+                {connectionStatus === 'connected' ? 'Terhubung' : connectionStatus === 'connecting' ? 'Menghubungkan...' : connectionStatus === 'reconnecting' ? 'Menghubungkan ulang...' : 'Terputus'}
+              </div>
+              <div className="max-h-[55vh] overflow-y-auto -mx-1 px-1">
+                {isLoading ? (
+                  <div className="py-10 text-center text-gray-500">Memuat notifikasi...</div>
+                ) : notifications.length === 0 ? (
+                  <div className="py-10 text-center text-gray-500">Tidak ada notifikasi</div>
+                ) : (
+                  notifications
+                    .filter(n => !hiddenIds.has(n.id))
+                    .slice(0, 20)
+                    .map((notification) => (
+                      <div key={notification.id} className="p-3 border-b flex items-start gap-3">
+                        <div className="mt-1">{getNotificationIcon(notification)}</div>
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <div className="font-medium text-sm text-gray-900">{notification.title}</div>
+                            <div className="text-xs text-gray-500">{formatTime(notification.time)}</div>
+                          </div>
+                          <div className="text-sm text-gray-600 mt-0.5">{notification.message}</div>
+                          {notification.clientName && (
+                            <div className="text-xs text-blue-600 mt-1">Client: {notification.clientName}</div>
+                          )}
+                          <div className="flex gap-2 mt-2">
+                            {notification.unread && (
+                              <button
+                                className="px-3 py-1 rounded-full text-xs"
+                                style={{ backgroundColor: 'var(--neuro-bg-secondary)' }}
+                                onClick={() => onMarkAsRead([notification.id])}
+                              >
+                                Tandai dibaca
+                              </button>
+                            )}
+                            <button
+                              className="px-3 py-1 rounded-full text-xs text-red-600 border"
+                              onClick={async () => {
+                                if (deletingIds.has(notification.id) || hiddenIds.has(notification.id)) return;
+                                setHiddenIds(prev => new Set(prev).add(notification.id));
+                                setDeletingIds(prev => new Set(prev).add(notification.id));
+                                try { await onDelete(notification.id); } finally {
+                                  setDeletingIds(prev => {
+                                    const ns = new Set(prev); ns.delete(notification.id); return ns;
+                                  });
+                                }
+                              }}
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+              {notifications.length > 0 && (
+                <div className="pt-3">
+                  <button
+                    onClick={() => { onMarkAsRead(); setIsOpen(false); }}
+                    className="w-full px-4 py-3 rounded-full text-white"
+                    style={{ backgroundColor: 'var(--neuro-orange)' }}
+                  >
+                    Tandai semua sudah dibaca
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Popover */}
+      <AnimatePresence>
+        {!isMobile && isOpen && (
           <motion.div
             ref={popoverRef}
             initial={{ opacity: 0, scale: 0.9, y: 10 }}
@@ -142,13 +252,8 @@ export default function NotificationPopover({
               damping: 25,
               duration: 0.3
             }}
-            className="absolute right-0 mt-3 w-96 z-50"
-            style={{
-              background: 'var(--neuro-bg)',
-              borderRadius: '20px',
-              boxShadow: '12px 12px 24px rgba(163, 163, 166, 0.4), -12px -12px 24px rgba(255, 255, 255, 0.9)',
-              border: '1px solid var(--neuro-border)'
-            }}
+            className="absolute right-0 mt-3 w-80 z-50 rounded-xl border bg-white shadow-lg"
+            style={{ borderColor: 'var(--neuro-border)' }}
 
           >
             {/* Header */}

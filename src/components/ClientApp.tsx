@@ -180,8 +180,10 @@ export default function ClientApp() {
         </main>
       </div>
 
-      {/* Floating Studio Robot Widget (Bottom Right for all screen sizes) */}
-      <StudioRobot isPermanentPanel={false} onNavigate={handleNavigation} />
+      {/* Floating Studio Robot Widget (Desktop only) */}
+      <div className="hidden lg:block">
+        <StudioRobot isPermanentPanel={false} onNavigate={handleNavigation} />
+      </div>
 
       {/* Mobile Bottom Navigation */}
       <MobileNav activeTab={activeTab} onTabChange={handleNavigation} />

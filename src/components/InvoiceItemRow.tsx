@@ -4,6 +4,7 @@ import { Trash2 } from 'lucide-react';
 
 export interface InvoiceItem {
   description: string;
+  subDescription?: string;
   quantity: number;
   rate: number;
   amount: number;
@@ -36,16 +37,30 @@ export default function InvoiceItemRow({
           <label className="block text-xs mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Description</label>
           {readOnly ? (
             <div className="px-3 py-2 text-sm rounded" style={{ backgroundColor: 'var(--neuro-bg-light)', color: 'var(--neuro-text-primary)' }}>
-              {item.description}
+              <div className="font-medium">{item.description}</div>
+              {item.subDescription && (
+                <div className="text-xs mt-1 text-slate-500 whitespace-pre-line" style={{ color: 'var(--neuro-text-secondary)' }}>
+                  {item.subDescription}
+                </div>
+              )}
             </div>
           ) : (
-            <input
-              type="text"
-              value={item.description}
-              onChange={(e) => handleUpdate('description', e.target.value)}
-              className="app-input w-full px-3 py-2 text-sm"
-              placeholder="Item description"
-            />
+            <>
+              <input
+                type="text"
+                value={item.description}
+                onChange={(e) => handleUpdate('description', e.target.value)}
+                className="app-input w-full px-3 py-2 text-sm"
+                placeholder="Item description (e.g. Project: Predator combat)"
+              />
+              <textarea
+                value={item.subDescription || ''}
+                onChange={(e) => handleUpdate('subDescription', e.target.value)}
+                className="app-input w-full px-3 py-1.5 text-xs mt-2 resize-y"
+                rows={2}
+                placeholder="Sub-description / project detail (optional detail for client)"
+              />
+            </>
           )}
         </div>
         <div>

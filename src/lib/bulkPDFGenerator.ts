@@ -11,6 +11,7 @@ export interface InvoicePDFData {
   billedToName: string;
   items: Array<{
     description: string;
+    subDescription?: string;
     quantity: number;
     rate: number;
     amount: number;

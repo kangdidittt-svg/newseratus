@@ -10,6 +10,7 @@ import InvoiceItemRow, { InvoiceItem } from './InvoiceItemRow';
 interface Project {
   _id: string;
   title: string;
+  description?: string;
   client: string;
   budget?: number;
   hourlyRate?: number;
@@ -51,9 +52,11 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
 
   const generateItemsForProject = (project: Project): InvoiceItem[] => {
     const projectItems: InvoiceItem[] = [];
+    const subDesc = project.description || '';
     if (project.hoursWorked && project.hourlyRate) {
       projectItems.push({
         description: `Development work - ${project.hoursWorked} hours (${project.title})`,
+        subDescription: subDesc,
         quantity: project.hoursWorked,
         rate: project.hourlyRate,
         amount: (project.hoursWorked || 0) * (project.hourlyRate || 0)
@@ -61,6 +64,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
     } else if (project.totalEarned) {
       projectItems.push({
         description: `Project: ${project.title}`,
+        subDescription: subDesc,
         quantity: 1,
         rate: project.totalEarned,
         amount: project.totalEarned
@@ -68,6 +72,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
     } else if (project.budget) {
       projectItems.push({
         description: `Project: ${project.title}`,
+        subDescription: subDesc,
         quantity: 1,
         rate: project.budget,
         amount: project.budget
@@ -75,6 +80,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
     } else {
       projectItems.push({
         description: `Project: ${project.title}`,
+        subDescription: subDesc,
         quantity: 1,
         rate: 0,
         amount: 0
@@ -135,7 +141,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
 
   const addItem = () => {
     if (isBatch) return; // Disable manual add in batch mode to avoid ambiguity
-    setItems([...items, { description: '', quantity: 1, rate: 0, amount: 0 }]);
+    setItems([...items, { description: '', subDescription: '', quantity: 1, rate: 0, amount: 0 }]);
   };
 
   const removeItem = (index: number) => {

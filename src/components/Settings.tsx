@@ -16,9 +16,11 @@ import {
   Settings as SettingsIcon,
   Users,
   Edit,
-  Crown
+  Crown,
+  Palette
 } from 'lucide-react';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface UserSettings {
   profile: {
@@ -32,6 +34,7 @@ interface UserSettings {
     };
     language: string;
     timezone: string;
+    theme?: 'default' | 'clean';
   };
 }
 
@@ -44,6 +47,7 @@ interface AdminUser {
 }
 
 export default function Settings() {
+  const { currentTheme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   const [isMobile, setIsMobile] = useState(false);
   const [deleteDataModal, setDeleteDataModal] = useState(false);
@@ -59,7 +63,8 @@ export default function Settings() {
         sms: false
       },
       language: 'en',
-      timezone: 'America/New_York'
+      timezone: 'America/New_York',
+      theme: currentTheme
     }
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -109,6 +114,17 @@ export default function Settings() {
     }
   }, [activeTab, currentUserRole]);
   
+  // Update settings when theme changes
+  useEffect(() => {
+    setSettings(prev => ({
+      ...prev,
+      preferences: {
+        ...prev.preferences,
+        theme: currentTheme
+      }
+    }));
+  }, [currentTheme]);
+  
   const loadSettings = async () => {
     try {
       const response = await fetch('/api/user/settings', {
@@ -119,6 +135,10 @@ export default function Settings() {
       if (response.ok) {
         const data = await response.json();
         setSettings(data.settings);
+        // Apply saved theme if it exists
+        if (data.settings?.preferences?.theme) {
+          setTheme(data.settings.preferences.theme);
+        }
       } else {
         console.error('Failed to load settings:', response.status);
       }
@@ -246,6 +266,7 @@ export default function Settings() {
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'preferences', label: 'Preferences', icon: Bell },
+    { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'system', label: 'System', icon: SettingsIcon },
     ...(currentUserRole === 'admin' ? [{ id: 'admin', label: 'User Management', icon: Users }] : []),
@@ -577,7 +598,70 @@ export default function Settings() {
     </motion.div>
   );
 
-
+  const renderAppearanceTab = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <div>
+        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
+          <Palette className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
+          Theme Selection
+        </h3>
+        <div className="space-y-4">
+          <div className="p-4 neuro-card rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Default Theme</p>
+                <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>Dark, futuristic design with neumorphic elements</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="theme"
+                  value="default"
+                  checked={currentTheme === 'default'}
+                  onChange={(e) => setTheme(e.target.value as 'default' | 'clean')}
+                  className="sr-only peer"
+                />
+                <div className="w-5 h-5 rounded-full border-2 peer-checked:bg-orange-500 peer-checked:border-orange-500 transition-all duration-200" style={{ borderColor: currentTheme === 'default' ? 'var(--neuro-orange)' : 'var(--neuro-border)' }}></div>
+              </label>
+            </div>
+          </div>
+          
+          <div className="p-4 neuro-card rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Clean Theme</p>
+                <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>Modern, minimal design with light colors and subtle shadows</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="theme"
+                  value="clean"
+                  checked={currentTheme === 'clean'}
+                  onChange={(e) => setTheme(e.target.value as 'default' | 'clean')}
+                  className="sr-only peer"
+                />
+                <div className="w-5 h-5 rounded-full border-2 peer-checked:bg-orange-500 peer-checked:border-orange-500 transition-all duration-200" style={{ borderColor: currentTheme === 'clean' ? 'var(--neuro-orange)' : 'var(--neuro-border)' }}></div>
+              </label>
+            </div>
+          </div>
+          
+          <div className="mt-6 p-4 neuro-card rounded-lg" style={{ backgroundColor: currentTheme === 'clean' ? 'rgba(255, 244, 236, 0.5)' : 'rgba(139, 92, 246, 0.1)' }}>
+            <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>
+              <strong>Current Theme:</strong> {currentTheme === 'clean' ? 'Clean Theme' : 'Default Theme'}
+            </p>
+            <p className="text-xs font-inter mt-2" style={{ color: 'var(--neuro-text-muted)' }}>
+              Theme changes are applied instantly and saved automatically.
+            </p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
 
   const renderSecurityTab = () => (
     <motion.div
@@ -946,6 +1030,7 @@ export default function Settings() {
         <div className="space-y-8">
           {renderProfileTab()}
           {renderPreferencesTab()}
+          {renderAppearanceTab()}
           {renderSecurityTab()}
           {renderSystemTab()}
         </div>
@@ -956,6 +1041,8 @@ export default function Settings() {
           return renderProfileTab();
         case 'preferences':
           return renderPreferencesTab();
+        case 'appearance':
+          return renderAppearanceTab();
         case 'security':
           return renderSecurityTab();
         case 'system':

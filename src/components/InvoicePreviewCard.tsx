@@ -4,6 +4,7 @@ import { formatDate } from '@/lib/invoiceUtils';
 
 export interface InvoiceItem {
   description: string;
+  subDescription?: string;
   quantity: number;
   rate: number;
   amount: number;
@@ -90,7 +91,14 @@ export default function InvoicePreviewCard({ invoice, className = '', containerI
             <tbody>
               {invoice.items.map((item, index) => (
                 <tr key={index} className="border-b" style={{ borderColor: 'var(--neuro-border)' }}>
-                  <td className="py-3 px-4 text-sm" style={{ wordBreak: 'break-word' }}>{item.description}</td>
+                  <td className="py-3 px-4 text-sm" style={{ wordBreak: 'break-word' }}>
+                    <div className="font-medium">{item.description}</div>
+                    {item.subDescription && (
+                      <div className="text-xs mt-1 leading-relaxed whitespace-pre-line" style={{ color: 'var(--neuro-text-secondary)' }}>
+                        {item.subDescription}
+                      </div>
+                    )}
+                  </td>
                   <td className="py-3 px-4 text-sm text-center">{item.quantity}</td>
                   <td className="py-3 px-4 text-sm text-right">
                     {item.rate.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}

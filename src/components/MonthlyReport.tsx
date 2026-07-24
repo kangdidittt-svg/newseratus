@@ -44,7 +44,13 @@ export default function MonthlyReport() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [monthlyEarnings, setMonthlyEarnings] = useState<MonthlyEarning[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPeriod, setSelectedPeriod] = useState('current');
+  const [selectedPeriod, setSelectedPeriod] = useState('last6');
+  
+  const usdToIdr = (usd?: number) => {
+    const rate = 16000;
+    const amount = typeof usd === 'number' ? usd : 0;
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount * rate);
+  };
 
   const currentDate = new Date();
   const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
@@ -74,17 +80,38 @@ export default function MonthlyReport() {
 
   // Transform monthlyEarnings data for charts
   const getMonthlyTrendData = () => {
-    if (!monthlyEarnings || monthlyEarnings.length === 0) {
-      // Return default data for current month if no data available
-      const currentMonth = new Date().toLocaleString('default', { month: 'short' });
-      return [{ month: currentMonth, earnings: stats?.totalEarnings || 0, projects: stats?.totalProjects || 0 }];
+    const periodMap: Record<string, number> = {
+      current: 1,
+      last3: 3,
+      last6: 6,
+      year: 12
+    };
+    const monthsBack = periodMap[selectedPeriod] ?? 1;
+    const now = new Date();
+    const series: Array<{ month: string; year: number; m: number; earnings: number; projects: number }> = [];
+
+    for (let i = monthsBack - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const label = d.toLocaleString('default', { month: 'short' });
+
+      const match = monthlyEarnings.find(e => e._id.year === y && e._id.month === m);
+      series.push({
+        month: label,
+        year: y,
+        m,
+        earnings: match?.earnings ?? 0,
+        projects: match?.projectCount ?? 0
+      });
     }
-    
-    return monthlyEarnings.map(item => ({
-      month: new Date(item._id.year, item._id.month - 1).toLocaleString('default', { month: 'short' }),
-      earnings: item.earnings || 0,
-      projects: item.projectCount ?? 0
-    }));
+
+    if (series.length === 0) {
+      const label = now.toLocaleString('default', { month: 'short' });
+      return [{ month: label, earnings: stats?.totalEarnings || 0, projects: stats?.totalProjects || 0 }];
+    }
+
+    return series.map(({ month, earnings, projects }) => ({ month, earnings, projects }));
   };
 
   const handleExportReport = () => {
@@ -185,6 +212,7 @@ Generated on: ${new Date().toLocaleDateString()}
               <p className="text-sm font-medium" style={{ color: 'var(--neuro-text-secondary)' }}>Total Earnings</p>
               <p className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>${stats?.totalEarnings?.toLocaleString()}</p>
               <p className="text-xs mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>From {stats?.totalProjects} projects</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>≈ {usdToIdr(stats?.totalEarnings)}</p>
             </div>
             <div className="h-12 w-12 rounded-lg flex items-center justify-center neuro-icon">
               <DollarSign className="h-6 w-6" style={{ color: 'var(--neuro-orange)' }} />

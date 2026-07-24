@@ -2,6 +2,7 @@
 
 export interface InvoiceItem {
   description: string;
+  subDescription?: string;
   quantity: number;
   rate: number;
   amount: number;

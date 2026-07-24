@@ -257,3 +257,169 @@ select {
 .app-btn-secondary:hover {
   box-shadow: var(--neuro-shadow-hover);
 }
+
+/* Clean Theme Styles */
+.clean-theme {
+  --background: #f9fafb;
+  --foreground: #111827;
+  --card-background: #ffffff;
+  --card-border: #e5e7eb;
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --primary: #FF6B00;
+  --primary-hover: #FFF4EC;
+  --border-radius: 0.375rem;
+  --shadow-intensity: subtle;
+  
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.clean-theme .neuro-card {
+  background: var(--card-background);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  border-radius: var(--border-radius);
+}
+
+.clean-theme .neuro-button-orange {
+  background: var(--primary);
+  color: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.clean-theme .neuro-button-orange:hover {
+  background: #e55f00;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.clean-theme .neuro-input {
+  background: var(--card-background);
+  border: 1px solid var(--card-border);
+  border-radius: var(--border-radius);
+  color: var(--foreground);
+}
+
+.clean-theme .neuro-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.1);
+}
+
+.clean-theme .neuro-select {
+  background: var(--card-background);
+  border: 1px solid var(--card-border);
+  border-radius: var(--border-radius);
+  color: var(--foreground);
+}
+
+.clean-theme .neuro-card-hover:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary);
+}
+
+.clean-theme .neuro-card-pressed {
+  background: var(--primary-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.clean-theme .glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.05);
+}
+
+.clean-theme .glass-dark {
+  background: rgba(249, 250, 251, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.05);
+}
+
+.clean-theme .card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.clean-theme .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.clean-theme .pulse-glow {
+  animation: pulse-glow-clean 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow-clean {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 107, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 107, 0, 0.25);
+  }
+}
+
+.clean-theme .loading-spinner {
+  animation: spin-glow-clean 1s linear infinite;
+}
+
+@keyframes spin-glow-clean {
+  0% {
+    transform: rotate(0deg);
+    box-shadow: 0 0 8px rgba(255, 107, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 107, 0, 0.25);
+  }
+  100% {
+    transform: rotate(360deg);
+    box-shadow: 0 0 8px rgba(255, 107, 0, 0.15);
+  }
+}
+
+.clean-theme .modal-backdrop {
+  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.clean-theme .btn-animate::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.clean-theme input, 
+.clean-theme textarea, 
+.clean-theme select {
+  color: #374151 !important;
+  background-color: white !important;
+  border-color: #e5e7eb !important;
+}
+
+.clean-theme input::placeholder, 
+.clean-theme textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+.clean-theme .focus-ring:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: rgba(255, 107, 0, 0.3);
+  ring-offset: 2px;
+}
+
+/* Default Theme Styles */
+.default-theme {
+  --background: #0f0f23;
+  --foreground: #ffffff;
+  --card-background: rgba(15, 15, 35, 0.8);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.15);
+  --primary: #8b5cf6;
+  --primary-hover: rgba(139, 92, 246, 0.1);
+  --border-radius: 0.75rem;
+  --shadow-intensity: normal;
+  
+  background: var(--background);
+  color: var(--foreground);
+}

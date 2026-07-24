@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import GlobalSearchCommandPalette from '@/components/GlobalSearchCommandPalette';
 import StudioRobot from '@/components/StudioRobot';
 
@@ -62,11 +63,13 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} antialiased min-h-screen relative`} suppressHydrationWarning={true}>
         <AuthProvider>
-          <div id="root" className="relative z-10">{children}</div>
-          <GlobalSearchCommandPalette />
-          <div className="hidden md:block">
-            <StudioRobot />
-          </div>
+          <ThemeProvider>
+            <div id="root" className="relative z-10">{children}</div>
+            <GlobalSearchCommandPalette />
+            <div className="hidden md:block">
+              <StudioRobot />
+            </div>
+          </ThemeProvider>
         </AuthProvider>
         <script
           dangerouslySetInnerHTML={{

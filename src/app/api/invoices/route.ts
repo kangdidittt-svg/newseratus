@@ -96,6 +96,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     // Prepare invoice data with snapshot behavior
     interface InvoiceItemData {
       description: string;
+      subDescription?: string;
       quantity: number;
       rate: number;
       amount: number;
@@ -107,6 +108,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       billedToName: invoiceData.billedToName.trim(),
       items: invoiceData.items.map((item: InvoiceItemData) => ({
         description: item.description?.trim() || '',
+        subDescription: item.subDescription?.trim() || '',
         quantity: Number(item.quantity) || 0,
         rate: Number(item.rate) || 0,
         amount: Number(item.amount) || 0

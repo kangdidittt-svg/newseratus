@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IInvoiceItem {
   description: string;
+  subDescription?: string;
   quantity: number;
   rate: number;
   amount: number;
@@ -28,6 +29,11 @@ const InvoiceItemSchema: Schema = new Schema({
     required: [true, 'Item description is required'],
     trim: true,
     maxlength: [500, 'Description cannot exceed 500 characters']
+  },
+  subDescription: {
+    type: String,
+    trim: true,
+    maxlength: [1000, 'Sub description cannot exceed 1000 characters']
   },
   quantity: {
     type: Number,

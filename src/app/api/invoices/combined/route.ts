@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 
 interface InvoiceItemData {
   description: string;
+  subDescription?: string;
   quantity: number;
   rate: number;
   amount: number;
@@ -50,6 +51,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       billedToName,
       items: items.map((item) => ({
         description: item.description?.trim() || '',
+        subDescription: item.subDescription?.trim() || '',
         quantity: Number(item.quantity) || 0,
         rate: Number(item.rate) || 0,
         amount: Number(item.amount) || 0,

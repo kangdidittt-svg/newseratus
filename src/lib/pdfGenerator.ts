@@ -3,6 +3,7 @@ import { formatCurrency, formatDate } from './invoiceUtils';
 
 export interface IInvoiceItem {
   description: string;
+  subDescription?: string;
   quantity: number;
   rate: number;
   amount: number;
@@ -57,11 +58,17 @@ export function generateInvoicePDF(invoice: InvoicePDFData): Promise<Buffer> {
 
   // Items
   invoice.items.forEach((item) => {
-    doc.fontSize(11).text(item.description, 50, y);
-    doc.text(item.quantity.toString(), 300, y);
-    doc.text(formatCurrency(item.rate), 380, y);
-    doc.text(formatCurrency(item.amount), 460, y);
-    y += 20;
+    const startY = y;
+    doc.fontSize(11).fillColor('#1e293b').text(item.description, 50, y, { width: 230 });
+    if (item.subDescription) {
+      y += 14;
+      doc.fontSize(9).fillColor('#64748b').text(item.subDescription, 50, y, { width: 230 });
+    }
+    doc.fontSize(11).fillColor('#1e293b');
+    doc.text(item.quantity.toString(), 300, startY);
+    doc.text(formatCurrency(item.rate), 380, startY);
+    doc.text(formatCurrency(item.amount), 460, startY);
+    y += 24;
   });
 
   // Line separator
@@ -150,17 +157,22 @@ export function generateDetailedInvoicePDF(invoice: InvoicePDFData): Promise<Buf
 
   // Items
   invoice.items.forEach((item, index) => {
+    const rowHeight = item.subDescription ? 40 : 25;
     // Alternate row background
     if (index % 2 === 0) {
-      doc.rect(50, y - 5, 500, 25).fill('#f9fafb');
+      doc.rect(50, y - 5, 500, rowHeight).fill('#f9fafb');
     }
     
     doc.fillColor(textColor);
-    doc.fontSize(11).text(item.description, 60, y);
+    doc.fontSize(11).text(item.description, 60, y, { width: 230 });
+    if (item.subDescription) {
+      doc.fontSize(9).fillColor('#6b7280').text(item.subDescription, 60, y + 14, { width: 230 });
+    }
+    doc.fontSize(11).fillColor(textColor);
     doc.text(item.quantity.toString(), 300, y);
     doc.text(formatCurrency(item.rate), 350, y);
     doc.text(formatCurrency(item.amount), 450, y);
-    y += 25;
+    y += rowHeight;
   });
 
   // Totals section

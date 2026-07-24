@@ -74,25 +74,42 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       { name: 'Cancelled', value: cancelledProjects }
     ];
 
-    // Get monthly earnings (last 6 months)
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    // Get monthly earnings (last 12 months to support full-year charts)
+    const periodStart = new Date();
+    periodStart.setMonth(periodStart.getMonth() - 12);
 
     const monthlyEarnings = await Project.aggregate([
       {
         $match: {
           userId: userObjectId,
-          status: 'completed',
-          createdAt: { $gte: sixMonthsAgo }
+          status: 'completed'
+        }
+      },
+      {
+        $addFields: {
+          effectiveDate: { $ifNull: ['$completedAt', '$createdAt'] }
+        }
+      },
+      {
+        $match: {
+          effectiveDate: { $gte: periodStart }
         }
       },
       {
         $group: {
           _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' }
+            year: { $year: '$effectiveDate' },
+            month: { $month: '$effectiveDate' }
           },
-          earnings: { $sum: { $ifNull: ['$totalEarned', '$budget'] } },
+          earnings: { 
+            $sum: { 
+              $cond: {
+                if: { $and: [{ $ne: ['$totalEarned', null] }, { $gt: ['$totalEarned', 0] }] },
+                then: '$totalEarned',
+                else: { $ifNull: ['$budget', 0] }
+              }
+            }
+          },
           hours: { $sum: '$hoursWorked' },
           projectCount: { $sum: 1 }
         }

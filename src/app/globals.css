@@ -1,28 +1,23 @@
 @import "tailwindcss";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 @import '../styles/neumorphic.css';
 
 :root {
-  --background: #0f0f23;
-  --foreground: #ffffff;
-  --primary: #8b5cf6;
-  --secondary: #ec4899;
-  --accent: #06b6d4;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #0F1115;
+  --foreground: #FAFAFA;
+  --card: #14161A;
+  --elevated: #1A1D22;
+  --hover: #22252C;
+  --border: rgba(255, 255, 255, 0.05);
+  --primary: #8B5CF6;
+  --secondary: #A1A1AA;
+  --muted: #71717A;
+  --accent: #8B5CF6;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f0f23;
-    --foreground: #ffffff;
+    --background: #0D0D0D;
+    --foreground: #F5F5F5;
   }
 }
 
@@ -104,16 +99,15 @@ body {
   background: var(--neuro-orange-light);
 }
 
-/* Input Field Styling - Fix white text issue */
+/* Input Field Styling - High contrast dark cyan system */
 input, textarea, select {
-  color: #374151 !important; /* Dark gray text */
+  color: var(--neuro-text-primary, #f8fafc) !important;
 }
 
 input::placeholder, textarea::placeholder {
-  color: #9ca3af !important; /* Gray placeholder */
+  color: var(--neuro-text-muted, #94a3b8) !important;
 }
 
-/* Ensure input text is visible on white backgrounds */
 input[type="text"], 
 input[type="email"], 
 input[type="password"], 
@@ -122,8 +116,16 @@ input[type="date"],
 input[type="time"], 
 textarea, 
 select {
-  color: #1f2937 !important;
-  background-color: white;
+  color: var(--neuro-text-primary, #f8fafc) !important;
+  background-color: var(--neuro-bg-secondary, #111a2e) !important;
+  border: 1px solid var(--neuro-border, rgba(56, 189, 248, 0.2)) !important;
+  border-radius: var(--neuro-radius-md, 14px);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none !important;
+  border-color: var(--neuro-accent, #06b6d4) !important;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2) !important;
 }
 
 /* Avatar Image Styling */
@@ -191,9 +193,7 @@ select {
 /* Improved Focus States */
 .focus-ring:focus {
   outline: none;
-  ring: 2px;
-  ring-color: rgba(139, 92, 246, 0.5);
-  ring-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.5);
 }
 
 /* Better Modal Backdrop - Made lighter and thinner */
@@ -403,9 +403,7 @@ select {
 
 .clean-theme .focus-ring:focus {
   outline: none;
-  ring: 2px;
-  ring-color: rgba(255, 107, 0, 0.3);
-  ring-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.3);
 }
 
 /* Default Theme Styles */

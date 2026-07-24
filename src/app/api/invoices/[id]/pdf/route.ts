@@ -25,8 +25,7 @@ interface InvoiceData {
   status: string;
 }
 
-// POST /api/invoices/:id/pdf - Generate PDF for single invoice
-export const POST = withAuth(async (request: AuthenticatedRequest, context: { params: Promise<{ id: string }> }) => {
+async function handleGeneratePDF(request: AuthenticatedRequest, context: { params: Promise<{ id: string }> }) {
   const { params } = await context;
   try {
     await connectDB();
@@ -64,7 +63,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest, context: { pa
       invoiceDate: typedInvoice.createdAt,
       projectTitle: typedInvoice.projectTitle,
       billedToName: typedInvoice.billedToName,
-      items: typedInvoice.items,
+      items: typedInvoice.items || [],
       subtotal: typedInvoice.subtotal,
       taxPercent: typedInvoice.taxPercent,
       total: typedInvoice.total,
@@ -94,4 +93,8 @@ export const POST = withAuth(async (request: AuthenticatedRequest, context: { pa
       { status: 500 }
     );
   }
-});
+}
+
+// Support both GET and POST for single invoice PDF download
+export const GET = withAuth(handleGeneratePDF);
+export const POST = withAuth(handleGeneratePDF);

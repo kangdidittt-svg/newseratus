@@ -197,38 +197,38 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
 
         {/* Project Title */}
         <div>
-          <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Project Title *</label>
+          <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Project Title *</label>
           <input
             type="text"
             required
             value={formData.title}
             onChange={(e) => handleInputChange('title', e.target.value)}
-            className="neuro-input w-full px-3 py-2 text-sm transition-all"
+            className="w-full px-3 py-2 text-xs rounded-xl bg-[#1A1D22] border border-white/10 text-slate-100 placeholder-slate-500 outline-none focus:border-purple-500 transition-all"
             placeholder="Enter project title"
           />
         </div>
 
         {/* Client */}
         <div>
-          <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Client *</label>
+          <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Client *</label>
           <input
             type="text"
             required
             value={formData.client}
             onChange={(e) => handleInputChange('client', e.target.value)}
-            className="neuro-input w-full px-3 py-2 text-sm transition-all"
+            className="w-full px-3 py-2 text-xs rounded-xl bg-[#1A1D22] border border-white/10 text-slate-100 placeholder-slate-500 outline-none focus:border-purple-500 transition-all"
             placeholder="Enter client name"
           />
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Description</label>
+          <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Description</label>
           <textarea
             value={formData.description}
             onChange={(e) => handleInputChange('description', e.target.value)}
-            rows={1}
-            className="neuro-input w-full px-3 py-2 text-sm transition-all resize-none"
+            rows={2}
+            className="w-full px-3 py-2 text-xs rounded-xl bg-[#1A1D22] border border-white/10 text-slate-100 placeholder-slate-500 outline-none focus:border-purple-500 transition-all resize-none"
             placeholder="Describe your project..."
           />
         </div>
@@ -236,24 +236,24 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
         {/* Budget and Deadline */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Budget ($)</label>
+            <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Budget ($)</label>
             <input
               type="number"
               value={formData.budget}
               onChange={(e) => handleInputChange('budget', e.target.value)}
-              className="neuro-input w-full px-3 py-2 text-sm transition-all"
+              className="w-full px-3 py-2 text-xs rounded-xl bg-[#1A1D22] border border-white/10 text-slate-100 placeholder-slate-500 outline-none focus:border-purple-500 transition-all font-mono"
               placeholder="0.00"
               min="0"
               step="0.01"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Deadline</label>
+            <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Deadline</label>
             <input
               type="date"
               value={formData.deadline}
               onChange={(e) => handleInputChange('deadline', e.target.value)}
-              className="neuro-input w-full px-3 py-2 text-sm transition-all"
+              className="w-full px-3 py-2 text-xs rounded-xl bg-[#1A1D22] border border-white/10 text-slate-100 outline-none focus:border-purple-500 transition-all"
             />
           </div>
         </div>
@@ -261,11 +261,11 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
         {/* Category and Priority */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Category</label>
+            <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Category</label>
             <select
               value={formData.category}
               onChange={(e) => handleInputChange('category', e.target.value)}
-              className="neuro-select w-full px-3 py-2 text-sm"
+              className="w-full px-3 py-2 text-xs rounded-xl bg-[#1A1D22] border border-white/10 text-slate-100 outline-none focus:border-purple-500 transition-all"
               required
             >
               <option value="web-development">🌐 Web Dev</option>
@@ -276,11 +276,11 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Priority</label>
+            <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Priority</label>
             <select
               value={formData.priority}
               onChange={(e) => handleInputChange('priority', e.target.value)}
-              className="neuro-select w-full px-3 py-2 text-sm"
+              className="w-full px-3 py-2 text-xs rounded-xl bg-[#1A1D22] border border-white/10 text-slate-100 outline-none focus:border-purple-500 transition-all"
               required
             >
               <option value="low">🟢 Low</option>
@@ -292,11 +292,11 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
 
         {/* Status */}
         <div>
-          <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Status</label>
+          <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Status</label>
           <select
             value={formData.status}
             onChange={(e) => handleInputChange('status', e.target.value)}
-            className="neuro-select w-full px-3 py-2 text-sm"
+            className="w-full px-3 py-2 text-xs rounded-xl bg-[#1A1D22] border border-white/10 text-slate-100 outline-none focus:border-purple-500 transition-all"
             required
           >
             <option value="active">🔵 Active</option>
@@ -305,14 +305,11 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
           </select>
         </div>
 
-        {/* Submit Button */}
-        <div className="pt-1">
-          <motion.button
+        <div className="px-5 py-4">
+          <button
             type="submit"
             disabled={isSubmitting}
-            className="neuro-button-orange w-full py-2 px-4 font-semibold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-            whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
-            whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+            className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
           >
             {isSubmitting ? (
               <>
@@ -325,7 +322,7 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
                 <span>Create Project</span>
               </>
             )}
-          </motion.button>
+          </button>
         </div>
       </form>
       

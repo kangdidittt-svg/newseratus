@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Eye, FileText } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Check, ChevronRight, ChevronLeft, Download, FileText, Sparkles } from 'lucide-react';
 import { formatCurrency, calculateSubtotal, calculateTotal } from '@/lib/invoiceUtils';
 import InvoicePreviewCard from './InvoicePreviewCard';
 import InvoiceItemRow, { InvoiceItem } from './InvoiceItemRow';
@@ -16,7 +16,7 @@ interface Project {
   hourlyRate?: number;
   hoursWorked?: number;
   totalEarned?: number;
-  status?: 'active' | 'completed' | 'pending' | 'on-hold' | string;
+  status?: string;
 }
 
 interface InvoiceCreateFormProps {
@@ -24,6 +24,7 @@ interface InvoiceCreateFormProps {
 }
 
 export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFormProps) {
+  const [wizardStep, setWizardStep] = useState<number>(1);
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [billedToName, setBilledToName] = useState('');
@@ -34,15 +35,12 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
 
-  // Load projects on mount
   useEffect(() => {
     loadProjects();
   }, []);
 
-  // Auto-calculate totals when items or tax changes
   useEffect(() => {
     const newSubtotal = calculateSubtotal(items);
     const newTotal = calculateTotal(newSubtotal, taxPercent);
@@ -50,48 +48,46 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
     setTotal(newTotal);
   }, [items, taxPercent]);
 
+  const loadProjects = async () => {
+    try {
+      const response = await fetch('/api/projects', { credentials: 'include' });
+      if (response.ok) {
+        const responseData = await response.json();
+        setProjects(responseData.projects || []);
+      } else {
+        setError('Failed to load projects');
+      }
+    } catch (err) {
+      console.error('Error loading projects:', err);
+      setError('Network error loading projects');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const generateItemsForProject = (project: Project): InvoiceItem[] => {
-    const projectItems: InvoiceItem[] = [];
     const subDesc = project.description || '';
     if (project.hoursWorked && project.hourlyRate) {
-      projectItems.push({
+      return [{
         description: `Development work - ${project.hoursWorked} hours (${project.title})`,
         subDescription: subDesc,
         quantity: project.hoursWorked,
         rate: project.hourlyRate,
         amount: (project.hoursWorked || 0) * (project.hourlyRate || 0)
-      });
-    } else if (project.totalEarned) {
-      projectItems.push({
-        description: `Project: ${project.title}`,
-        subDescription: subDesc,
-        quantity: 1,
-        rate: project.totalEarned,
-        amount: project.totalEarned
-      });
-    } else if (project.budget) {
-      projectItems.push({
-        description: `Project: ${project.title}`,
-        subDescription: subDesc,
-        quantity: 1,
-        rate: project.budget,
-        amount: project.budget
-      });
-    } else {
-      projectItems.push({
-        description: `Project: ${project.title}`,
-        subDescription: subDesc,
-        quantity: 1,
-        rate: 0,
-        amount: 0
-      });
+      }];
     }
-    return projectItems;
+    const val = project.totalEarned || project.budget || 0;
+    return [{
+      description: `Project: ${project.title}`,
+      subDescription: subDesc,
+      quantity: 1,
+      rate: val,
+      amount: val
+    }];
   };
 
   const isBatch = useMemo(() => selectedProjects.length > 1, [selectedProjects]);
 
-  // Auto-fill data when project(s) are selected
   useEffect(() => {
     if (selectedProjects.length === 0) {
       setItems([]);
@@ -104,43 +100,18 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
         setItems(generateItemsForProject(project));
       }
     } else {
-      // Batch mode: auto-generate items dari semua project terpilih
       const all = selectedProjects
         .map(id => projects.find(p => p._id === id))
         .filter(Boolean) as Project[];
       const combined = all.flatMap(p => generateItemsForProject(p));
       setItems(combined);
       const uniqueClients = Array.from(new Set(all.map(p => p.client).filter(Boolean)));
-      if (uniqueClients.length === 1) {
-        setBilledToName(uniqueClients[0] || '');
-      } else if (!billedToName) {
-        setBilledToName(all[0]?.client || '');
-      }
+      setBilledToName(uniqueClients.length === 1 ? uniqueClients[0] || '' : 'Multiple Clients');
     }
-  }, [selectedProjects, projects, billedToName]);
-
-  const loadProjects = async () => {
-    try {
-      const response = await fetch('/api/projects', {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const responseData = await response.json();
-        setProjects(responseData.projects || []);
-      } else {
-        setError('Failed to load projects');
-      }
-    } catch (error) {
-      console.error('Error loading projects:', error);
-      setError('Network error while loading projects');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [selectedProjects, projects]);
 
   const addItem = () => {
-    if (isBatch) return; // Disable manual add in batch mode to avoid ambiguity
+    if (isBatch) return;
     setItems([...items, { description: '', subDescription: '', quantity: 1, rate: 0, amount: 0 }]);
   };
 
@@ -149,407 +120,316 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
   };
 
   const updateItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
-    if (isBatch) return; // Disable manual edit in batch mode
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
-    
-    // Auto-calculate amount if quantity or rate changes
     if (field === 'quantity' || field === 'rate') {
-      const quantity = field === 'quantity' ? Number(value) : newItems[index].quantity;
-      const rate = field === 'rate' ? Number(value) : newItems[index].rate;
-      newItems[index].amount = quantity * rate;
+      const q = field === 'quantity' ? Number(value) : newItems[index].quantity;
+      const r = field === 'rate' ? Number(value) : newItems[index].rate;
+      newItems[index].amount = q * r;
     }
-    
     setItems(newItems);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSaveInvoice = async () => {
     if (selectedProjects.length === 0) {
       setError('Please select at least one project');
       return;
     }
-    
-    if (!isBatch && !billedToName.trim()) {
-      setError('Please enter billed to name');
+    if (!billedToName.trim()) {
+      setError('Please enter client name');
       return;
     }
-    
     if (items.length === 0) {
       setError('Please add at least one item');
       return;
-    }
-    
-    // Validate items
-    for (const item of items) {
-      if (!item.description.trim()) {
-        setError('All items must have a description');
-        return;
-      }
-      if (item.quantity <= 0) {
-        setError('All items must have positive quantity');
-        return;
-      }
-      if (item.rate < 0) {
-        setError('All items must have non-negative rate');
-        return;
-      }
     }
 
     setIsSubmitting(true);
     setError('');
 
     try {
-      if (!isBatch) {
-        // Single project
-        const projectId = selectedProjects[0];
-        const response = await fetch('/api/invoices', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            projectId,
-            billedToName: billedToName.trim(),
-            items,
-            taxPercent,
-            subtotal,
-            total
-          })
-        });
+      const endpoint = isBatch ? '/api/invoices/combined' : '/api/invoices';
+      const payload = isBatch ? {
+        primaryProjectId: selectedProjects[0],
+        billedToName,
+        items,
+        taxPercent,
+        subtotal,
+        total
+      } : {
+        projectId: selectedProjects[0],
+        billedToName,
+        items,
+        taxPercent,
+        subtotal,
+        total
+      };
 
-        if (response.ok) {
-          setSuccess(true);
-          setTimeout(() => {
-            setSuccess(false);
-            if (onInvoiceCreated) onInvoiceCreated();
-          }, 2500);
-          // Reset form
-          setSelectedProjects([]);
-          setBilledToName('');
-          setItems([]);
-          setTaxPercent(0);
-        } else {
-          const errorData = await response.json();
-          setError(errorData.error || 'Failed to create invoice');
-        }
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        const resData = await response.json();
+        const createdId = resData.invoice?._id;
+        setCreatedInvoiceId(createdId);
+        setWizardStep(5); // Go to Export PDF step
+        window.dispatchEvent(new Event('invoices:updated'));
+        if (onInvoiceCreated) onInvoiceCreated();
       } else {
-        // Batch mode: generate satu file invoice gabungan dari semua project terpilih (tersimpan + unduh PDF)
-        const all = selectedProjects
-          .map(id => projects.find(p => p._id === id))
-          .filter(Boolean) as Project[];
-        const clients = all.map(p => p.client);
-        const createRes = await fetch('/api/invoices/combined', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            primaryProjectId: selectedProjects[0],
-            billedToName: billedToName.trim(),
-            items,
-            taxPercent,
-            subtotal,
-            total,
-            clients
-          })
-        });
-        
-        if (createRes.ok) {
-          const { invoice } = await createRes.json();
-          const pdfRes = await fetch(`/api/invoices/${invoice._id}/pdf`, {
-            method: 'POST',
-            credentials: 'include'
-          });
-          if (pdfRes.ok) {
-            const blob = await pdfRes.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `invoice_${invoice._id}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-          } else {
-            setError('Failed to export PDF');
-          }
-          setSuccess(true);
-          setTimeout(() => {
-            setSuccess(false);
-            if (onInvoiceCreated) onInvoiceCreated();
-          }, 2500);
-        } else {
-          const errorData = await createRes.json().catch(() => ({}));
-          setError(errorData.error || 'Failed to create combined invoice');
-        }
-        // Reset form
-        setSelectedProjects([]);
-        setBilledToName('');
-        setItems([]);
-        setTaxPercent(0);
+        const errData = await response.json();
+        setError(errData.error || 'Failed to create invoice');
       }
-    } catch (error) {
-      console.error('Error creating invoice:', error);
-      setError('Network error. Please try again.');
+    } catch (err) {
+      console.error('Error creating invoice:', err);
+      setError('Network error while saving invoice');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="app-card p-8">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="ml-2">Loading projects...</span>
-        </div>
-      </div>
-    );
-  }
+  const steps = [
+    { num: 1, title: 'Choose Project' },
+    { num: 2, title: 'Scope & Details' },
+    { num: 3, title: 'Tax & Rates' },
+    { num: 4, title: 'Live Preview' },
+    { num: 5, title: 'Export PDF' }
+  ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>Create Invoice</h1>
-        <p className="mt-1 app-muted">Generate professional invoices from your projects</p>
+    <div className="space-y-6">
+      {/* Wizard Step Progress Header */}
+      <div className="p-4 rounded-2xl bg-[#171A21] border border-white/10">
+        <div className="flex justify-between items-center max-w-2xl mx-auto">
+          {steps.map((s, idx) => (
+            <div key={s.num} className="flex items-center space-x-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                wizardStep === s.num
+                  ? 'bg-purple-600 text-white shadow-[0_0_12px_rgba(124,92,255,0.4)]'
+                  : wizardStep > s.num
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : 'bg-white/5 text-slate-500 border border-white/10'
+              }`}>
+                {wizardStep > s.num ? <Check className="w-4 h-4" /> : s.num}
+              </div>
+              <span className={`text-xs font-medium hidden sm:inline ${wizardStep === s.num ? 'text-slate-100 font-bold' : 'text-slate-500'}`}>
+                {s.title}
+              </span>
+              {idx < steps.length - 1 && <ChevronRight className="w-4 h-4 text-slate-600 hidden sm:inline" />}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Success Message */}
-      {success && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="px-4 py-3 rounded-xl flex items-center space-x-2"
-          style={{ 
-            backgroundColor: 'var(--neuro-success-light)', 
-            border: '1px solid var(--neuro-success)', 
-            color: 'var(--neuro-success)' 
-          }}
-        >
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--neuro-success)' }}></div>
-          <span>Invoice created successfully!</span>
-        </motion.div>
-      )}
-
-      {/* Error Message */}
       {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="px-4 py-3 rounded-xl flex items-center space-x-2"
-          style={{ 
-            backgroundColor: 'var(--neuro-error-light)', 
-            border: '1px solid var(--neuro-error)', 
-            color: 'var(--neuro-error)' 
-          }}
-        >
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--neuro-error)' }}></div>
-          <span>{error}</span>
-        </motion.div>
+        <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300">
+          {error}
+        </div>
       )}
 
-      {/* Form */}
-      <div className="app-card p-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Project Selection */}
-          <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
-              Pilih Project (bisa lebih dari satu) *
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {projects.filter(p => (p.status || '').toLowerCase() !== 'completed').map((project) => {
-                const checked = selectedProjects.includes(project._id);
-                return (
-                  <label key={project._id} className="app-card p-3 flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={(e) => {
-                        setSelectedProjects((prev) => {
-                          if (e.target.checked) return [...prev, project._id];
-                          return prev.filter(id => id !== project._id);
-                        });
-                      }}
-                      className="rounded"
-                    />
-                    <div>
-                      <div className="text-sm font-medium" style={{ color: 'var(--neuro-text-primary)' }}>{project.title}</div>
-                      <div className="text-xs app-muted">{project.client}</div>
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
-            {selectedProjects.length > 1 && (
-              <p className="mt-2 text-xs app-muted">Mode batch aktif: project terpilih akan digabung menjadi 1 file PDF.</p>
-            )}
-          </div>
+      {/* Step Contents */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={wizardStep}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+        >
+          {/* STEP 1: CHOOSE PROJECT */}
+          {wizardStep === 1 && (
+            <div className="p-6 rounded-2xl bg-[#171A21] border border-white/10 space-y-6">
+              <div>
+                <h3 className="text-base font-bold text-slate-100">Step 1: Select Project & Client</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Select one or more projects to include in this invoice.</p>
+              </div>
 
-          {/* Billed To */}
-          <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
-              Billed To *
-            </label>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={billedToName}
-                onChange={(e) => setBilledToName(e.target.value)}
-                className="app-input flex-1 px-4 py-3"
-                placeholder="Client name"
-                required={!isBatch}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const project = projects.find(p => p._id === selectedProjects[0]);
-                  if (project) {
-                    setBilledToName(project.client);
-                  }
-                }}
-                className="app-btn-secondary px-4 py-3"
-                disabled={selectedProjects.length !== 1}
-              >
-                Reset to Project
-              </button>
-            </div>
-          </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {projects.filter(p => (p.status || '').toLowerCase() !== 'completed').map((project) => {
+                  const checked = selectedProjects.includes(project._id);
+                  return (
+                    <label
+                      key={project._id}
+                      className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center space-x-3 ${
+                        checked
+                          ? 'bg-purple-950/40 border-purple-500/50 text-slate-100 shadow-[0_0_12px_rgba(124,92,255,0.15)]'
+                          : 'bg-[#1E222B] border-white/5 text-slate-300 hover:border-white/20'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedProjects(prev => [...prev, project._id]);
+                          else setSelectedProjects(prev => prev.filter(id => id !== project._id));
+                        }}
+                        className="rounded accent-purple-500"
+                      />
+                      <div className="overflow-hidden">
+                        <div className="text-sm font-semibold truncate">{project.title}</div>
+                        <div className="text-xs text-slate-400">{project.client}</div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
 
-          {/* Items */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <label className="block text-sm font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>
-                Invoice Items *
-              </label>
-              <button
-                type="button"
-                onClick={addItem}
-                className={`app-btn-primary flex items-center space-x-2 px-3 py-2 text-sm ${isBatch ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={isBatch}
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Item</span>
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {items.map((item, index) => (
-                <InvoiceItemRow
-                  key={index}
-                  item={item}
-                  index={index}
-                  onUpdate={updateItem}
-                  onRemove={removeItem}
-                  readOnly={isBatch}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Billed To Name</label>
+                <input
+                  type="text"
+                  value={billedToName}
+                  onChange={(e) => setBilledToName(e.target.value)}
+                  className="w-full px-4 py-2.5 text-xs rounded-xl bg-[#1E222B] border border-white/10 text-slate-100 outline-none focus:border-purple-500"
+                  placeholder="Client or Company Name"
                 />
-              ))}
-            </div>
-          </div>
-
-          {/* Tax */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
-                Tax Percentage (%)
-              </label>
-              <input
-                type="number"
-                value={taxPercent}
-                onChange={(e) => setTaxPercent(Number(e.target.value))}
-                className="app-input w-full px-4 py-3"
-                min="0"
-                max="100"
-                step="0.01"
-              />
-            </div>
-          </div>
-
-          {/* Totals */}
-          <div className="app-card p-6" style={{ backgroundColor: 'var(--neuro-bg-light)' }}>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="app-muted">Subtotal:</span>
-                <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>{formatCurrency(subtotal)}</span>
               </div>
-              {taxPercent > 0 && (
-                <div className="flex justify-between">
-                  <span className="app-muted">Tax ({taxPercent}%):</span>
-                  <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>{formatCurrency(subtotal * taxPercent / 100)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
-                <span style={{ color: 'var(--neuro-text-primary)' }}>Total:</span>
-                <span style={{ color: 'var(--neuro-text-primary)' }}>{formatCurrency(total)}</span>
-              </div>
-            </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col md:flex-row gap-3">
-            <button
-              type="button"
-              onClick={() => setShowPreview(true)}
-              className="app-btn-secondary flex items-center justify-center gap-2 px-6 py-3 w-full md:w-auto rounded-xl"
-              disabled={items.length === 0}
-            >
-              <Eye className="h-4 w-4" />
-              <span>Preview</span>
-            </button>
-            <button
-              type="submit"
-              className="neuro-button-orange flex items-center justify-center gap-2 px-6 py-4 text-base font-semibold w-full md:flex-1 rounded-xl"
-              disabled={isSubmitting || selectedProjects.length === 0 || items.length === 0}
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Membuat...</span>
-                </>
-              ) : (
-                <>
-                  <FileText className="h-4 w-4" />
-                  <span>{isBatch ? 'Create Combined PDF' : 'Create Invoice'}</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Preview Modal */}
-      {showPreview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--neuro-bg)', color: 'var(--neuro-text-primary)' }}>
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold">Invoice Preview</h2>
+              <div className="flex justify-end pt-4 border-t border-white/10">
                 <button
-                  onClick={() => setShowPreview(false)}
-                  className="app-btn-secondary px-3 py-1"
+                  disabled={selectedProjects.length === 0}
+                  onClick={() => setWizardStep(2)}
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white flex items-center space-x-2 disabled:opacity-50 transition-all"
                 >
-                  ✕
+                  <span>Next: Scope & Details</span>
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* STEP 2: SCOPE & DETAILS */}
+          {wizardStep === 2 && (
+            <div className="p-6 rounded-2xl bg-[#171A21] border border-white/10 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-slate-100">Step 2: Define Scope & Line Items</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Customize scope sub-descriptions for project clarity.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="px-3 py-1.5 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-300 text-xs font-semibold hover:bg-purple-600/30 flex items-center space-x-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Line Item</span>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {items.map((item, index) => (
+                  <InvoiceItemRow
+                    key={index}
+                    item={item}
+                    index={index}
+                    onUpdate={updateItem}
+                    onRemove={removeItem}
+                    readOnly={isBatch}
+                  />
+                ))}
+              </div>
+
+              <div className="flex justify-between pt-4 border-t border-white/10">
+                <button
+                  onClick={() => setWizardStep(1)}
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 flex items-center space-x-1"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+                <button
+                  onClick={() => setWizardStep(3)}
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white flex items-center space-x-2"
+                >
+                  <span>Next: Tax & Rates</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: TAX & RATES */}
+          {wizardStep === 3 && (
+            <div className="p-6 rounded-2xl bg-[#171A21] border border-white/10 space-y-6">
+              <div>
+                <h3 className="text-base font-bold text-slate-100">Step 3: Tax & Currency Summary</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Configure tax percentage and check totals.</p>
+              </div>
+
+              <div className="max-w-md space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Tax Percentage (%)</label>
+                  <input
+                    type="number"
+                    value={taxPercent}
+                    onChange={(e) => setTaxPercent(Number(e.target.value))}
+                    className="w-full px-4 py-2.5 text-xs rounded-xl bg-[#1E222B] border border-white/10 text-slate-100 outline-none focus:border-purple-500"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+
+                <div className="p-4 rounded-xl bg-[#1E222B] border border-white/5 space-y-2 text-xs">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Subtotal:</span>
+                    <span className="font-mono text-slate-200">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Tax ({taxPercent}%):</span>
+                    <span className="font-mono text-slate-200">${(subtotal * taxPercent / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-sm text-purple-400 pt-2 border-t border-white/5">
+                    <span>Total Amount:</span>
+                    <span className="font-mono">${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-4 border-t border-white/10">
+                <button
+                  onClick={() => setWizardStep(2)}
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 flex items-center space-x-1"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+                <button
+                  onClick={() => setWizardStep(4)}
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white flex items-center space-x-2"
+                >
+                  <span>Next: Live Preview</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4: LIVE PREVIEW & SAVE */}
+          {wizardStep === 4 && (
+            <div className="space-y-6">
+              <div className="p-6 rounded-2xl bg-[#171A21] border border-white/10 flex justify-between items-center">
+                <div>
+                  <h3 className="text-base font-bold text-slate-100">Step 4: Live Invoice Preview</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Review your document before saving.</p>
+                </div>
+                <button
+                  onClick={handleSaveInvoice}
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shadow-lg transition-all flex items-center space-x-2"
+                >
+                  {isSubmitting ? 'Saving Invoice...' : 'Save & Proceed to Export'}
+                  <Check className="w-4 h-4" />
+                </button>
+              </div>
+
               <InvoicePreviewCard
                 invoice={{
-                  invoiceNumber: 'PREVIEW',
-                  projectTitle: isBatch ? 'Multiple Projects' : (projects.find(p => p._id === selectedProjects[0])?.title || ''),
-                  billedToName: (() => {
-                    if (!isBatch) return billedToName;
-                    const all = selectedProjects
-                      .map(id => projects.find(p => p._id === id))
-                      .filter(Boolean) as Project[];
-                    const uniqueClients = Array.from(new Set(all.map(p => p.client).filter(Boolean)));
-                    if (billedToName.trim()) return billedToName.trim();
-                    if (uniqueClients.length > 1) return 'Multiple Clients';
-                    return uniqueClients[0] || '';
-                  })(),
+                  invoiceNumber: 'INV-PREVIEW',
+                  projectTitle: selectedProjects.length === 1 ? (projects.find(p => p._id === selectedProjects[0])?.title || 'Selected Project') : 'Multiple Projects',
+                  billedToName,
                   items,
                   subtotal,
                   taxPercent,
@@ -558,10 +438,48 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
                   createdAt: new Date()
                 }}
               />
+
+              <div className="flex justify-between pt-4 border-t border-white/10">
+                <button
+                  onClick={() => setWizardStep(3)}
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 flex items-center space-x-1"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-    </motion.div>
+          )}
+
+          {/* STEP 5: EXPORT PDF */}
+          {wizardStep === 5 && (
+            <div className="p-8 rounded-2xl bg-[#171A21] border border-white/10 text-center space-y-6 max-w-xl mx-auto">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto">
+                <Check className="w-8 h-8" />
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold text-slate-100">Invoice Created Successfully!</h3>
+                <p className="text-xs text-slate-400 mt-1">Your document has been generated and saved to your workstation database.</p>
+              </div>
+
+              {createdInvoiceId && (
+                <div className="pt-4 flex justify-center space-x-3">
+                  <a
+                    href={`/api/invoices/${createdInvoiceId}/pdf`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white shadow-lg flex items-center space-x-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download PDF Invoice</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }

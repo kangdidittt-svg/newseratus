@@ -20,11 +20,13 @@ export function DesktopLayout({ children, activeTab, onTabChange }: DesktopLayou
   ];
 
   return (
-    <div className="hidden md:flex h-screen bg-gray-50">
+    <div className="hidden md:flex h-screen" style={{ backgroundColor: 'var(--neuro-bg)' }}>
       {/* Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">Project Manager</h1>
+      <div className="w-64 border-r flex flex-col" style={{ backgroundColor: 'var(--neuro-bg-secondary)', borderColor: 'var(--neuro-border)' }}>
+        <div className="p-6 border-b" style={{ borderColor: 'var(--neuro-border)' }}>
+          <h1 className="text-xl font-bold tracking-tight" style={{ color: 'var(--neuro-text-primary)' }}>
+            Studio<span style={{ color: 'var(--neuro-accent)' }}>Manager</span>
+          </h1>
         </div>
         
         <nav className="flex-1 p-4 space-y-2">
@@ -33,15 +35,14 @@ export function DesktopLayout({ children, activeTab, onTabChange }: DesktopLayou
               key={item.id}
               onClick={() => onTabChange(item.id)}
               className={cn(
-                'w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors',
-                'text-left',
+                'w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-left font-medium text-sm',
                 activeTab === item.id
-                  ? 'bg-orange-50 text-orange-600 border border-orange-200'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  ? 'bg-cyan-950/60 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.15)]'
+                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/40'
               )}
             >
               {item.icon}
-              <span className="font-medium">{item.label}</span>
+              <span>{item.label}</span>
             </button>
           ))}
         </nav>
@@ -50,24 +51,29 @@ export function DesktopLayout({ children, activeTab, onTabChange }: DesktopLayou
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <header className="border-b px-6 py-4" style={{ backgroundColor: 'var(--neuro-bg-secondary)', borderColor: 'var(--neuro-border)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: 'var(--neuro-text-muted)' }} />
                 <input
                   type="text"
                   placeholder="Search projects..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="pl-9 pr-4 py-2 text-sm rounded-xl outline-none transition-all duration-200 border"
+                  style={{
+                    backgroundColor: 'var(--neuro-bg)',
+                    borderColor: 'var(--neuro-border)',
+                    color: 'var(--neuro-text-primary)'
+                  }}
                 />
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <button className="p-2 rounded-lg hover:bg-gray-100">
-                <Bell className="w-5 h-5 text-gray-600" />
+              <button className="p-2 rounded-xl border transition-all" style={{ backgroundColor: 'var(--neuro-bg)', borderColor: 'var(--neuro-border)' }}>
+                <Bell className="w-4 h-4" style={{ color: 'var(--neuro-text-secondary)' }} />
               </button>
-              <button className="p-2 rounded-lg hover:bg-gray-100">
-                <User className="w-5 h-5 text-gray-600" />
+              <button className="p-2 rounded-xl border transition-all" style={{ backgroundColor: 'var(--neuro-bg)', borderColor: 'var(--neuro-border)' }}>
+                <User className="w-4 h-4" style={{ color: 'var(--neuro-text-secondary)' }} />
               </button>
             </div>
           </div>

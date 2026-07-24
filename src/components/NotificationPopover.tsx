@@ -153,56 +153,55 @@ export default function NotificationPopover({
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4"
+              className="absolute bottom-0 left-0 right-0 bg-[#14161A] border-t border-white/5 rounded-t-2xl p-4 shadow-2xl"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-orange-500" />
-                  <span className="font-semibold">Notifikasi</span>
+                  <Bell className="h-5 w-5 text-[#8B5CF6]" />
+                  <span className="font-semibold text-sm text-[#FAFAFA]">Notifikasi</span>
                   {unreadCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full text-xs text-white" style={{ backgroundColor: 'var(--neuro-orange)' }}>
+                    <span className="px-2 py-0.5 rounded-full text-xs text-white bg-[#8B5CF6]">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
                 </div>
-                <button className="px-3 py-1 rounded-full border text-sm" onClick={() => setIsOpen(false)}>Tutup</button>
+                <button className="px-3 py-1 rounded-full border border-white/10 text-xs text-[#A1A1AA]" onClick={() => setIsOpen(false)}>Tutup</button>
               </div>
-              <div className="text-xs text-gray-500 mb-3">
+              <div className="text-xs text-[#71717A] mb-3">
                 {connectionStatus === 'connected' ? 'Terhubung' : connectionStatus === 'connecting' ? 'Menghubungkan...' : connectionStatus === 'reconnecting' ? 'Menghubungkan ulang...' : 'Terputus'}
               </div>
-              <div className="max-h-[55vh] overflow-y-auto -mx-1 px-1">
+              <div className="max-h-[55vh] overflow-y-auto -mx-1 px-1 space-y-2">
                 {isLoading ? (
-                  <div className="py-10 text-center text-gray-500">Memuat notifikasi...</div>
+                  <div className="py-10 text-center text-xs text-[#A1A1AA]">Memuat notifikasi...</div>
                 ) : notifications.length === 0 ? (
-                  <div className="py-10 text-center text-gray-500">Tidak ada notifikasi</div>
+                  <div className="py-10 text-center text-xs text-[#A1A1AA]">Tidak ada notifikasi</div>
                 ) : (
                   notifications
                     .filter(n => !hiddenIds.has(n.id))
                     .slice(0, 20)
                     .map((notification) => (
-                      <div key={notification.id} className="p-3 border-b flex items-start gap-3">
+                      <div key={notification.id} className="p-3 rounded-xl bg-[#1A1D22] border border-white/5 flex items-start gap-3">
                         <div className="mt-1">{getNotificationIcon(notification)}</div>
-                        <div className="flex-1">
-                          <div className="flex justify-between">
-                            <div className="font-medium text-sm text-gray-900">{notification.title}</div>
-                            <div className="text-xs text-gray-500">{formatTime(notification.time)}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-center">
+                            <div className="font-medium text-xs text-[#FAFAFA] truncate">{notification.title}</div>
+                            <div className="text-[10px] text-[#71717A] shrink-0 font-mono">{formatTime(notification.time)}</div>
                           </div>
-                          <div className="text-sm text-gray-600 mt-0.5">{notification.message}</div>
+                          <div className="text-xs text-[#A1A1AA] mt-1 leading-snug">{notification.message}</div>
                           {notification.clientName && (
-                            <div className="text-xs text-blue-600 mt-1">Client: {notification.clientName}</div>
+                            <div className="text-[11px] text-[#A78BFA] mt-1">Client: {notification.clientName}</div>
                           )}
                           <div className="flex gap-2 mt-2">
                             {notification.unread && (
                               <button
-                                className="px-3 py-1 rounded-full text-xs"
-                                style={{ backgroundColor: 'var(--neuro-bg-secondary)' }}
+                                className="px-3 py-1 rounded-lg text-[11px] bg-white/5 hover:bg-white/10 text-[#FAFAFA]"
                                 onClick={() => onMarkAsRead([notification.id])}
                               >
                                 Tandai dibaca
                               </button>
                             )}
                             <button
-                              className="px-3 py-1 rounded-full text-xs text-red-600 border"
+                              className="px-3 py-1 rounded-lg text-[11px] text-rose-400 bg-rose-500/10 border border-rose-500/20"
                               onClick={async () => {
                                 if (deletingIds.has(notification.id) || hiddenIds.has(notification.id)) return;
                                 setHiddenIds(prev => new Set(prev).add(notification.id));
@@ -226,8 +225,7 @@ export default function NotificationPopover({
                 <div className="pt-3">
                   <button
                     onClick={() => { onMarkAsRead(); setIsOpen(false); }}
-                    className="w-full px-4 py-3 rounded-full text-white"
-                    style={{ backgroundColor: 'var(--neuro-orange)' }}
+                    className="w-full px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#8B5CF6] hover:bg-[#7C3AED] transition-colors"
                   >
                     Tandai semua sudah dibaca
                   </button>
@@ -243,33 +241,30 @@ export default function NotificationPopover({
         {!isMobile && isOpen && (
           <motion.div
             ref={popoverRef}
-            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{
               type: "spring",
               stiffness: 300,
               damping: 25,
-              duration: 0.3
+              duration: 0.2
             }}
-            className="absolute right-0 mt-3 w-80 z-50 rounded-xl border bg-white shadow-lg"
-            style={{ borderColor: 'var(--neuro-border)' }}
-
+            className="absolute right-0 mt-3 w-84 z-50 rounded-2xl border border-white/5 bg-[#14161A] shadow-2xl overflow-hidden"
           >
             {/* Header */}
-            <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--neuro-border)' }}>
+            <div className="px-5 py-3.5 border-b border-white/5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Bell className="h-5 w-5" style={{ color: 'var(--neuro-orange)' }} />
-                  <h3 className="font-semibold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>
+                  <Bell className="h-4 w-4 text-[#8B5CF6]" />
+                  <h3 className="font-semibold text-xs text-[#FAFAFA]">
                     Notifikasi
                   </h3>
                   {unreadCount > 0 && (
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="px-2 py-1 rounded-full text-xs font-bold text-white"
-                      style={{ backgroundColor: 'var(--neuro-orange)' }}
+                      className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white bg-[#8B5CF6]"
                     >
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </motion.span>

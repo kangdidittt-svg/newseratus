@@ -13,31 +13,31 @@ export const StatCard: React.FC<StatCardProps> = ({
   title, 
   value, 
   icon, 
-  color = 'orange',
+  color = 'purple',
   change,
   changeType
 }) => {
   const colorClasses = {
-    orange: 'bg-orange-100 text-orange-600',
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    purple: 'bg-purple-100 text-purple-600',
-    red: 'bg-red-100 text-red-600'
+    orange: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
+    blue: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30',
+    green: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+    purple: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
+    red: 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
   };
 
   const changeColorClasses = {
-    increase: 'text-green-600',
-    decrease: 'text-red-600'
+    increase: 'text-emerald-400',
+    decrease: 'text-rose-400'
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div className="bg-[#171A21] rounded-2xl border border-white/10 p-5 shadow-lg">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</p>
+          <p className="text-2xl font-black text-slate-100 mt-1 font-mono">{value}</p>
           {change && (
-            <p className={`text-sm mt-1 ${changeColorClasses[changeType!]}`}>
+            <p className={`text-xs mt-1 font-medium ${changeColorClasses[changeType!]}`}>
               {changeType === 'increase' ? '↗' : '↘'} {change}
             </p>
           )}

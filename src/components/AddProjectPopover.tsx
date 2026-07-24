@@ -8,212 +8,105 @@ import AddProjectCompact from './AddProjectCompact';
 interface AddProjectPopoverProps {
   isActive: boolean;
   onProjectAdded?: () => void;
+  expanded?: boolean;
 }
 
-export default function AddProjectPopover({ isActive, onProjectAdded }: AddProjectPopoverProps) {
+export default function AddProjectPopover({ isActive, onProjectAdded, expanded = false }: AddProjectPopoverProps) {
   const [open, setOpen] = useState(false);
   const [isFormDirty, setIsFormDirty] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  const [buttonTop, setButtonTop] = useState(0);
 
-  // Auto-close dengan hover detection dan proteksi form
-  const handleMouseEnter = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-    if (isDesktop && !open) {
-      setOpen(true);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isFormDirty) {
-      hoverTimeoutRef.current = setTimeout(() => {
-        setOpen(false);
-      }, 500); // Delay 500ms sebelum menutup untuk mengurangi flicker
-    }
-  };
-
-
-
-  // Tutup popover jika klik di luar (hanya jika form tidak terisi)
+  // Update button position whenever open changes so we can place the fixed form
   useEffect(() => {
+    if (open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setButtonTop(rect.top);
+    }
+  }, [open]);
+
+  // Close on click outside
+  useEffect(() => {
+    if (!open) return;
     function handleClickOutside(e: MouseEvent) {
       if (
-        popoverRef.current && 
-        !popoverRef.current.contains(e.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node) &&
+        formRef.current && !formRef.current.contains(e.target as Node) &&
+        buttonRef.current && !buttonRef.current.contains(e.target as Node) &&
         !isFormDirty
       ) {
         setOpen(false);
       }
     }
-    
-    if (open) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open, isFormDirty]);
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Handle project added callback
   const handleProjectAdded = () => {
-    setOpen(false); // Close popover after successful submission
-    setIsFormDirty(false); // Reset form dirty state
-    if (onProjectAdded) {
-      onProjectAdded();
-    }
+    setOpen(false);
+    setIsFormDirty(false);
+    if (onProjectAdded) onProjectAdded();
   };
-
-  // Handle form data change to track if form is dirty
-  const handleFormDataChange = (isDirty: boolean) => {
-    setIsFormDirty(isDirty);
-  };
-
-  // Only show on desktop (min-width: 768px)
-  const [isDesktop, setIsDesktop] = useState(false);
-  
-  useEffect(() => {
-    const checkIsDesktop = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-    
-    checkIsDesktop();
-    window.addEventListener('resize', checkIsDesktop);
-    
-    return () => {
-      window.removeEventListener('resize', checkIsDesktop);
-    };
-  }, []);
 
   return (
-    <div 
-      className="relative"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* Tombol Add Project di sidebar */}
+    <div className="relative">
+      {/* + New Project Button */}
       <motion.button
         ref={buttonRef}
-        className={`w-full flex items-center justify-center p-3 rounded-xl font-inter font-medium transition-all duration-300 ${
-          isActive
-            ? 'neuro-card-pressed'
-            : 'neuro-button hover:neuro-button-hover'
-        }`}
-        style={{
-          color: isActive ? 'var(--neuro-orange)' : 'var(--neuro-text-primary)'
-        }}
-        onClick={() => {
-          if (isDesktop) {
-            setOpen(prev => !prev);
-          }
-        }}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        title="Add Project"
+        onClick={() => setOpen(prev => !prev)}
+        whileTap={{ scale: 0.97 }}
+        title="New Project"
+        className="w-full flex items-center py-2.5 rounded-xl text-xs font-medium transition-all duration-150 text-left border border-transparent text-[#9CA3AF] hover:text-[#F5F5F5] hover:bg-white/5 group"
+        style={{ paddingLeft: 12, paddingRight: 12 }}
       >
-        <Plus 
-          className="w-5 h-5" 
-          style={{ 
-            color: isActive ? 'var(--neuro-orange)' : 'var(--neuro-text-secondary)' 
-          }} 
-        />
+        <Plus className="w-[18px] h-[18px] shrink-0 text-[#6B7280] group-hover:text-[#9CA3AF]" />
+        <AnimatePresence>
+          {expanded && (
+            <motion.span
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -6 }}
+              transition={{ duration: 0.13, delay: 0.04 }}
+              className="ml-3 overflow-hidden whitespace-nowrap"
+            >
+              New Project
+            </motion.span>
+          )}
+        </AnimatePresence>
       </motion.button>
 
-      {/* Blur Background Overlay - Exclude sidebar area */}
+      {/* Form — Fixed position so it's never clipped by sidebar */}
       <AnimatePresence>
-        {open && isDesktop && (
+        {open && (
           <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed top-0 right-0 bottom-0 z-40"
-              style={{
-                left: '80px', // Sidebar width is 80px (w-20)
-                backdropFilter: 'blur(4px)',
-                backgroundColor: 'rgba(0, 0, 0, 0.1)'
-              }}
-            />
-        )}
-      </AnimatePresence>
-
-      {/* Invisible bridge untuk mencegah flicker */}
-      {open && isDesktop && (
-        <div className="absolute left-full top-0 w-4 h-full z-40" />
-      )}
-
-      {/* Popover Form - Only on desktop */}
-      <AnimatePresence>
-        {open && isDesktop && (
-          <motion.div
-            ref={popoverRef}
-            initial={{ opacity: 0, scale: 0.8, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: -20 }}
-            transition={{ 
-              type: "spring",
-              stiffness: 300,
-              damping: 25,
-              duration: 0.4
-            }}
-            className="absolute left-full top-0 ml-4 w-96 max-h-[60vh] overflow-y-auto z-50"
+            ref={formRef}
+            initial={{ opacity: 0, scale: 0.95, x: -8 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.95, x: -8 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+            className="fixed z-[200] w-96 max-h-[85vh] overflow-y-auto rounded-2xl bg-[#14161A] border border-white/8 shadow-2xl"
             style={{
+              left: 76,
+              top: Math.max(8, buttonTop - 8),
               transformOrigin: 'left top',
-              background: 'var(--neuro-bg)',
-              borderRadius: '20px 20px 20px 8px', // Bubble chat shape
-              boxShadow: '12px 12px 24px rgba(163, 163, 166, 0.4), -12px -12px 24px rgba(255, 255, 255, 0.9)',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
             }}
           >
-            {/* Chat bubble tail */}
-            <div 
-              className="absolute -left-2 top-6 w-4 h-4 rotate-45"
-              style={{
-                background: 'var(--neuro-bg)',
-                boxShadow: '-3px -3px 6px rgba(255, 255, 255, 0.9), 3px 3px 6px rgba(163, 163, 166, 0.3)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRight: 'none',
-                borderBottom: 'none'
-              }}
-            />
-            
-            {/* Header dengan tombol close */}
-            <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--neuro-border)' }}>
-              <h3 className="font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>
-                Quick Add Project
-              </h3>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5">
+              <h3 className="text-sm font-semibold text-[#FAFAFA]">Quick Add Project</h3>
               <button
-                onClick={() => {
-                  setOpen(false);
-                  setIsFormDirty(false);
-                }}
-                className="neuro-button p-2 rounded-lg hover:scale-110 transition-transform"
-                style={{ minWidth: 'auto' }}
+                onClick={() => { setOpen(false); setIsFormDirty(false); }}
+                className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
               >
-                <X className="w-4 h-4" style={{ color: 'var(--neuro-text-secondary)' }} />
+                <X className="w-4 h-4 text-[#71717A]" />
               </button>
             </div>
-            
+
             {/* Form Content */}
             <div className="p-4">
-              <AddProjectCompact 
+              <AddProjectCompact
                 onProjectAdded={handleProjectAdded}
-                onFormDataChange={handleFormDataChange}
+                onFormDataChange={(dirty) => setIsFormDirty(dirty)}
               />
             </div>
           </motion.div>

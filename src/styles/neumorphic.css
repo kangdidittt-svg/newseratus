@@ -1,52 +1,49 @@
-/* Neumorphic Design System Variables */
+/* StudioManager v2.1 Design System Variables (Seratus Graphite) */
 :root {
   /* Colors */
-  --neuro-bg: #f0f0f3;
-  --neuro-bg-light: #ffffff;
-  --neuro-bg-dark: #d1d1d4;
-  --neuro-shadow-light: #ffffff;
-  --neuro-shadow-dark: #a3a3a6;
-  --neuro-accent: #ff6b6b;
-  --neuro-accent-light: #ff8e8e;
-  --neuro-accent-dark: #e55555;
-  --neuro-orange: #ff8c42;
-  --neuro-orange-light: #ffab70;
-  --neuro-orange-dark: #e67a3c;
-  --neuro-text-primary: #1a202c;
-  --neuro-text-secondary: #4a5568;
-  --neuro-text-muted: #718096;
-  --neuro-text-light: #a0aec0;
-  --neuro-border: #e2e8f0;
-  --neuro-success: #48bb78;
-  --neuro-success-light: rgba(72, 187, 120, 0.1);
-  --neuro-warning: #ed8936;
-  --neuro-warning-light: rgba(237, 137, 54, 0.1);
-  --neuro-error: #f56565;
-  --neuro-error-light: rgba(245, 101, 101, 0.1);
-  --neuro-info: #4299e1;
-  --neuro-info-light: rgba(66, 153, 225, 0.1);
-  --neuro-blue: #4299e1;
-  --neuro-blue-light: rgba(66, 153, 225, 0.1);
-  --neuro-bg-secondary: #e8e8eb;
-  --neuro-orange-light: rgba(255, 140, 66, 0.1);
-  
-  /* Shadows - Made lighter and thinner */
-  --neuro-shadow-inset: inset 3px 3px 6px rgba(163, 163, 166, 0.4), inset -3px -3px 6px rgba(255, 255, 255, 0.9);
-  --neuro-shadow-outset: 3px 3px 6px rgba(163, 163, 166, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.9);
-  --neuro-shadow-pressed: inset 2px 2px 4px rgba(163, 163, 166, 0.5), inset -2px -2px 4px rgba(255, 255, 255, 0.9);
-  --neuro-shadow-hover: 4px 4px 8px rgba(163, 163, 166, 0.3), -4px -4px 8px rgba(255, 255, 255, 0.9);
+  --neuro-bg: #0F1115;             /* Background */
+  --neuro-bg-secondary: #14161A;   /* Surface / Card */
+  --neuro-bg-light: #1A1D22;       /* Elevated Surface / Input */
+  --neuro-bg-dark: #0A0C0E;
+  --neuro-accent: #8B5CF6;         /* Single Accent (#8B5CF6) */
+  --neuro-accent-light: #A78BFA;
+  --neuro-accent-dark: #7C3AED;
+  --neuro-orange: #8B5CF6;
+  --neuro-orange-light: rgba(139, 92, 246, 0.15);
+  --neuro-orange-dark: #7C3AED;
+  --neuro-text-primary: #FAFAFA;   /* Primary Text */
+  --neuro-text-secondary: #A1A1AA; /* Secondary Text */
+  --neuro-text-muted: #71717A;     /* Muted Text */
+  --neuro-text-light: #52525B;
+  --neuro-border: rgba(255, 255, 255, 0.05); /* Border */
+  --neuro-success: #22C55E;
+  --neuro-success-light: rgba(34, 197, 94, 0.15);
+  --neuro-warning: #F59E0B;
+  --neuro-warning-light: rgba(245, 158, 11, 0.15);
+  --neuro-error: #EF4444;
+  --neuro-error-light: rgba(239, 68, 68, 0.15);
+  --neuro-info: #3B82F6;
+  --neuro-info-light: rgba(59, 130, 246, 0.15);
+  --neuro-blue: #8B5CF6;
+  --neuro-blue-light: rgba(139, 92, 246, 0.15);
+
+  /* Clean Micro Shadows — No glow, pure dark depth */
+  --neuro-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  --neuro-shadow-outset: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --neuro-shadow-pressed: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+  --neuro-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.25);
   
   /* Border Radius */
-  --neuro-radius-sm: 12px;
-  --neuro-radius-md: 20px;
-  --neuro-radius-lg: 28px;
-  --neuro-radius-xl: 36px;
-  --neuro-radius-full: 50%;
+  --neuro-radius-sm: 8px;
+  --neuro-radius-md: 12px;
+  --neuro-radius-lg: 16px;
+  --neuro-radius-xl: 24px;
+  --neuro-radius-full: 9999px;
   
-  /* Transitions */
-  --neuro-transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  --neuro-transition-fast: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  --neuro-transition-slow: all 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Fast Micro Transitions (150-250ms) */
+  --neuro-transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --neuro-transition-fast: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  --neuro-transition-slow: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Base Neumorphic Classes */
@@ -70,44 +67,50 @@
 }
 
 .neuro-button {
-  background: var(--neuro-bg);
-  border: none;
+  background: #1A1D22;
+  border: 1px solid rgba(255,255,255,0.05);
   border-radius: var(--neuro-radius-md);
-  box-shadow: var(--neuro-shadow-outset);
+  box-shadow: none;
   color: var(--neuro-text-primary);
   cursor: pointer;
-  transition: var(--neuro-transition);
+  transition: background 0.15s;
   outline: none;
 }
 
 .neuro-button:hover {
-  box-shadow: var(--neuro-shadow-hover);
-  transform: translateY(-3px);
+  background: #22252C;
+  box-shadow: none;
+  transform: none;
 }
 
 .neuro-button:active {
-  box-shadow: var(--neuro-shadow-pressed);
-  transform: translateY(0);
+  background: #14161A;
+  box-shadow: none;
+  transform: none;
 }
 
 .neuro-button-accent {
-  background: linear-gradient(135deg, var(--neuro-accent), var(--neuro-accent-light));
+  background: var(--neuro-accent);
   color: white;
-  box-shadow: 3px 3px 6px rgba(255, 107, 107, 0.2), -3px -3px 6px rgba(255, 255, 255, 0.9);
+  box-shadow: none;
+  border: none;
 }
 
 .neuro-button-accent:hover {
-  box-shadow: 4px 4px 8px rgba(255, 107, 107, 0.25), -4px -4px 8px rgba(255, 255, 255, 0.95);
+  background: var(--neuro-accent-dark);
+  box-shadow: none;
 }
 
 .neuro-button-orange {
-  background: linear-gradient(135deg, var(--neuro-orange), var(--neuro-orange-light));
+  background: var(--neuro-accent);
   color: white;
-  box-shadow: 3px 3px 6px rgba(255, 140, 66, 0.2), -3px -3px 6px rgba(255, 255, 255, 0.9);
+  box-shadow: none;
+  border: none;
 }
 
 .neuro-button-orange:hover {
-  box-shadow: 4px 4px 8px rgba(255, 140, 66, 0.25), -4px -4px 8px rgba(255, 255, 255, 0.95);
+  background: var(--neuro-accent-dark);
+  box-shadow: none;
 }
 
 .neuro-card-hover:hover {
@@ -286,7 +289,7 @@
   }
 
   .app-btn-secondary {
-    background: #ffffff !important;
+    background: var(--neuro-bg-secondary) !important;
     color: var(--neuro-text-primary) !important;
     border: 1px solid var(--neuro-border) !important;
   }
@@ -296,7 +299,8 @@
   .neuro-select,
   .app-select {
     box-shadow: none !important;
-    background: #ffffff !important;
+    background: var(--neuro-bg-secondary) !important;
+    color: var(--neuro-text-primary) !important;
     border: 1px solid var(--neuro-border) !important;
   }
 }

@@ -58,6 +58,13 @@ export default function MonthlyReport() {
 
   useEffect(() => {
     fetchReportData();
+    const handleUpdate = () => fetchReportData();
+    window.addEventListener('projects:updated', handleUpdate);
+    window.addEventListener('invoices:updated', handleUpdate);
+    return () => {
+      window.removeEventListener('projects:updated', handleUpdate);
+      window.removeEventListener('invoices:updated', handleUpdate);
+    };
   }, [selectedPeriod]);
 
   const fetchReportData = async () => {

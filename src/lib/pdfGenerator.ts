@@ -122,27 +122,43 @@ export function generateDetailedInvoicePDF(invoice: InvoicePDFData): Promise<Buf
   const lightGray = '#f3f4f6';
 
   // Header with background
-  doc.rect(0, 0, 612, 120).fill(primaryColor);
-  doc.fillColor('white').fontSize(28).text('INVOICE', 50, 40);
+  doc.rect(0, 0, 612, 110).fill('#0f172a');
+  doc.fillColor('white').fontSize(24).text('INVOICE', 50, 35);
+  doc.fontSize(11).fillColor('#94a3b8').text('Overthinklabs.id', 50, 65);
   
   // Invoice info
-  doc.fontSize(12);
-  doc.text(`Invoice #: ${invoice.invoiceNumber}`, 400, 40);
-  doc.text(`Date: ${formatDate(invoice.invoiceDate)}`, 400, 60);
-  doc.text(`Status: ${invoice.status.toUpperCase()}`, 400, 80);
+  doc.fontSize(11).fillColor('white');
+  doc.text(`Invoice #: ${invoice.invoiceNumber}`, 400, 35);
+  doc.text(`Date: ${formatDate(invoice.invoiceDate)}`, 400, 55);
+  doc.text(`Status: ${invoice.status.toUpperCase()}`, 400, 75);
+
+  // PAID Stamp Overlay if status is paid
+  if (invoice.status.toLowerCase() === 'paid') {
+    doc.save();
+    doc.rotate(-12, { origin: [480, 75] });
+    doc.rect(435, 55, 100, 36).lineWidth(2).dash(4, { space: 2 }).strokeColor('#059669').stroke();
+    doc.undash();
+    doc.fontSize(18).fillColor('#059669').text('PAID', 435, 61, { width: 100, align: 'center' });
+    doc.fontSize(7).fillColor('#047857').text('PAYMENT RECEIVED', 435, 80, { width: 100, align: 'center' });
+    doc.restore();
+  }
 
   // Reset color
   doc.fillColor(textColor);
 
-  // Bill To section
-  doc.fontSize(14).text('BILL TO:', 50, 150);
-  doc.fontSize(12).text(invoice.billedToName, 50, 170);
-  
-  doc.fontSize(14).text('PROJECT:', 300, 150);
-  doc.fontSize(12).text(invoice.projectTitle, 300, 170);
+  // From / Bill To / Project section
+  let y = 135;
+  doc.fontSize(10).fillColor('#64748b').text('FROM:', 50, y);
+  doc.fontSize(12).fillColor('#0f172a').text('Overthinklabs.id', 50, y + 15);
+
+  doc.fontSize(10).fillColor('#64748b').text('BILL TO:', 220, y);
+  doc.fontSize(12).fillColor('#0f172a').text(invoice.billedToName, 220, y + 15);
+
+  doc.fontSize(10).fillColor('#64748b').text('PROJECT:', 390, y);
+  doc.fontSize(12).fillColor('#0f172a').text(invoice.projectTitle, 390, y + 15);
 
   // Items table with headers
-  let y = 220;
+  y = 210;
   
   // Table header background
   doc.rect(50, y - 10, 500, 30).fill(lightGray);

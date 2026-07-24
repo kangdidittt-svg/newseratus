@@ -38,6 +38,13 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
     fetchInvoices();
   }, [refreshTrigger]);
 
+  // Listen for Studio Robot "Generate Invoice" quick action
+  useEffect(() => {
+    const handler = () => setShowCreateModal(true);
+    window.addEventListener('invoice:openCreateModal', handler);
+    return () => window.removeEventListener('invoice:openCreateModal', handler);
+  }, []);
+
   const fetchInvoices = async () => {
     try {
       const response = await fetch('/api/invoices', {
@@ -223,201 +230,142 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
         </div>
       ) : (
         <>
-        {/* Mobile list (clean, flat) */}
+        {/* Mobile list */}
         <div className="md:hidden space-y-3">
           {invoices.map((invoice) => (
-            <div key={invoice._id} className="bg-white border rounded-xl p-4" style={{ borderColor: 'var(--neuro-border)' }}>
+            <div key={invoice._id} className="bg-[#121418] border border-white/5 rounded-2xl p-4 space-y-3">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-sm app-muted">Invoice #</div>
-                  <div className="text-base font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>{invoice.invoiceNumber}</div>
+                  <div className="text-[10px] text-[#6B7280] font-mono">#{invoice.invoiceNumber}</div>
+                  <div className="text-sm font-bold text-[#F5F5F5]">{invoice.projectTitle}</div>
                 </div>
-                <span 
-                  className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={getStatusColor(invoice.status)}
-                >
-                  {invoice.status.toUpperCase()}
+                <span className="inline-flex items-center space-x-1.5 text-xs font-medium">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    invoice.status === 'paid' ? 'bg-[#22C55E]' :
+                    invoice.status === 'overdue' ? 'bg-[#EF4444]' :
+                    'bg-[#F59E0B]'
+                  }`} />
+                  <span className="text-[#FAFAFA] capitalize">{invoice.status}</span>
                 </span>
               </div>
-              <div className="mt-2 text-sm" style={{ color: 'var(--neuro-text-primary)' }}>
-                <div className="flex items-center justify-between">
-                  <span className="app-muted">Project</span>
-                  <span>{invoice.projectTitle}</span>
+
+              <div className="text-xs text-[#9CA3AF] space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-[#6B7280]">Client:</span>
+                  <span className="font-semibold text-[#F5F5F5]">{invoice.billedToName}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="app-muted">Client</span>
-                  <span>{invoice.billedToName}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="app-muted">Total</span>
-                  <span>{invoice.total.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="app-muted">Date</span>
-                  <span>{formatDate(invoice.createdAt)}</span>
+                <div className="flex justify-between">
+                  <span className="text-[#6B7280]">Total:</span>
+                  <span className="font-mono font-bold text-cyan-400">${invoice.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
               </div>
-              <div className="mt-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
+
+              <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setShowPreview(invoice)}
-                    className="px-4 py-2 rounded-full"
-                    style={{ backgroundColor: 'var(--neuro-orange)', color: '#fff' }}
-                    title="View Invoice"
+                    className="px-3 py-1.5 rounded-xl bg-purple-600/20 text-[#A78BFA] border border-purple-500/30 text-xs font-semibold"
                   >
                     Preview
                   </button>
-                  <InvoiceDownloadButton
-                    fileName={`invoice-${invoice.invoiceNumber}.pdf`}
-                    targetId={`invoice-preview-${invoice._id}`}
-                    className="px-4 py-2 rounded-full"
+                  <a
+                    href={`/api/invoices/${invoice._id}/pdf`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-[#F5F5F5] text-xs font-semibold flex items-center space-x-1"
                   >
-                    Download
-                  </InvoiceDownloadButton>
+                    <Download className="w-3.5 h-3.5" />
+                    <span>PDF</span>
+                  </a>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div className="flex items-center space-x-1">
                   <button
                     onClick={() => markAsPaid(invoice._id)}
-                    className="px-3 py-2 rounded-full"
                     disabled={invoice.status === 'paid'}
-                    style={{
-                      backgroundColor: '#fff',
-                      border: '1px solid var(--neuro-border)',
-                      color: invoice.status === 'paid' ? 'var(--neuro-text-muted)' : 'var(--neuro-success)'
-                    }}
+                    className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 disabled:opacity-30"
+                    title="Mark Paid"
                   >
-                    <Check className="h-4 w-4" />
+                    <Check className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleDeleteInvoice(invoice._id)}
-                    className="px-3 py-2 rounded-full"
-                    style={{ backgroundColor: '#fff', border: '1px solid var(--neuro-border)', color: 'var(--neuro-error)' }}
+                    className="p-2 rounded-xl bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                    title="Delete"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
+
         {/* Desktop table */}
-        <div className="hidden md:block app-card overflow-hidden">
+        <div className="hidden md:block bg-[#121418] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectedInvoices.length === invoices.length}
-                      onChange={handleSelectAll}
-                      className="rounded border-gray-300"
-                    />
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium app-muted uppercase tracking-wider">
-                    Invoice #
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium app-muted uppercase tracking-wider">
-                    Project
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium app-muted uppercase tracking-wider">
-                    Client
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium app-muted uppercase tracking-wider">
-                    Subtotal
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium app-muted uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium app-muted uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium app-muted uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium app-muted uppercase tracking-wider">
-                    Actions
-                  </th>
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-white/5 bg-[#181A20] text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider">
+                  <th className="px-5 py-3">Invoice #</th>
+                  <th className="px-5 py-3">Project</th>
+                  <th className="px-5 py-3">Client</th>
+                  <th className="px-5 py-3">Total</th>
+                  <th className="px-5 py-3">Date</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y" style={{ backgroundColor: 'var(--neuro-bg)', color: 'var(--neuro-text-primary)', borderColor: 'var(--neuro-border)' }}>
+              <tbody className="divide-y divide-white/5 text-xs text-[#F5F5F5] font-medium">
                 {invoices.map((invoice) => (
-                  <tr key={invoice._id} className="transition-colors" style={{ cursor: 'default' }}>
-                    <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedInvoices.includes(invoice._id)}
-                        onChange={() => handleSelectInvoice(invoice._id)}
-                        className="rounded border-gray-300"
-                      />
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {invoice.invoiceNumber}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {invoice.projectTitle}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <div className="flex items-center space-x-2">
-                        <span>{invoice.billedToName}</span>
-                        <button
-                          onClick={() => handleEditName(invoice)}
-                          className="text-blue-600 hover:text-blue-800"
-                          title="Edit Client Name"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm" style={{ color: 'var(--neuro-text-primary)' }}>
-                      {invoice.subtotal.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium" style={{ color: 'var(--neuro-text-primary)' }}>
-                      {invoice.total.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {formatDate(invoice.createdAt)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span 
-                        className="px-2 py-1 rounded-full text-xs font-medium"
-                        style={getStatusColor(invoice.status)}
-                      >
-                        {invoice.status.toUpperCase()}
+                  <tr key={invoice._id} className="hover:bg-white/5 transition-colors">
+                    <td className="px-5 py-3.5 font-mono text-purple-400 font-bold">#{invoice.invoiceNumber}</td>
+                    <td className="px-5 py-3.5 font-semibold text-[#FAFAFA]">{invoice.projectTitle}</td>
+                    <td className="px-5 py-3.5 text-[#A1A1AA]">{invoice.billedToName}</td>
+                    <td className="px-5 py-3.5 font-mono font-bold text-[#FAFAFA]">${invoice.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-3.5 text-[#71717A]">{formatDate(invoice.createdAt)}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex items-center space-x-1.5 text-xs font-medium">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                          invoice.status === 'paid' ? 'bg-[#22C55E]' :
+                          invoice.status === 'overdue' ? 'bg-[#EF4444]' :
+                          'bg-[#F59E0B]'
+                        }`} />
+                        <span className="text-[#FAFAFA] capitalize">{invoice.status}</span>
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex items-center space-x-2">
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end space-x-1.5">
                         <button
                           onClick={() => setShowPreview(invoice)}
-                          className="app-btn-secondary"
-                          title="View Invoice"
+                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
+                          title="Preview Invoice"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="w-3.5 h-3.5" />
                         </button>
-                        <InvoiceDownloadButton
-                          fileName={`invoice-${invoice.invoiceNumber}.pdf`}
-                          targetId={`invoice-preview-${invoice._id}`}
-                          className="app-btn-secondary"
+                        <a
+                          href={`/api/invoices/${invoice._id}/pdf`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-lg bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors"
+                          title="Download PDF"
                         >
-                          <Download className="h-4 w-4" />
-                        </InvoiceDownloadButton>
+                          <Download className="w-3.5 h-3.5" />
+                        </a>
                         <button
                           onClick={() => markAsPaid(invoice._id)}
-                          className="app-btn-secondary"
-                          title="Tandai sebagai Paid"
                           disabled={invoice.status === 'paid'}
-                          style={{ color: invoice.status === 'paid' ? 'var(--neuro-text-muted)' : 'var(--neuro-success)' }}
+                          className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 disabled:opacity-30"
+                          title="Mark Paid"
                         >
-                          <Check className="h-4 w-4" />
+                          <Check className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteInvoice(invoice._id)}
-                          className="app-btn-secondary"
-                          title="Hapus Invoice"
-                          style={{ color: 'var(--neuro-error)' }}
+                          className="p-1.5 rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                          title="Delete Invoice"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
@@ -432,22 +380,39 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
 
       {/* Preview Modal */}
       {showPreview && (
-        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
-          <div className="neuro-card p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>Invoice Preview</h2>
-              <button
-                onClick={() => setShowPreview(null)}
-                className="neuro-button px-3 py-1"
-              >
-                ✕
-              </button>
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#14161A] border border-white/10 rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/5">
+              <div>
+                <h2 className="text-lg font-bold text-[#FAFAFA]">Invoice Preview</h2>
+                <p className="text-xs text-[#A1A1AA]">Clean minimalist print & PDF preview</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <InvoiceDownloadButton
+                  invoiceId={showPreview._id}
+                  fileName={`Invoice-${showPreview.invoiceNumber}.pdf`}
+                  targetId="modal-invoice-preview"
+                  className="px-4 py-2 rounded-xl bg-[#8B5CF6] hover:bg-[#7C3AED] text-white text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </InvoiceDownloadButton>
+                <button
+                  onClick={() => setShowPreview(null)}
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#A1A1AA] hover:text-[#FAFAFA] transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-            <InvoicePreviewCard invoice={{
-              ...showPreview,
-              createdAt: new Date(showPreview.createdAt),
-              items: showPreview.items || []
-            }} />
+            <InvoicePreviewCard
+              containerId="modal-invoice-preview"
+              invoice={{
+                ...showPreview,
+                createdAt: new Date(showPreview.createdAt),
+                items: showPreview.items || []
+              }}
+            />
           </div>
         </div>
       )}

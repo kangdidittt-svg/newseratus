@@ -21,7 +21,7 @@ interface TodoItem {
   status: 'pending' | 'done';
 }
 
-type FilterTab = 'today' | 'tomorrow' | 'upcoming' | 'all';
+type FilterTab = 'today' | 'tomorrow' | 'upcoming' | 'completed' | 'all';
 
 function todayStr() {
   const d = new Date();
@@ -302,28 +302,28 @@ export default function TodoPage() {
           {/* Left/Main */}
           <div className="flex-1 space-y-6">
             {/* Quick Add */}
-            <div className="app-card p-4 flex items-center gap-3">
-              <Plus className="h-5 w-5" />
+            <div className="bg-[#121418] border border-white/5 rounded-2xl p-4 flex items-center gap-3">
+              <Plus className="h-5 w-5 text-[#8B5CF6]" />
               <input
                 value={quickInput}
                 onChange={e => setQuickInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') submitQuickAdd(); }}
                 placeholder="+ Add a task..."
-                className="app-input flex-1"
+                className="flex-1 bg-[#181A20] border border-white/5 rounded-xl px-3 py-2 text-xs text-[#F5F5F5] placeholder-[#6B7280] outline-none focus:border-[#8B5CF6]"
               />
-              <button className="app-btn-primary" onClick={submitQuickAdd}>Add</button>
+              <button className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white transition-all" onClick={submitQuickAdd}>Add</button>
             </div>
 
             {/* Form Add/Edit */}
-            <div className="app-card p-6">
+            <div className="bg-[#121418] border border-white/5 rounded-2xl p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="app-muted text-sm">Title</label>
-                  <input className="app-input w-full" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+                  <label className="text-[11px] font-semibold text-[#9CA3AF] uppercase block mb-1">Title</label>
+                  <input className="w-full bg-[#181A20] border border-white/5 rounded-xl px-3 py-2 text-xs text-[#F5F5F5] outline-none focus:border-[#8B5CF6]" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
                 </div>
                 <div>
-                  <label className="app-muted text-sm">Project</label>
-                  <select className="app-select w-full" value={form.projectId || ''} onChange={e => setForm({ ...form, projectId: e.target.value || undefined })}>
+                  <label className="text-[11px] font-semibold text-[#9CA3AF] uppercase block mb-1">Project</label>
+                  <select className="w-full bg-[#181A20] border border-white/5 rounded-xl px-3 py-2 text-xs text-[#F5F5F5] outline-none focus:border-[#8B5CF6]" value={form.projectId || ''} onChange={e => setForm({ ...form, projectId: e.target.value || undefined })}>
                     <option value="">None</option>
                     {projects.map(p => (
                       <option key={p._id} value={p._id}>{p.title}</option>
@@ -331,87 +331,90 @@ export default function TodoPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="app-muted text-sm">Due Date</label>
-                  <input type="date" className="app-input w-full" value={form.dueDateStr} onChange={e => setForm({ ...form, dueDateStr: e.target.value })} />
+                  <label className="text-[11px] font-semibold text-[#9CA3AF] uppercase block mb-1">Due Date</label>
+                  <input type="date" className="w-full bg-[#181A20] border border-white/5 rounded-xl px-3 py-2 text-xs text-[#F5F5F5] outline-none focus:border-[#8B5CF6]" value={form.dueDateStr} onChange={e => setForm({ ...form, dueDateStr: e.target.value })} />
                 </div>
                 <div>
-                  <label className="app-muted text-sm">Priority</label>
-                  <select className="app-select w-full" value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as 'low'|'medium'|'high' })}>
+                  <label className="text-[11px] font-semibold text-[#9CA3AF] uppercase block mb-1">Priority</label>
+                  <select className="w-full bg-[#181A20] border border-white/5 rounded-xl px-3 py-2 text-xs text-[#F5F5F5] outline-none focus:border-[#8B5CF6]" value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as 'low'|'medium'|'high' })}>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="app-muted text-sm">Notes</label>
-                  <textarea className="app-input w-full" value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} />
+                  <label className="text-[11px] font-semibold text-[#9CA3AF] uppercase block mb-1">Notes</label>
+                  <textarea className="w-full bg-[#181A20] border border-white/5 rounded-xl px-3 py-2 text-xs text-[#F5F5F5] outline-none focus:border-[#8B5CF6] resize-none" rows={2} value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} />
                 </div>
               </div>
-              <div className="mt-4 flex gap-2">
-                <button className="app-btn-primary" onClick={editing ? saveEdit : submitForm}>{editing ? 'Save Changes' : 'Add Task'}</button>
-                <button className="app-btn-secondary" onClick={addToday}>{editing ? 'Save for Today' : 'Add for Today'}</button>
-                <button className="app-btn-secondary" onClick={addTomorrow}>Add for Tomorrow</button>
+              <div className="pt-2 flex flex-wrap gap-2">
+                <button className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white transition-all" onClick={editing ? saveEdit : submitForm}>{editing ? 'Save Changes' : 'Add Task'}</button>
+                <button className="px-4 py-2 rounded-xl bg-[#181A20] border border-white/5 hover:bg-white/10 text-xs text-[#F5F5F5] font-semibold transition-all" onClick={addToday}>{editing ? 'Save for Today' : 'Add for Today'}</button>
+                <button className="px-4 py-2 rounded-xl bg-[#181A20] border border-white/5 hover:bg-white/10 text-xs text-[#F5F5F5] font-semibold transition-all" onClick={addTomorrow}>Add for Tomorrow</button>
               </div>
             </div>
 
             {/* Filter Tabs */}
             <div className="flex items-center gap-2">
-              {(['today', 'tomorrow', 'upcoming', 'all'] as FilterTab[]).map(t => (
-                <button key={t} className={`app-btn-secondary ${filter === t ? 'neuro-card-pressed' : ''}`} onClick={() => setFilter(t)}>
-                  {t[0].toUpperCase() + t.slice(1)}
-                </button>
-              ))}
+              {(['today', 'tomorrow', 'upcoming', 'all'] as FilterTab[]).map(t => {
+                const isActive = filter === t;
+                return (
+                  <button key={t} className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${isActive ? 'bg-[#8B5CF6]/20 text-[#A78BFA] border border-[#8B5CF6]/30' : 'bg-[#121418] text-[#9CA3AF] border border-white/5 hover:bg-white/5'}`} onClick={() => setFilter(t)}>
+                    {t[0].toUpperCase() + t.slice(1)}
+                  </button>
+                );
+              })}
             </div>
 
-            {/* List */}
-            <div className="app-card p-0 overflow-hidden">
-              <div className="divide-y" style={{ borderColor: 'var(--neuro-border)' }}>
+            {/* Task List */}
+            <div className="bg-[#121418] border border-white/5 rounded-2xl overflow-hidden">
+              <div className="divide-y divide-white/5">
                 {todos.map(todo => (
-                  <div key={todo._id} className="flex items-center justify-between p-4">
+                  <div key={todo._id} className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
                     <div className="flex items-center gap-3">
-                      <input type="checkbox" checked={todo.status === 'done'} onChange={() => toggleDone(todo)} />
+                      <input type="checkbox" checked={todo.status === 'done'} onChange={() => toggleDone(todo)} className="rounded border-white/20 bg-[#181A20] text-purple-600" />
                       <div>
-                        <div className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>{todo.title}</div>
-                        <div className="text-sm app-muted">
+                        <div className="text-xs font-semibold text-[#F5F5F5]">{todo.title}</div>
+                        <div className="text-[11px] text-[#6B7280]">
                           {projectName(todo.projectId)}
                           {projectName(todo.projectId) ? ' • ' : ''}
-                          <span>{todo.dueDateStr}</span>
+                          <span className="font-mono">{todo.dueDateStr}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {filter === 'all' && todo.status !== 'done' && (
-                        <button className="app-btn-secondary" onClick={() => markDone(todo._id)} title="Mark done"><Check className="h-4 w-4" /></button>
+                        <button className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" onClick={() => markDone(todo._id)} title="Mark done"><Check className="h-3.5 w-3.5" /></button>
                       )}
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${todo.priority === 'high' ? 'bg-red-100 text-red-700' : todo.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{todo.priority.toUpperCase()}</span>
-                      <button className="app-btn-secondary" onClick={() => startEdit(todo)} title="Edit"><Edit className="h-4 w-4" /></button>
-                      <button className="app-btn-secondary" onClick={() => deleteTodo(todo)} title="Delete"><Trash2 className="h-4 w-4" /></button>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${todo.priority === 'high' ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' : todo.priority === 'medium' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' : 'bg-blue-500/15 text-blue-400 border-blue-500/30'}`}>{todo.priority}</span>
+                      <button className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[#9CA3AF]" onClick={() => startEdit(todo)} title="Edit"><Edit className="h-3.5 w-3.5" /></button>
+                      <button className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400" onClick={() => deleteTodo(todo)} title="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
                     </div>
                   </div>
                 ))}
                 {todos.length === 0 && (
-                  <div className="p-6 text-center app-muted">No tasks</div>
+                  <div className="p-8 text-center text-xs text-[#6B7280]">No tasks found</div>
                 )}
               </div>
             </div>
           </div>
 
           {/* Right/Stats */}
-          <div className="w-full md:w-80 space-y-6">
-            <div className="app-card p-6">
+          <div className="w-full md:w-72 space-y-4">
+            <div className="bg-[#121418] border border-white/5 rounded-2xl p-5 space-y-2">
               <div className="flex items-center gap-2 mb-2">
-                <CheckSquare className="h-4 w-4" style={{ color: 'var(--neuro-text-secondary)' }} />
-                <span className="font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Quick Stats</span>
+                <CheckSquare className="h-4 w-4 text-[#8B5CF6]" />
+                <span className="font-bold text-xs text-[#F5F5F5]">Quick Stats</span>
               </div>
-              <div className="text-sm app-muted">Today: {todos.filter(t => t.dueDateStr === todayStr()).length}</div>
-              <div className="text-sm app-muted">Pending: {todos.filter(t => t.status === 'pending').length}</div>
-              <div className="text-sm app-muted">Completed: {todos.filter(t => t.status === 'done').length}</div>
+              <div className="text-xs text-[#9CA3AF] flex justify-between"><span>Today:</span> <span className="font-mono text-[#F5F5F5]">{todos.filter(t => t.dueDateStr === todayStr()).length}</span></div>
+              <div className="text-xs text-[#9CA3AF] flex justify-between"><span>Pending:</span> <span className="font-mono text-amber-400">{todos.filter(t => t.status === 'pending').length}</span></div>
+              <div className="text-xs text-[#9CA3AF] flex justify-between"><span>Completed:</span> <span className="font-mono text-emerald-400">{todos.filter(t => t.status === 'done').length}</span></div>
             </div>
 
             {undo && (
-              <div className="app-card p-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 app-muted text-sm"><Undo2 className="h-4 w-4" />Task deleted</div>
-                <button className="app-btn-secondary" onClick={undoDelete}>Undo</button>
+              <div className="bg-[#121418] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-[#9CA3AF]"><Undo2 className="h-3.5 w-3.5 text-amber-400" />Task deleted</div>
+                <button className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#F5F5F5]" onClick={undoDelete}>Undo</button>
               </div>
             )}
           </div>

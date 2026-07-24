@@ -113,7 +113,6 @@ const InvoiceSchema: Schema = new Schema(
 
 // Index untuk performa query
 InvoiceSchema.index({ userId: 1, createdAt: -1 });
-InvoiceSchema.index({ invoiceNumber: 1 });
 InvoiceSchema.index({ projectId: 1 });
 InvoiceSchema.index({ status: 1 });
 InvoiceSchema.index({ userId: 1, status: 1 });

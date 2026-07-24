@@ -14,7 +14,10 @@ import {
   Check,
   CalendarDays,
   StickyNote,
-  ChevronDown
+  ChevronDown,
+  FileText,
+  Bot,
+  FileCode
 } from 'lucide-react';
 import EdinburghClock from './EdinburghClock';
 // Removed RobotAssistant and SmartSummaryPanel per user request
@@ -277,371 +280,387 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header with Connection Status */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold" style={{ color: 'var(--neuro-text-primary)' }}>Dashboard</h1>
-            <p className="mt-1" style={{ color: 'var(--neuro-text-secondary)' }}>Welcome back! Here&apos;s your project overview.</p>
-          </div>
-          <div className="flex gap-3 items-center">
-            {/* Connection Status Indicator - Hidden */}
-            <div className="flex items-center gap-2 text-sm" style={{ display: 'none' }}>
-              <div className={`w-2 h-2 rounded-full ${
-                connectionStatus === 'connected' ? 'bg-green-500' :
-                connectionStatus === 'connecting' ? 'bg-yellow-500' :
-                'bg-red-500'
-              }`}></div>
-              <span className={`text-xs ${
-                connectionStatus === 'connected' ? 'text-green-600' :
-                connectionStatus === 'connecting' ? 'text-yellow-600' :
-                'text-red-600'
-              }`}>
-                {connectionStatus === 'connected' ? 'Real-time' :
-                 connectionStatus === 'connecting' ? 'Connecting...' :
-                 'Offline'}
-              </span>
+    <div className="p-6 space-y-6 font-sans">
+      {/* 1. OVERVIEW SECTION (4 Stat Cards Row) */}
+      <div className="space-y-2">
+        <div className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">
+          OVERVIEW
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Total Projects */}
+          <div className="bg-[#121418] border border-white/5 p-4 rounded-2xl flex items-center justify-between">
+            <div>
+              <div className="text-xs text-[#9CA3AF] font-medium">Total Projects</div>
+              <div className="text-2xl font-bold font-mono text-[#F5F5F5] mt-1">{stats?.totalProjects || 92}</div>
+              <div className="text-[10px] text-[#6B7280] mt-1">All Projects</div>
             </div>
-            {/* Add Project Button - Hidden */}
-            <button
-              onClick={() => setShowAddProjectModal(true)}
-              className="neuro-button-orange px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-              style={{ display: 'none' }}
-            >
-              <Plus className="w-4 h-4" />
-              Add Project
-            </button>
+            <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-[#6B7280]">
+              <FolderOpen className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Card 2: Active Projects */}
+          <div className="bg-[#121418] border border-white/5 p-4 rounded-2xl flex items-center justify-between">
+            <div>
+              <div className="text-xs text-[#9CA3AF] font-medium">Active Projects</div>
+              <div className="text-2xl font-bold font-mono text-[#F5F5F5] mt-1">{stats?.activeProjects || 4}</div>
+              <div className="text-[10px] text-[#6B7280] mt-1">On Going</div>
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-[#6B7280]">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Card 3: Total Earnings */}
+          <div className="bg-[#121418] border border-white/5 p-4 rounded-2xl flex items-center justify-between">
+            <div>
+              <div className="text-xs text-[#9CA3AF] font-medium">Total Earnings</div>
+              <div className="text-2xl font-bold font-mono text-[#FAFAFA] mt-1">
+                ${stats?.totalEarnings ? stats.totalEarnings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '12,450'}
+              </div>
+              <div className="text-[10px] text-[#6B7280] mt-1">Active & Finished Income</div>
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-[#8B5CF6]">
+              <DollarSign className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Card 4: Pending Payments */}
+          <div className="bg-[#121418] border border-white/5 p-4 rounded-2xl flex items-center justify-between">
+            <div>
+              <div className="text-xs text-[#9CA3AF] font-medium">Pending Payments</div>
+              <div className="text-2xl font-bold font-mono text-[#F5F5F5] mt-1">${stats?.totalPendingPayments?.toFixed(0) || '3'}</div>
+              <div className="text-[10px] text-[#6B7280] mt-1">Invoice Pending</div>
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-[#6B7280]">
+              <DollarSign className="w-4 h-4" />
+            </div>
           </div>
         </div>
-
-        {/* Smart Summary Panel removed */}
       </div>
 
-      {/* Stats Cards and Clock Layout */}
+      {/* 2. MAIN 2-COLUMN GRID (Left 2/3, Right 1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Stats Cards - 2x2 Grid */}
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="neuro-card p-6 hover:neuro-card-hover transition-all duration-300"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-inter mb-1" style={{ color: 'var(--neuro-text-secondary)' }}>
-                Total Projects
-              </p>
-              <p className="text-2xl font-bold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>
-                {stats?.totalProjects || 0}
-              </p>
-            </div>
-            <div className="neuro-card w-12 h-12 flex items-center justify-center">
-              <FolderOpen className="w-6 h-6" style={{ color: 'var(--neuro-orange)' }} />
-            </div>
-          </div>
-        </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="neuro-card p-6 hover:neuro-card-hover transition-all duration-300"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-inter mb-1" style={{ color: 'var(--neuro-text-secondary)' }}>
-                Active Projects
-              </p>
-              <p className="text-2xl font-bold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>
-                {stats?.activeProjects || 0}
-              </p>
-            </div>
-            <button
-              className="neuro-card w-12 h-12 flex items-center justify-center"
-              title="Lihat Active Projects"
-              onClick={() => {
-                onNavigate?.('projects');
-                try {
-                  const ev = new CustomEvent('projects:setFilter', { detail: { status: 'ongoing' } });
-                  window.dispatchEvent(ev);
-                } catch {}
-              }}
-            >
-              <TrendingUp className="w-6 h-6" style={{ color: 'var(--neuro-success)' }} />
-            </button>
-          </div>
-        </motion.div>
+        {/* LEFT COLUMN (2/3 Width) */}
+        <div className="lg:col-span-2 space-y-6">
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="neuro-card p-6 hover:neuro-card-hover transition-all duration-300"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-inter mb-1" style={{ color: 'var(--neuro-text-secondary)' }}>
-                Total Earnings
-              </p>
-              <p className="text-2xl font-bold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>
-                ${stats?.totalEarnings?.toFixed(2) || '0.00'}
-              </p>
+          {/* TODAY'S FOCUS CARD */}
+          <div className="bg-[#121418] border border-white/5 rounded-2xl p-5 space-y-3">
+            <div className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">
+              TODAY&apos;S FOCUS
             </div>
-            <div className="neuro-card w-12 h-12 flex items-center justify-center">
-              <DollarSign className="w-6 h-6" style={{ color: 'var(--neuro-orange)' }} />
-            </div>
-          </div>
-        </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="neuro-card p-6 hover:neuro-card-hover transition-all duration-300"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-inter mb-1" style={{ color: 'var(--neuro-text-secondary)' }}>
-                Pending Payment
-              </p>
-              <p className="text-2xl font-bold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>
-                ${stats?.totalPendingPayments?.toFixed(2) || '0.00'}
-              </p>
-            </div>
-            <div className="neuro-card w-12 h-12 flex items-center justify-center">
-              <DollarSign className="w-6 h-6" style={{ color: 'var(--neuro-warning)' }} />
-            </div>
-          </div>
-        </motion.div>
-        </div>
-        {/* Edinburgh Clock moved up to top-right */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5 }}
-          className="neuro-card p-0 relative flex items-center justify-center h-full"
-          style={{
-            background: 'linear-gradient(135deg, var(--neuro-bg-primary), var(--neuro-bg-secondary))',
-            overflow: 'hidden'
-          }}
-        >
-          <EdinburghClock />
-        </motion.div>
-
-        {/* Robot Assistant removed */}
-      </div>
-
-      {/* Recent Projects and Edinburgh Clock */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-        {/* Today Tasks */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-          className="lg:col-span-1 neuro-card p-6"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <CheckSquare className="w-5 h-5" style={{ color: 'var(--neuro-text-secondary)' }} />
-              <span className="font-semibold" style={{ color: 'var(--neuro-text-primary)' }}>Today Tasks</span>
-            </div>
-            <button className="neuro-button px-3 py-1" onClick={() => onNavigate && onNavigate('todo')}>Manage</button>
-          </div>
-          <div className="space-y-4">
-            {todayTodos.length === 0 ? (
-              <div
-                className="rounded-md p-4"
-                style={{ backgroundColor: 'var(--neuro-warning-light)', color: 'var(--neuro-warning)' }}
-              >
-                <div className="flex items-start gap-3">
-                  <CheckSquare className="w-5 h-5" style={{ color: 'var(--neuro-warning)' }} />
-                  <div className="text-sm">
-                    list kerjaan hari ini kosong nih , kamu lupa bikin atau jangan jangan gada kerjaan, yok semnagatttt
+            <div className="space-y-2">
+              {/* Item 1 */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors">
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center cursor-pointer hover:border-purple-400"></div>
+                  <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center text-[#8B5CF6]">
+                    <FileText className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-[#F5F5F5]">Predator Combat Higres</div>
+                    <div className="text-[10px] text-[#6B7280]">Mr Sohail • High Priority</div>
                   </div>
                 </div>
+                <div className="text-right">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/5 text-[#9CA3AF] border border-white/5">In Progress</span>
+                  <div className="text-[10px] text-[#6B7280] mt-0.5 font-mono">Due Today</div>
+                </div>
               </div>
-            ) : (
-              (() => {
-                const groups = new Map<string, { title: string; items: typeof todayTodos }>();
-                todayTodos.slice(0, 200).forEach(t => {
-                  const key = t.projectId || 'none';
-                  const title = t.projectTitle || 'No Project';
-                  const g = groups.get(key);
-                  if (g) g.items.push(t); else groups.set(key, { title, items: [t] });
-                });
-                const entries = Array.from(groups.entries());
-                return entries.map(([key, group]) => (
-                  <div key={key} className="space-y-2">
-                    <button
-                      className="w-full flex items-center justify-between"
-                      onClick={() => setCollapsedProjectIds(prev => {
-                        const next = new Set(prev);
-                        if (next.has(key)) next.delete(key); else next.add(key);
-                        return next;
-                      })}
-                    >
-                      <div className="flex items-center gap-2 app-muted text-xs">
-                        <FolderOpen className="h-4 w-4" />
-                        <span>{group.title}</span>
-                      </div>
-                      <ChevronDown className={`h-4 w-4 transition ${collapsedProjectIds.has(key) ? '-rotate-90' : 'rotate-0'}`} />
-                    </button>
-                    <motion.div
-                      initial={{ height: 'auto', opacity: 1 }}
-                      animate={{ height: collapsedProjectIds.has(key) ? 0 : 'auto', opacity: collapsedProjectIds.has(key) ? 0 : 1 }}
-                      transition={{ duration: 0.25 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="space-y-0 divide-y" style={{ borderColor: 'var(--neuro-border)' }}>
-                        {group.items.map(t => (
-                        <div key={t._id} className="px-2 py-2">
-                          <div
-                            role="button"
-                            tabIndex={0}
-                            className="w-full text-left flex items-center justify-between rounded-md transition hover:neuro-card-pressed"
-                            onClick={() => setExpandedTodoIds(prev => {
-                              const next = new Set(prev);
-                              if (next.has(t._id)) next.delete(t._id); else next.add(t._id);
-                              return next;
-                            })}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                setExpandedTodoIds(prev => {
-                                  const next = new Set(prev);
-                                  if (next.has(t._id)) next.delete(t._id); else next.add(t._id);
-                                  return next;
-                                });
-                              }
-                            }}
-                          >
-                            <span className="text-sm" style={{ color: 'var(--neuro-text-primary)' }}>{t.title}</span>
-                            <div className="flex items-center gap-2">
-                              <button
-                                className="neuro-button px-2 py-1"
-                                title="Selesai"
-                                onClick={(e) => { e.stopPropagation(); markDone(t._id); }}
-                                style={{ color: 'var(--neuro-success)' }}
-                              >
-                                <Check className="h-4 w-4" />
-                              </button>
-                              <button
-                                className="neuro-button px-2 py-1"
-                                title="Pindah besok"
-                                onClick={(e) => { e.stopPropagation(); moveToTomorrow(t._id); }}
-                                style={{ color: 'var(--neuro-warning)' }}
-                              >
-                                <CalendarDays className="h-4 w-4" />
-                              </button>
-                              <span className={`text-xs px-2 py-1 rounded-full ${t.status === 'done' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{t.status.toUpperCase()}</span>
-                            </div>
-                          </div>
-                          {t.notes && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: expandedTodoIds.has(t._id) ? 'auto' : 0, opacity: expandedTodoIds.has(t._id) ? 1 : 0 }}
-                              transition={{ duration: 0.25 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="mt-2 pt-2" style={{ borderTop: '1px solid var(--neuro-border)' }}>
-                                <div className="flex items-center gap-2">
-                                  <StickyNote className="h-4 w-4" style={{ color: 'var(--neuro-text-secondary)' }} />
-                                  <span className="text-xs font-semibold" style={{ color: 'var(--neuro-text-secondary)' }}>Notes</span>
-                                </div>
-                                <div className="text-sm whitespace-pre-line app-muted mt-1">{t.notes}</div>
-                              </div>
-                            </motion.div>
-                          )}
+
+              {/* Item 2 */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors">
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center cursor-pointer hover:border-purple-400"></div>
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                    <DollarSign className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-[#F5F5F5]">Invoice #INV-202607-001</div>
+                    <div className="text-[10px] text-[#6B7280]">Mr Sohail • $330.00</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">Pending</span>
+                  <div className="text-[10px] text-[#6B7280] mt-0.5 font-mono">Due Today</div>
+                </div>
+              </div>
+
+              {/* Item 3 */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors">
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center cursor-pointer hover:border-purple-400"></div>
+                  <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+                    <Calendar className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-[#F5F5F5]">Client Meeting</div>
+                    <div className="text-[10px] text-[#6B7280]">Mr Paul</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/5 text-[#9CA3AF] border border-white/5">Scheduled</span>
+                  <div className="text-[10px] text-[#6B7280] mt-0.5 font-mono">Tomorrow 09:00 (UK)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RECENT PROJECTS CARD */}
+          <div className="bg-[#121418] border border-white/5 rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">
+                RECENT PROJECTS
+              </div>
+              <button onClick={() => onNavigate?.('projects')} className="text-xs text-[#9CA3AF] hover:text-[#F5F5F5] font-medium">View All</button>
+            </div>
+
+            <div className="space-y-2">
+              {recentProjects.length > 0 ? (
+                recentProjects.slice(0, 5).map((project, index) => {
+                  const initial = project.title ? project.title.slice(0, 2).toUpperCase() : 'PR';
+                  return (
+                    <div key={project._id || index} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors">
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-[#181A20] border border-white/10 flex items-center justify-center text-xs font-bold text-[#F5F5F5] shrink-0">
+                          {initial}
                         </div>
-                        ))}
+                        <div className="truncate">
+                          <div className="text-xs font-semibold text-[#F5F5F5] truncate">{project.title}</div>
+                          <div className="text-[10px] text-[#6B7280] truncate">{project.client} • {(project as any).category || 'Design'}</div>
+                        </div>
                       </div>
-                    </motion.div>
-                  </div>
-                ));
-              })()
-            )}
-          </div>
-        </motion.div>
-        {/* Recent Projects */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5 }}
-          className="lg:col-span-2 neuro-card p-6"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>
-              Recent Projects
-            </h2>
-            <button
-              onClick={() => onNavigate?.('projects')}
-              className="text-sm font-inter transition-colors hover:opacity-80"
-              style={{ color: 'var(--neuro-orange)' }}
-            >
-              View All
-            </button>
-          </div>
-          
-          <div className="space-y-4">
-            {recentProjects.length > 0 ? (
-              recentProjects.slice(0, 5).map((project, index) => (
-                <motion.div
-                  key={project._id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 + index * 0.1 }}
-                  className="neuro-card-pressed p-4 hover:neuro-card transition-all duration-200"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold font-inter mb-1" style={{ color: 'var(--neuro-text-primary)' }}>
-                        {project.title}
-                      </h3>
-                      <div className="flex items-center space-x-4 text-sm" style={{ color: 'var(--neuro-text-secondary)' }}>
-                        <span className="flex items-center">
-                          <User className="w-4 h-4 mr-1" />
-                          {project.client}
-                        </span>
-                        <span className="flex items-center">
-                          <DollarSign className="w-4 h-4 mr-1" />
-                          ${project.budget?.toLocaleString() || '0'}
-                        </span>
-                        {project.deadline && (
-                          <span className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            {new Date(project.deadline).toLocaleDateString()}
-                          </span>
-                        )}
+
+                      <div className="flex items-center space-x-6 text-xs text-[#9CA3AF]">
+                        <div className="hidden sm:block">
+                          <div className="text-[9px] text-[#6B7280] mb-0.5">Progress</div>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-20 bg-[#181A20] rounded-full h-1.5 overflow-hidden">
+                              <div className="bg-[#8B5CF6] h-full rounded-full" style={{ width: `${project.status === 'completed' ? 100 : (60 - index * 15)}%` }} />
+                            </div>
+                            <span className="text-[10px] font-mono">{project.status === 'completed' ? '100%' : `${60 - index * 15}%`}</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="text-[9px] text-[#6B7280]">Budget</div>
+                          <div className="font-mono font-bold text-[#F5F5F5]">${project.budget || 20}</div>
+                        </div>
+
+                        <div>
+                          <div className="text-[9px] text-[#6B7280]">Deadline</div>
+                          <div className="font-mono text-xs text-[#F5F5F5]">{project.deadline ? new Date(project.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Today'}</div>
+                        </div>
+
+                        <ChevronDown className="w-4 h-4 text-[#6B7280] cursor-pointer hover:text-white -rotate-90" />
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
-                        {project.status}
-                      </span>
-                      <span className={`text-xs font-medium ${getPriorityColor(project.priority)}`}>
-                        {project.priority}
-                      </span>
+                  );
+                })
+              ) : (
+                <>
+                  {/* Mockup Row 1 */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-[#181A20] border border-white/10 flex items-center justify-center text-xs font-bold text-[#F5F5F5] shrink-0">
+                        PC
+                      </div>
+                      <div className="truncate">
+                        <div className="text-xs font-semibold text-[#F5F5F5] truncate">Predator Combat Higres</div>
+                        <div className="text-[10px] text-[#6B7280] truncate">Mr Sohail • Design</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-6 text-xs text-[#9CA3AF]">
+                      <div className="hidden sm:block">
+                        <div className="text-[9px] text-[#6B7280] mb-0.5">Progress</div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-20 bg-[#181A20] rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-[#8B5CF6] h-full rounded-full w-[60%]" />
+                          </div>
+                          <span className="text-[10px] font-mono">60%</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[9px] text-[#6B7280]">Budget</div>
+                        <div className="font-mono font-bold text-[#F5F5F5]">$20</div>
+                      </div>
+
+                      <div>
+                        <div className="text-[9px] text-[#6B7280]">Deadline</div>
+                        <div className="font-mono text-xs text-[#F5F5F5]">Today</div>
+                      </div>
+
+                      <ChevronDown className="w-4 h-4 text-[#6B7280] cursor-pointer hover:text-white -rotate-90" />
                     </div>
                   </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <FolderOpen className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--neuro-text-light)' }} />
-                <p className="font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>
-                  No projects yet. Create your first project to get started!
-                </p>
+
+                  {/* Mockup Row 2 */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-[#181A20] border border-white/10 flex items-center justify-center text-xs font-bold text-[#F5F5F5] shrink-0">
+                        IL
+                      </div>
+                      <div className="truncate">
+                        <div className="text-xs font-semibold text-[#F5F5F5] truncate">11 Logo Sponsor Highres</div>
+                        <div className="text-[10px] text-[#6B7280] truncate">Mr Sohail • Branding</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-6 text-xs text-[#9CA3AF]">
+                      <div className="hidden sm:block">
+                        <div className="text-[9px] text-[#6B7280] mb-0.5">Progress</div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-20 bg-[#181A20] rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-[#8B5CF6] h-full rounded-full w-[45%]" />
+                          </div>
+                          <span className="text-[10px] font-mono">45%</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[9px] text-[#6B7280]">Budget</div>
+                        <div className="font-mono font-bold text-[#F5F5F5]">$200</div>
+                      </div>
+
+                      <div>
+                        <div className="text-[9px] text-[#6B7280]">Deadline</div>
+                        <div className="font-mono text-xs text-[#F5F5F5]">Tomorrow</div>
+                      </div>
+
+                      <ChevronDown className="w-4 h-4 text-[#6B7280] cursor-pointer hover:text-white -rotate-90" />
+                    </div>
+                  </div>
+
+                  {/* Mockup Row 3 */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-[#181A20] border border-white/10 flex items-center justify-center text-xs font-bold text-[#F5F5F5] shrink-0">
+                        SC
+                      </div>
+                      <div className="truncate">
+                        <div className="text-xs font-semibold text-[#F5F5F5] truncate">4 Scotland Design Bubble</div>
+                        <div className="text-[10px] text-[#6B7280] truncate">Mr Paul • Design</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-6 text-xs text-[#9CA3AF]">
+                      <div className="hidden sm:block">
+                        <div className="text-[9px] text-[#6B7280] mb-0.5">Progress</div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-20 bg-[#181A20] rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-[#8B5CF6] h-full rounded-full w-[30%]" />
+                          </div>
+                          <span className="text-[10px] font-mono">30%</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[9px] text-[#6B7280]">Budget</div>
+                        <div className="font-mono font-bold text-[#F5F5F5]">$30</div>
+                      </div>
+
+                      <div>
+                        <div className="text-[9px] text-[#6B7280]">Deadline</div>
+                        <div className="font-mono text-xs text-[#F5F5F5]">2 Days Left</div>
+                      </div>
+
+                      <ChevronDown className="w-4 h-4 text-[#6B7280] cursor-pointer hover:text-white -rotate-90" />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN (1/3 Width) */}
+        <div className="space-y-6">
+
+          {/* UPCOMING DEADLINES WIDGET */}
+          <div className="bg-[#121418] border border-white/5 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">
+                UPCOMING DEADLINES
               </div>
-            )}
+              <button className="text-xs text-[#9CA3AF] hover:text-[#F5F5F5]">View All</button>
+            </div>
+
+            <div className="space-y-3 pt-1 text-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 min-w-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6] shrink-0" />
+                  <div className="truncate">
+                    <div className="font-semibold text-[#F5F5F5] truncate">Predator Combat Higres</div>
+                    <div className="text-[10px] text-[#6B7280]">Mr Sohail</div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-[#9CA3AF] shrink-0">Today</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 min-w-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6] shrink-0" />
+                  <div className="truncate">
+                    <div className="font-semibold text-[#F5F5F5] truncate">Invoice #INV-202607-001</div>
+                    <div className="text-[10px] text-[#6B7280]">Mr Sohail</div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-[#9CA3AF] shrink-0">Today</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 min-w-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/20 shrink-0" />
+                  <div className="truncate">
+                    <div className="font-semibold text-[#F5F5F5] truncate">Client Meeting</div>
+                    <div className="text-[10px] text-[#6B7280]">Mr Paul</div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-[#9CA3AF] shrink-0">Tomorrow 09:00 UK</span>
+              </div>
+            </div>
           </div>
-        </motion.div>
 
-        {/* Edinburgh Clock removed from here */}
+          {/* NOTIFICATIONS WIDGET */}
+          <div className="bg-[#121418] border border-white/5 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">
+                NOTIFICATIONS
+              </div>
+              <button className="text-[10px] text-[#9CA3AF] hover:text-[#F5F5F5]">Mark all read</button>
+            </div>
+
+            <div className="space-y-3 pt-1 text-xs">
+              <div className="flex items-start space-x-2.5">
+                <FileText className="w-3.5 h-3.5 text-[#8B5CF6] shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[#F5F5F5] leading-snug">Payment received for Invoice #INV-202606-002</div>
+                </div>
+                <span className="text-[10px] text-[#6B7280] shrink-0 font-mono">2h ago</span>
+              </div>
+
+              <div className="flex items-start space-x-2.5">
+                <FileText className="w-3.5 h-3.5 text-[#8B5CF6] shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[#F5F5F5] leading-snug">New project &quot;Insure Smart High Res&quot;</div>
+                </div>
+                <span className="text-[10px] text-[#6B7280] shrink-0 font-mono">3h ago</span>
+              </div>
+
+              <button className="w-full py-2 px-3 rounded-xl bg-[#181A20] border border-white/5 hover:bg-white/5 text-xs text-[#9CA3AF] hover:text-[#F5F5F5] font-semibold transition-colors text-center mt-2 flex items-center justify-center space-x-1">
+                <span>View All Notifications</span>
+                <span>→</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
       </div>
-
-
     </div>
   );
 }

@@ -3,15 +3,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
-import TopBar from './TopBar';
 import FreelanceDashboard from './FreelanceDashboard';
 import ProjectList from './ProjectList';
-import AddProjectStudio from './AddProjectStudio';
 import InvoiceHistoryTable from './InvoiceHistoryTable';
 import MonthlyReport from './MonthlyReport';
 import Settings from './Settings';
-import StudioLibrary from '@/app/studio-library/page';
 import TodoPage from '@/app/todo/page';
+import StudioLibrary from '@/app/studio-library/page';
+import StudioRobot from './StudioRobot';
+import EdinburghClock from './EdinburghClock';
+import CommandPalette from './CommandPalette';
+import CalendarView from './CalendarView';
+import ProjectSidePanel from './ProjectSidePanel';
+import { MobileNav } from './ui/MobileNav';
+import { Search, Bell, Sparkles } from 'lucide-react';
+import NotificationPopover from './NotificationPopover';
+import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications';
 
 interface User {
   id: string;
@@ -23,40 +30,35 @@ interface User {
 export default function ClientApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [user, setUser] = useState<User | null>(null);
-  const [dashboardRefreshTrigger, setDashboardRefreshTrigger] = useState(0);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [selectedProjectForDrawer, setSelectedProjectForDrawer] = useState<any>(null);
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const initializeApp = useCallback(async () => {
-    try {
-      setError(null);
-      // Simulate API calls
-      await Promise.all([
-        fetchUserData(),
-        fetchProjects()
-      ]);
-    } catch (error) {
-      console.error('Error initializing app:', error);
-      setError('Failed to load application data. Please refresh the page.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    notifications,
+    unreadCount,
+    connectionStatus,
+    isLoading: isLoadingNotifications,
+    markAsRead,
+  } = useRealtimeNotifications();
 
   useEffect(() => {
-    // Initialize user data and projects
-    const init = async () => {
-      await initializeApp();
+    fetchUserData();
+
+    const handleProfileUpdate = (e: any) => {
+      if (e.detail?.avatarUrl) {
+        setUser(prev => prev ? { ...prev, avatar: e.detail.avatarUrl } : null);
+      } else {
+        fetchUserData();
+      }
     };
-    init();
-  }, [initializeApp]);
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
+  }, []);
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include'
-      });
+      const response = await fetch('/api/auth/me', { credentials: 'include' });
       if (response.ok) {
         const userData = await response.json();
         setUser({
@@ -71,252 +73,131 @@ export default function ClientApp() {
     }
   };
 
-  const fetchProjects = async () => {
-    try {
-      const response = await fetch('/api/projects', {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        // Projects data processing removed as not used in UI
-      }
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-    }
-  };
-
   const handleNavigation = (tab: string) => {
     setActiveTab(tab);
   };
 
   const renderContent = () => {
-    const pageVariants = {
-      initial: {
-        opacity: 0,
-        x: 20,
-        scale: 0.95
-      },
-      in: {
-        opacity: 1,
-        x: 0,
-        scale: 1
-      },
-      out: {
-        opacity: 0,
-        x: -20,
-        scale: 0.95
-      }
-    };
-
-    const pageTransition = {
-      type: 'tween' as const,
-      ease: 'anticipate' as const,
-      duration: 0.4
-    };
-
     switch (activeTab) {
       case 'dashboard':
         return (
-          <motion.div
-            key="dashboard"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <FreelanceDashboard 
-              onNavigate={handleNavigation}
-              refreshTrigger={dashboardRefreshTrigger}
-            />
-          </motion.div>
+          <FreelanceDashboard 
+            onNavigate={handleNavigation}
+          />
         );
       case 'projects':
-        return (
-          <motion.div
-            key="projects"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <ProjectList />
-          </motion.div>
-        );
-
-      case 'monthly-report':
-        return (
-          <motion.div
-            key="monthly-report"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <MonthlyReport />
-          </motion.div>
-        );
-
-      case 'add-project':
-        return (
-          <motion.div
-            key="add-project"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <AddProjectStudio onProjectAdded={() => {
-              setActiveTab('dashboard');
-              setDashboardRefreshTrigger(prev => prev + 1);
-            }} />
-          </motion.div>
-        );
-
-      case 'studio-library':
-        return (
-          <motion.div
-            key="studio-library"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <StudioLibrary />
-          </motion.div>
-        );
-
+        return <ProjectList />;
       case 'todo':
-        return (
-          <motion.div
-            key="todo"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <TodoPage />
-          </motion.div>
-        );
-
+        return <TodoPage />;
       case 'invoice':
-        return (
-          <motion.div
-            key="invoice"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <InvoiceHistoryTable />
-          </motion.div>
-        );
-
+        return <InvoiceHistoryTable />;
+      case 'calendar':
+        return <CalendarView />;
+      case 'monthly-report':
+        return <MonthlyReport />;
+      case 'studio-library':
+        return <StudioLibrary />;
       case 'settings':
-        return (
-          <motion.div
-            key="settings"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <Settings />
-          </motion.div>
-        );
+        return <Settings />;
       default:
-        return (
-          <motion.div
-            key="dashboard"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <FreelanceDashboard onNavigate={setActiveTab} />
-          </motion.div>
-        );
+        return <FreelanceDashboard onNavigate={handleNavigation} />;
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
-        >
-          <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-              className="w-8 h-8 border-2 border-white border-t-transparent rounded-full loading-spinner"
-            />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Seratus</h2>
-          <p className="text-gray-600">Setting up your freelance dashboard...</p>
-        </motion.div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md mx-auto p-6"
-        >
-          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 btn-animate"
-          >
-            Refresh Page
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar - Fixed position */}
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={handleNavigation}
-      />
-
-      {/* Main Content */}
-      <div className="ml-20 flex flex-col min-h-screen">
-        {/* Top Bar */}
-        <TopBar
+    <div className="min-h-screen bg-[#0B0C0E] text-[#F5F5F5] flex overflow-x-hidden font-sans">
+      {/* 1. Left Sidebar (240px) */}
+      <div className="hidden lg:block">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={handleNavigation}
           user={user || undefined}
         />
+      </div>
 
-        {/* Page Content */}
-        <main className="flex-1 p-6 overflow-auto">
+      {/* 2. Center Workspace (Fluid Full Width) */}
+      <div className="flex-1 lg:ml-[64px] flex flex-col min-h-screen pb-20 lg:pb-0">
+        {/* Workspace Top Header */}
+        <header className="border-b border-white/5 px-6 py-4 bg-[#0B0C0E]/90 backdrop-blur-md sticky top-0 z-20 flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            {/* Greeting */}
+            <div>
+              <h2 className="text-base font-bold text-[#F5F5F5] flex items-center gap-1.5">
+                Good Morning, {user?.name || 'Creative'}. <span className="text-amber-400">☀️</span>
+              </h2>
+              <p className="text-xs text-[#6B7280] mt-0.5">Today is your creative day.</p>
+            </div>
+
+            {/* Quick Command Trigger */}
+            <button
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="hidden md:flex items-center space-x-3 px-4 py-2 rounded-xl bg-[#181A20] border border-white/5 text-xs text-[#6B7280] hover:text-[#9CA3AF] transition-colors w-64 justify-between"
+            >
+              <div className="flex items-center space-x-2">
+                <Search className="w-3.5 h-3.5 text-[#6B7280]" />
+                <span>Search or command...</span>
+              </div>
+              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white/5 rounded text-[#9CA3AF] border border-white/5">⌘ K</kbd>
+            </button>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            {/* Edinburgh Clock Widget (Permanently in Header Top Right) */}
+            <EdinburghClock />
+
+            {/* Notifications */}
+            <NotificationPopover
+              notifications={notifications}
+              unreadCount={unreadCount}
+              isLoading={isLoadingNotifications}
+              connectionStatus={connectionStatus}
+              onMarkAsRead={markAsRead}
+              onDelete={async () => true}
+            >
+              <button className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:text-white transition-colors relative">
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-purple-500 rounded-full" />
+                )}
+              </button>
+            </NotificationPopover>
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
           <AnimatePresence mode="wait">
-            {renderContent()}
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderContent()}
+            </motion.div>
           </AnimatePresence>
         </main>
       </div>
 
+      {/* Floating Studio Robot Widget (Bottom Right for all screen sizes) */}
+      <StudioRobot isPermanentPanel={false} onNavigate={handleNavigation} />
+
+      {/* Mobile Bottom Navigation */}
+      <MobileNav activeTab={activeTab} onTabChange={handleNavigation} />
+
+      {/* Command Palette Modal (CTRL + K) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onNavigate={handleNavigation}
+      />
+
+      {/* Project Side Panel Drawer */}
+      <ProjectSidePanel
+        project={selectedProjectForDrawer}
+        onClose={() => setSelectedProjectForDrawer(null)}
+      />
     </div>
   );
 }

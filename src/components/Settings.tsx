@@ -444,42 +444,51 @@ export default function Settings() {
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setSaveMessage('Error: Image size must be less than 5MB');
+        setTimeout(() => setSaveMessage(''), 4000);
+        return;
+      }
+
+      // Show temporary preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Data = e.target?.result as string;
+        if (base64Data) {
+          updateSettings('profile', 'avatar', base64Data);
+        }
+      };
+      reader.readAsDataURL(file);
+
+      // Upload file to /api/user/avatar
       try {
-        // Create a preview URL for immediate feedback
-        const previewUrl = URL.createObjectURL(file);
-        updateSettings('profile', 'avatar', previewUrl);
-        
-        // Upload to server
         const formData = new FormData();
         formData.append('avatar', file);
-        
+
         const response = await fetch('/api/user/avatar', {
           method: 'POST',
           credentials: 'include',
-          body: formData
+          body: formData,
         });
-        
+
         if (response.ok) {
           const data = await response.json();
-          updateSettings('profile', 'avatar', data.avatarUrl);
-          setSaveMessage('Avatar updated successfully!');
-          setTimeout(() => setSaveMessage(''), 3000);
-          
-          // Dispatch custom event to notify other components
-          window.dispatchEvent(new CustomEvent('profileUpdated', {
-            detail: { avatarUrl: data.avatarUrl }
-          }));
+          if (data.avatarUrl) {
+            updateSettings('profile', 'avatar', data.avatarUrl);
+            setSaveMessage('Profile picture updated successfully!');
+            window.dispatchEvent(new CustomEvent('profileUpdated', {
+              detail: { avatarUrl: data.avatarUrl }
+            }));
+          }
         } else {
-          // Revert to original avatar on error
-          loadSettings();
-          setSaveMessage('Error uploading avatar. Please try again.');
-          setTimeout(() => setSaveMessage(''), 3000);
+          const errorData = await response.json();
+          setSaveMessage(`Error: ${errorData.error || 'Failed to upload image'}`);
         }
-      } catch (error) {
-        console.error('Error uploading avatar:', error);
-        loadSettings();
-        setSaveMessage('Error uploading avatar. Please try again.');
-        setTimeout(() => setSaveMessage(''), 3000);
+      } catch (err) {
+        console.error('Error uploading avatar:', err);
+        setSaveMessage('Error uploading profile picture');
+      } finally {
+        setTimeout(() => setSaveMessage(''), 4000);
       }
     }
   };
@@ -1079,26 +1088,20 @@ export default function Settings() {
           <nav className="space-y-2 overflow-x-auto md:overflow-visible -mx-1 px-1 md:mx-0 md:px-0 flex md:block gap-2">
             {tabs.map((tab) => {
               const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
-                <motion.button
+                <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-shrink-0 md:shrink w-auto md:w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-300 font-inter ${
-                    activeTab === tab.id
-                      ? 'neuro-card-pressed'
-                      : 'neuro-card hover:neuro-card-hover'
+                  className={`flex-shrink-0 md:shrink w-auto md:w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-200 text-xs font-semibold ${
+                    isActive
+                      ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30'
+                      : 'bg-[#171A21] text-slate-400 hover:text-slate-100 hover:bg-white/5 border border-white/5'
                   }`}
-                  style={{
-                    color: activeTab === tab.id ? 'var(--neuro-orange)' : 'var(--neuro-text-primary)'
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
                 >
-                  <Icon className="h-5 w-5 mr-3" style={{
-                    color: activeTab === tab.id ? 'var(--neuro-orange)' : 'var(--neuro-text-secondary)'
-                  }} />
+                  <Icon className={`h-4 w-4 mr-3 ${isActive ? 'text-purple-400' : 'text-slate-500'}`} />
                   {tab.label}
-                </motion.button>
+                </button>
               );
             })}
           </nav>
@@ -1106,17 +1109,17 @@ export default function Settings() {
 
         {/* Content */}
         <div className="flex-1">
-          <div className="neuro-card p-4 md:p-8 rounded-2xl">
+          <div className="bg-[#171A21] border border-white/10 p-6 md:p-8 rounded-2xl shadow-xl">
             {renderTabContent()}
             
             {/* Save Button */}
-            <div className="mt-6 md:mt-8 pt-6" style={{ borderTop: '1px solid var(--neuro-border)' }}>
+            <div className="mt-6 md:mt-8 pt-6 border-t border-white/10">
               <div className="flex items-center md:justify-between flex-col md:flex-row gap-3">
                 {saveMessage && (
                   <motion.p
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="text-sm font-inter w-full md:w-auto text-center md:text-left"
+                    className="text-xs font-medium w-full md:w-auto text-center md:text-left"
                     style={{
                       color: saveMessage.includes('Error') ? 'var(--neuro-error)' : 'var(--neuro-success)'
                     }}
@@ -1124,16 +1127,14 @@ export default function Settings() {
                     {saveMessage}
                   </motion.p>
                 )}
-                <motion.button
+                <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="neuro-button-orange w-full md:w-auto px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 md:ml-auto font-inter rounded-xl"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  className="w-full md:w-auto px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 md:ml-auto"
                 >
                   <Save className="h-4 w-4" />
                   <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
-                </motion.button>
+                </button>
               </div>
             </div>
           </div>

@@ -421,3 +421,249 @@ input:focus, textarea:focus, select:focus {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* ==========================================================
+   WHITE MINIMALIST THEME
+   Ultra-clean, crisp white studio workspace aesthetics
+   ========================================================== */
+.theme-white-minimalist,
+body.theme-white-minimalist,
+html.theme-white-minimalist {
+  --background: #F8F9FA;
+  --foreground: #09090B;
+  --card: #FFFFFF;
+  --elevated: #F4F4F5;
+  --hover: #E4E4E7;
+  --border: rgba(0, 0, 0, 0.08);
+  --primary: #8B5CF6;
+  --primary-hover: #7C3AED;
+  --secondary: #71717A;
+  --muted: #A1A1AA;
+
+  --neuro-bg: #F8F9FA;
+  --neuro-bg-secondary: #FFFFFF;
+  --neuro-bg-light: #F4F4F5;
+  --neuro-text-primary: #09090B;
+  --neuro-text-secondary: #71717A;
+  --neuro-text-muted: #A1A1AA;
+  --neuro-border: rgba(0, 0, 0, 0.08);
+
+  background-color: #F8F9FA !important;
+  color: #09090B !important;
+}
+
+/* 1. All Dark Shell & Layout Background Overrides */
+.theme-white-minimalist .min-h-screen,
+.theme-white-minimalist .bg-\[\#0B0C0E\],
+.theme-white-minimalist .bg-\[\#0D0D0D\],
+.theme-white-minimalist .bg-\[\#0F1115\],
+.theme-white-minimalist .bg-slate-950,
+.theme-white-minimalist .bg-zinc-950,
+.theme-white-minimalist .bg-gray-950 {
+  background-color: #F8F9FA !important;
+  color: #09090B !important;
+}
+
+/* 2. All Elevated Card & Surface Overrides */
+.theme-white-minimalist .bg-\[\#121418\],
+.theme-white-minimalist .bg-\[\#14161A\],
+.theme-white-minimalist .bg-\[\#151515\],
+.theme-white-minimalist .bg-\[\#171A21\],
+.theme-white-minimalist .bg-\[\#181A20\],
+.theme-white-minimalist .bg-\[\#1A1D22\],
+.theme-white-minimalist .bg-\[\#1E222B\],
+.theme-white-minimalist .bg-\[\#22252C\],
+.theme-white-minimalist .bg-slate-900,
+.theme-white-minimalist .bg-zinc-900,
+.theme-white-minimalist .neuro-card {
+  background-color: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.02) !important;
+  color: #09090B !important;
+}
+
+/* 3. Sub-surfaces, Inner Card Rows & Badges */
+.theme-white-minimalist .bg-white\/5,
+.theme-white-minimalist .bg-white\/10,
+.theme-white-minimalist .bg-white\/\[0\.02\],
+.theme-white-minimalist .bg-white\/\[0\.04\] {
+  background-color: #F4F4F5 !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+  color: #09090B !important;
+}
+
+.theme-white-minimalist .hover\:bg-white\/5:hover,
+.theme-white-minimalist .hover\:bg-white\/10:hover,
+.theme-white-minimalist .hover\:bg-white\/\[0\.04\]:hover {
+  background-color: #ECECEE !important;
+}
+
+/* 4. Left Sidebar Specifics */
+.theme-white-minimalist aside,
+.theme-white-minimalist aside.bg-\[\#0B0C0E\] {
+  background-color: #FFFFFF !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 1px 0 4px rgba(0, 0, 0, 0.02) !important;
+}
+
+.theme-white-minimalist aside .bg-white {
+  background-color: #18181B !important;
+  color: #FFFFFF !important;
+}
+
+.theme-white-minimalist aside nav button {
+  color: #71717A !important;
+}
+
+.theme-white-minimalist aside nav button:hover {
+  background-color: #F4F4F5 !important;
+  color: #09090B !important;
+}
+
+.theme-white-minimalist aside nav button.bg-\[\#181A20\] {
+  background-color: #F4F4F5 !important;
+  color: #09090B !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+  font-weight: 600 !important;
+}
+
+/* 5. Top Workspace Header */
+.theme-white-minimalist header,
+.theme-white-minimalist header.bg-\[\#0B0C0E\]\/90 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+/* 6. Typography & Text Colors */
+.theme-white-minimalist .text-\[\#F5F5F5\],
+.theme-white-minimalist .text-\[\#FAFAFA\],
+.theme-white-minimalist .text-slate-100,
+.theme-white-minimalist .text-slate-200,
+.theme-white-minimalist .text-slate-300,
+.theme-white-minimalist .text-zinc-100,
+.theme-white-minimalist .text-zinc-200,
+.theme-white-minimalist .text-zinc-300,
+.theme-white-minimalist .text-white:not(.bg-purple-600):not(.bg-gradient-to-r) {
+  color: #09090B !important;
+}
+
+.theme-white-minimalist .text-\[\#9CA3AF\],
+.theme-white-minimalist .text-\[\#6B7280\],
+.theme-white-minimalist .text-slate-400,
+.theme-white-minimalist .text-zinc-400 {
+  color: #71717A !important;
+}
+
+.theme-white-minimalist .text-\[\#D4D4D8\] {
+  color: #27272A !important;
+}
+
+.theme-white-minimalist .text-slate-500,
+.theme-white-minimalist .text-slate-600,
+.theme-white-minimalist .text-zinc-500 {
+  color: #A1A1AA !important;
+}
+
+/* 7. Borders Overrides */
+.theme-white-minimalist .border-white\/5,
+.theme-white-minimalist .border-white\/10,
+.theme-white-minimalist .border-white\/15,
+.theme-white-minimalist .border-white\/20,
+.theme-white-minimalist .border-white\/\[0\.05\],
+.theme-white-minimalist .border-slate-800,
+.theme-white-minimalist .border-zinc-800 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 8. Table Elements */
+.theme-white-minimalist table thead tr,
+.theme-white-minimalist table thead tr.bg-\[\#181A20\],
+.theme-white-minimalist table thead tr.bg-\[\#121418\] {
+  background-color: #F4F4F5 !important;
+  color: #71717A !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.theme-white-minimalist table tbody tr {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  color: #09090B !important;
+}
+
+.theme-white-minimalist table tbody tr:hover {
+  background-color: #F8F9FA !important;
+}
+
+.theme-white-minimalist .divide-white\/5 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* 9. Form Inputs, Textareas, and Selects */
+.theme-white-minimalist input:not([type="checkbox"]):not([type="radio"]),
+.theme-white-minimalist select,
+.theme-white-minimalist textarea,
+.theme-white-minimalist .neuro-input,
+.theme-white-minimalist .neuro-select {
+  background-color: #FFFFFF !important;
+  color: #09090B !important;
+  border: 1px solid #E4E4E7 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+.theme-white-minimalist input::placeholder,
+.theme-white-minimalist textarea::placeholder {
+  color: #A1A1AA !important;
+}
+
+.theme-white-minimalist input:focus,
+.theme-white-minimalist select:focus,
+.theme-white-minimalist textarea:focus {
+  border-color: #8B5CF6 !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15) !important;
+}
+
+/* 10. Popovers, Modals & Side Panels */
+.theme-white-minimalist [style*="var(--neuro-bg)"],
+.theme-white-minimalist [style*="#14161A"],
+.theme-white-minimalist [style*="#171A21"] {
+  background-color: #FFFFFF !important;
+  color: #09090B !important;
+}
+
+.theme-white-minimalist .bg-\[\#171A21\].border-l {
+  background-color: #FFFFFF !important;
+  border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 11. Command Palette & Quick Search */
+.theme-white-minimalist kbd {
+  background-color: #E4E4E7 !important;
+  color: #18181B !important;
+  border-color: #D4D4D8 !important;
+}
+
+/* 12. Edinburgh Clock & Robot Assistant */
+.theme-white-minimalist .fixed.bottom-20.bg-\[\#151515\] {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 13. Mobile Bottom Navigation */
+.theme-white-minimalist .fixed.bottom-0.bg-\[\#0B0C0E\]\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 14. Scrollbars */
+.theme-white-minimalist ::-webkit-scrollbar-track {
+  background: #F4F4F5 !important;
+}
+
+.theme-white-minimalist ::-webkit-scrollbar-thumb {
+  background: #D4D4D8 !important;
+}
+
+.theme-white-minimalist ::-webkit-scrollbar-thumb:hover {
+  background: #A1A1AA !important;
+}

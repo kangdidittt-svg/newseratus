@@ -15,7 +15,6 @@ function LoginContent() {
 
   useEffect(() => {
     if (user) {
-      // Jika datang dari halaman yang dilindungi, kembali ke halaman tersebut
       router.push(redirect);
     }
   }, [user, router, redirect]);
@@ -29,14 +28,14 @@ function LoginContent() {
     if (result.success) {
       router.push(redirect);
     } else {
-      setError(result.error || 'Login failed');
+      setError(result.error || 'Login failed. Please check your username and password.');
     }
     
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'var(--neuro-bg)' }}>
+    <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center p-4 selection:bg-purple-500 selection:text-white font-sans">
       <LoginCard 
         onSubmit={handleLogin}
         loading={loading}
@@ -48,7 +47,11 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center text-[#F5F5F5]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, User, Lock, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 interface LoginCardProps {
   onSubmit: (username: string, password: string) => Promise<void>;
@@ -14,7 +15,6 @@ export default function LoginCard({ onSubmit, loading, error }: LoginCardProps) 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,185 +22,131 @@ export default function LoginCard({ onSubmit, loading, error }: LoginCardProps) 
   };
 
   return (
-    <motion.div
-      className="w-full max-w-sm md:max-w-md mx-auto"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
-    >
-      <div className="neuro-card p-6 md:p-8">
-        {/* Header */}
-        <motion.div
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
+    <div className="relative w-full max-w-md mx-auto">
+      {/* Background Ambient Glow */}
+      <div className="absolute -top-12 -left-12 w-64 h-64 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+
+      <motion.div
+        className="relative bg-[#14161A]/95 border border-white/10 rounded-3xl p-8 md:p-10 shadow-2xl backdrop-blur-xl"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {/* Brand Header */}
+        <div className="text-center mb-8">
           <motion.div
-            className="neuro-card w-16 h-16 mx-auto mb-4 flex items-center justify-center"
-            whileHover={{ scale: 1.05 }}
+            className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-purple-400 p-0.5 shadow-lg shadow-purple-900/40 flex items-center justify-center"
+            whileHover={{ scale: 1.05, rotate: 3 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="w-8 h-8 rounded-lg" style={{ background: 'linear-gradient(135deg, var(--neuro-orange), var(--neuro-orange-light))' }} />
+            <div className="w-full h-full bg-[#0B0C0E] rounded-[14px] flex items-center justify-center">
+              <span className="font-black text-xl text-purple-400 tracking-tight">S</span>
+            </div>
           </motion.div>
-          <h1 className="text-2xl font-bold font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
-            Welcome Back
+          <h1 className="text-2xl font-bold text-[#F5F5F5] tracking-tight">
+            StudioManager
           </h1>
-          <p className="font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>
-            Sign in to your account
+          <p className="text-xs text-[#9CA3AF] mt-1">
+            Creative OS Workspace • Sign in to continue
           </p>
-        </motion.div>
+        </div>
 
-        {/* Error Message */}
+        {/* Error Alert */}
         {error && (
           <motion.div
-            className="neuro-card-pressed p-4 mb-6 border-l-4 border-red-400"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
+            className="p-3.5 mb-6 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
           >
-            <p className="text-red-600 text-sm font-inter">{error}</p>
+            {error}
           </motion.div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email Field */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-          >
-            <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Username Field */}
+          <div>
+            <label className="block text-xs font-semibold text-[#D4D4D8] mb-2">
               Username
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                <User className="w-5 h-5" style={{ color: 'var(--neuro-text-secondary)' }} />
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B7280]">
+                <User className="w-4 h-4" />
               </div>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                onFocus={() => setFocusedField('username')}
-                onBlur={() => setFocusedField(null)}
-                className="neuro-input w-full font-inter relative z-0 text-base"
-                style={{ 
-                  paddingLeft: '3rem', 
-                  paddingRight: '1rem', 
-                  paddingTop: '0.9rem', 
-                  paddingBottom: '0.9rem',
-                  ...(focusedField === 'username' ? { boxShadow: '0 0 0 2px var(--neuro-orange-light)' } : {})
-                }}
+                className="w-full pl-10 pr-4 py-3 bg-[#181A20] border border-white/10 rounded-xl text-sm text-[#F5F5F5] placeholder-[#6B7280] focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all"
                 placeholder="Enter your username"
                 required
                 disabled={loading}
               />
             </div>
-          </motion.div>
+          </div>
 
           {/* Password Field */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
-          >
-            <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
+          <div>
+            <label className="block text-xs font-semibold text-[#D4D4D8] mb-2">
               Password
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                <Lock className="w-5 h-5" style={{ color: 'var(--neuro-text-secondary)' }} />
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B7280]">
+                <Lock className="w-4 h-4" />
               </div>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onFocus={() => setFocusedField('password')}
-                onBlur={() => setFocusedField(null)}
-                className="neuro-input w-full font-inter relative z-0 text-base"
-                style={{
-                  paddingLeft: '3rem',
-                  paddingRight: '3rem', 
-                  paddingTop: '0.9rem',
-                  paddingBottom: '0.9rem',
-                  ...(focusedField === 'password' ? { boxShadow: '0 0 0 2px var(--neuro-orange-light)' } : {})
-                }}
+                className="w-full pl-10 pr-10 py-3 bg-[#181A20] border border-white/10 rounded-xl text-sm text-[#F5F5F5] placeholder-[#6B7280] focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all"
                 placeholder="Enter your password"
                 required
                 disabled={loading}
               />
-              <motion.button
+              <button
                 type="button"
-                className="absolute inset-y-0 right-0 pr-4 flex items-center transition-colors duration-200 z-10"
                 onClick={() => setShowPassword(!showPassword)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#6B7280] hover:text-[#F5F5F5] transition-colors"
                 disabled={loading}
-                style={{ color: 'var(--neuro-text-secondary)' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--neuro-orange)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--neuro-text-secondary)'}
               >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
-              </motion.button>
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
-          </motion.div>
+          </div>
 
           {/* Submit Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.5 }}
+          <motion.button
+            type="submit"
+            disabled={loading}
+            whileHover={{ scale: loading ? 1 : 1.01 }}
+            whileTap={{ scale: loading ? 1 : 0.98 }}
+            className="w-full py-3.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-purple-900/30 flex items-center justify-center space-x-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
           >
-            <motion.button
-              type="submit"
-              className="neuro-button-orange w-full py-3.5 px-4 flex items-center justify-center space-x-2 font-semibold font-inter rounded-xl"
-              disabled={loading}
-              whileHover={{ scale: loading ? 1 : 1.02 }}
-              whileTap={{ scale: loading ? 1 : 0.98 }}
-            >
-              {loading ? (
-                <motion.div
-                  className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                />
-              ) : (
-                <>
-                  <span>Sign In</span>
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </motion.button>
-          </motion.div>
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <span>Sign In to Workspace</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </motion.button>
         </form>
 
         {/* Footer */}
-        <motion.div
-          className="mt-8 text-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.6 }}
-        >
-          <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>
+        <div className="mt-8 text-center border-t border-white/5 pt-5">
+          <p className="text-xs text-[#9CA3AF]">
             Don&apos;t have an account?{' '}
-            <motion.a
+            <Link
               href="/register"
-              className="font-medium transition-colors duration-200"
-              style={{ color: 'var(--neuro-orange)' }}
-              whileHover={{ scale: 1.05 }}
-              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--neuro-orange-light)'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--neuro-orange)'}
+              className="font-semibold text-purple-400 hover:text-purple-300 transition-colors inline-flex items-center space-x-1"
             >
-              Sign up
-            </motion.a>
+              <span>Create Account</span>
+            </Link>
           </p>
-        </motion.div>
-      </div>
-    </motion.div>
+        </div>
+      </motion.div>
+    </div>
   );
 }

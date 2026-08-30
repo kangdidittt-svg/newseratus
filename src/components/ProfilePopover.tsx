@@ -9,9 +9,10 @@ interface ProfilePopoverProps {
   children: React.ReactNode;
   userName?: string;
   userEmail?: string;
+  onNavigate?: (tab: string) => void;
 }
 
-export default function ProfilePopover({ children, userName, userEmail }: ProfilePopoverProps) {
+export default function ProfilePopover({ children, userName, userEmail, onNavigate }: ProfilePopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -49,30 +50,41 @@ export default function ProfilePopover({ children, userName, userEmail }: Profil
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/auth/logout', {
+      setIsOpen(false);
+      await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       });
-      
-      if (response.ok) {
-        // Close popover first
-        setIsOpen(false);
-        // Redirect to login
-        window.location.href = '/login';
-      } else {
-        console.error('Logout failed:', response.statusText);
-      }
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      window.location.href = '/login';
     }
   };
 
   const handleSettings = () => {
-    // Close popover first
     setIsOpen(false);
-    // Navigate to settings page
-    router.push('/settings');
+    if (onNavigate) {
+      onNavigate('settings');
+    } else {
+      router.push('/settings');
+    }
   };
+
+  // Close on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   // Handle hover state changes
   useEffect(() => {

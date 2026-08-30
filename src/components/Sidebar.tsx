@@ -11,8 +11,10 @@ import {
   BarChart2,
   Settings,
   Plus,
+  LogOut,
 } from 'lucide-react';
 import AddProjectPopover from './AddProjectPopover';
+import ProfilePopover from './ProfilePopover';
 
 interface SidebarProps {
   activeTab: string;
@@ -36,6 +38,19 @@ const menuItems = [
 
 export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
   const [expanded, setExpanded] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      window.location.href = '/login';
+    }
+  };
 
   return (
     <motion.aside
@@ -117,39 +132,60 @@ export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps)
         </nav>
       </div>
 
-      {/* Bottom User Avatar */}
-      <div className="pt-3 border-t border-white/5 px-3">
-        <button
-          onClick={() => setActiveTab('settings')}
-          title={!expanded ? (user?.name || 'Settings') : undefined}
-          className="w-full flex items-center py-1.5 rounded-xl hover:bg-white/5 transition-colors"
+      {/* Bottom User Avatar & Logout */}
+      <div className="pt-3 border-t border-white/5 px-3 flex items-center justify-between">
+        <ProfilePopover
+          userName={user?.name}
+          userEmail={user?.email}
+          onNavigate={setActiveTab}
         >
-          {user?.avatar ? (
-            <img
-              src={user.avatar}
-              alt="Avatar"
-              className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-xs text-purple-300 font-bold shrink-0">
-              {user?.name ? user.name.slice(0, 2).toUpperCase() : 'SA'}
-            </div>
-          )}
-          <AnimatePresence>
-            {expanded && (
-              <motion.div
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -6 }}
-                transition={{ duration: 0.13, delay: 0.04 }}
-                className="ml-2.5 overflow-hidden min-w-0 text-left"
-              >
-                <div className="text-xs font-bold text-[#F5F5F5] truncate">{user?.name || 'Studio Admin'}</div>
-                <div className="text-[10px] text-[#6B7280] truncate">{user?.email || 'studio@manager.io'}</div>
-              </motion.div>
+          <div
+            title={!expanded ? (user?.name || 'Profile & Logout') : undefined}
+            className="flex items-center py-1.5 rounded-xl hover:bg-white/5 transition-colors cursor-pointer"
+          >
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt="Avatar"
+                className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-xs text-purple-300 font-bold shrink-0">
+                {user?.name ? user.name.slice(0, 2).toUpperCase() : 'SA'}
+              </div>
             )}
-          </AnimatePresence>
-        </button>
+            <AnimatePresence>
+              {expanded && (
+                <motion.div
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -6 }}
+                  transition={{ duration: 0.13, delay: 0.04 }}
+                  className="ml-2.5 overflow-hidden min-w-0 text-left pr-1"
+                >
+                  <div className="text-xs font-bold text-[#F5F5F5] truncate max-w-[100px]">{user?.name || 'Studio Admin'}</div>
+                  <div className="text-[10px] text-[#6B7280] truncate max-w-[100px]">{user?.email || 'studio@manager.io'}</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </ProfilePopover>
+
+        {/* Quick Logout button when expanded */}
+        <AnimatePresence>
+          {expanded && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={handleLogout}
+              title="Logout"
+              className="p-2 text-[#9CA3AF] hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors shrink-0"
+            >
+              <LogOut className="w-4 h-4" />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     </motion.aside>
   );

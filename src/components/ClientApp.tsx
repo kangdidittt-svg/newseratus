@@ -18,6 +18,7 @@ import ProjectSidePanel from './ProjectSidePanel';
 import { MobileNav } from './ui/MobileNav';
 import { Search, Bell, Sparkles } from 'lucide-react';
 import NotificationPopover from './NotificationPopover';
+import ProfilePopover from './ProfilePopover';
 import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications';
 
 interface User {
@@ -161,6 +162,30 @@ export default function ClientApp() {
                 )}
               </button>
             </NotificationPopover>
+
+            {/* Profile Avatar & Logout Popover */}
+            <ProfilePopover
+              userName={user?.name || 'Creative'}
+              userEmail={user?.email || 'studio@manager.io'}
+              onNavigate={handleNavigation}
+            >
+              <button
+                className="flex items-center space-x-2 p-1 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                title="Profile & Logout"
+              >
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Profile"
+                    className="w-7 h-7 rounded-full object-cover border border-purple-500/40"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-xs text-purple-300 font-bold">
+                    {user?.name ? user.name.slice(0, 2).toUpperCase() : 'CU'}
+                  </div>
+                )}
+              </button>
+            </ProfilePopover>
           </div>
         </header>
 

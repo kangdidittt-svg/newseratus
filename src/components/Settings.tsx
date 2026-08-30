@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import {
   User,
@@ -17,7 +17,14 @@ import {
   Users,
   Edit,
   Crown,
-  Palette
+  Palette,
+  LogOut,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Mail,
+  Sparkles,
+  Lock
 } from 'lucide-react';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -34,8 +41,16 @@ interface UserSettings {
     };
     language: string;
     timezone: string;
-    theme?: 'default' | 'clean';
+    theme?: 'default' | 'clean' | 'white-minimalist';
   };
+}
+
+interface CurrentUser {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  createdAt?: string;
 }
 
 interface AdminUser {
@@ -49,9 +64,9 @@ interface AdminUser {
 export default function Settings() {
   const { currentTheme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
-  const [isMobile, setIsMobile] = useState(false);
   const [deleteDataModal, setDeleteDataModal] = useState(false);
-  const [currentUserRole, setCurrentUserRole] = useState<string>('user');
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  
   const [settings, setSettings] = useState<UserSettings>({
     profile: {
       avatar: '/api/placeholder/150/150'
@@ -63,13 +78,14 @@ export default function Settings() {
         sms: false
       },
       language: 'en',
-      timezone: 'America/New_York',
+      timezone: 'Asia/Jakarta',
       theme: currentTheme
     }
   });
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
   // Password change states
   const [passwordData, setPasswordData] = useState({
@@ -92,29 +108,18 @@ export default function Settings() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  
-  // Detect mobile at mount and on resize (must be before any conditional returns)
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
-  // Load settings from API on component mount
   useEffect(() => {
     loadSettings();
-    checkUserRole();
+    loadCurrentUser();
   }, []);
   
-  // Load users when admin tab is active
   useEffect(() => {
-    if (activeTab === 'admin' && currentUserRole === 'admin') {
+    if (activeTab === 'admin' && currentUser?.role === 'admin') {
       loadUsers();
     }
-  }, [activeTab, currentUserRole]);
+  }, [activeTab, currentUser]);
   
-  // Update settings when theme changes
   useEffect(() => {
     setSettings(prev => ({
       ...prev,
@@ -125,6 +130,22 @@ export default function Settings() {
     }));
   }, [currentTheme]);
   
+  const loadCurrentUser = async () => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUser(data.user || null);
+      }
+    } catch (error) {
+      console.error('Error checking user info:', error);
+    }
+  };
+
   const loadSettings = async () => {
     try {
       const response = await fetch('/api/user/settings', {
@@ -134,34 +155,17 @@ export default function Settings() {
       
       if (response.ok) {
         const data = await response.json();
-        setSettings(data.settings);
-        // Apply saved theme if it exists
-        if (data.settings?.preferences?.theme) {
-          setTheme(data.settings.preferences.theme);
+        if (data.settings) {
+          setSettings(data.settings);
+          if (data.settings?.preferences?.theme) {
+            setTheme(data.settings.preferences.theme);
+          }
         }
-      } else {
-        console.error('Failed to load settings:', response.status);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-  
-  const checkUserRole = async () => {
-    try {
-      const response = await fetch('/api/auth/me', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentUserRole(data.user?.role || 'user');
-      }
-    } catch (error) {
-      console.error('Error checking user role:', error);
     }
   };
   
@@ -176,197 +180,24 @@ export default function Settings() {
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users || []);
-      } else {
-        setUserActionMessage('Failed to load users');
-        setTimeout(() => setUserActionMessage(''), 3000);
       }
     } catch (error) {
       console.error('Error loading users:', error);
-      setUserActionMessage('Error loading users');
+      setUserActionMessage('Gagal memuat daftar pengguna');
       setTimeout(() => setUserActionMessage(''), 3000);
     } finally {
       setIsLoadingUsers(false);
     }
   };
-  
-  const handleDeleteUser = (user: AdminUser) => {
-    setUserToDelete(user);
-    setShowDeleteModal(true);
-  };
 
-  const confirmDeleteUser = async () => {
-    if (!userToDelete) return;
-    
+  const handleLogout = async () => {
     try {
-      const response = await fetch('/api/admin/users', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ userId: userToDelete.id })
-      });
-      
-      if (response.ok) {
-        setUsers(users.filter(user => user.id !== userToDelete.id));
-        setUserActionMessage('User deleted successfully');
-        setTimeout(() => setUserActionMessage(''), 3000);
-      } else {
-        const data = await response.json();
-        setUserActionMessage(data.error || 'Failed to delete user');
-        setTimeout(() => setUserActionMessage(''), 3000);
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      setUserActionMessage('Error deleting user');
-      setTimeout(() => setUserActionMessage(''), 3000);
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) {
+      console.error(e);
     } finally {
-      setShowDeleteModal(false);
-      setUserToDelete(null);
+      window.location.href = '/login';
     }
-  };
-
-  const cancelDeleteUser = () => {
-    setShowDeleteModal(false);
-    setUserToDelete(null);
-  };
-  
-  const handleUpdateUserRole = async (userId: string, newRole: 'user' | 'admin') => {
-    try {
-      const response = await fetch('/api/admin/users', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ userId, role: newRole })
-      });
-      
-      if (response.ok) {
-        setUsers(users.map(user => 
-          user.id === userId ? { ...user, role: newRole } : user
-        ));
-        setUserActionMessage(`User role updated to ${newRole}`);
-        setTimeout(() => setUserActionMessage(''), 3000);
-        setShowEditModal(false);
-        setEditingUser(null);
-      } else {
-        const data = await response.json();
-        setUserActionMessage(data.error || 'Failed to update user role');
-        setTimeout(() => setUserActionMessage(''), 3000);
-      }
-    } catch (error) {
-      console.error('Error updating user role:', error);
-      setUserActionMessage('Error updating user role');
-      setTimeout(() => setUserActionMessage(''), 3000);
-    }
-  };
-
-
-  const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'preferences', label: 'Preferences', icon: Bell },
-    { id: 'appearance', label: 'Appearance', icon: Palette },
-    { id: 'security', label: 'Security', icon: Shield },
-    { id: 'system', label: 'System', icon: SettingsIcon },
-    ...(currentUserRole === 'admin' ? [{ id: 'admin', label: 'User Management', icon: Users }] : []),
-  ];
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const response = await fetch('/api/user/settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ settings })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSettings(data.settings);
-        setSaveMessage('Settings saved successfully!');
-        
-        // Dispatch custom event to notify other components about profile update
-        if (data.settings?.profile?.avatar) {
-          window.dispatchEvent(new CustomEvent('profileUpdated', {
-            detail: { avatarUrl: data.settings.profile.avatar }
-          }));
-        }
-      } else {
-        setSaveMessage('Error saving settings. Please try again.');
-      }
-      
-      setTimeout(() => setSaveMessage(''), 3000);
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      setSaveMessage('Error saving settings. Please try again.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleClearData = async () => {
-    try {
-      // Send notification first before clearing data
-      try {
-        await fetch('/api/notifications', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            title: 'Data Berhasil Dibersihkan',
-            message: 'Anda baru saja melakukan pembersihan data. Semua data pribadi Anda telah dihapus dari sistem.',
-            type: 'system_action'
-          })
-        });
-        console.log('✅ Notification sent successfully');
-      } catch (notificationError) {
-        console.error('Failed to send notification:', notificationError);
-      }
-
-      // Wait a moment for notification to be processed
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const response = await fetch('/api/user/clear-data', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        alert('Semua data berhasil dihapus. Anda akan diarahkan ke halaman login.');
-        // Clear local storage
-        localStorage.clear();
-        sessionStorage.clear();
-        // Redirect to login after clearing data
-        window.location.href = '/login';
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error || 'Gagal menghapus data. Silakan coba lagi.');
-      }
-    } catch (error) {
-      console.error('Error clearing data:', error);
-      alert('Terjadi kesalahan saat menghapus data.');
-    }
-  };
-
-
-
-  const updateSettings = (section: keyof UserSettings, field: string, value: string | boolean) => {
-    setSettings(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value
-      }
-    }));
   };
 
   const updateNestedSettings = (section: keyof UserSettings, subsection: string, field: string, value: string | boolean) => {
@@ -382,26 +213,68 @@ export default function Settings() {
     }));
   };
 
+  const updateSettings = (section: keyof UserSettings, field: string, value: string | boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setSaveMessage(null);
+    try {
+      const response = await fetch('/api/user/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ settings })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data.settings);
+        setSaveMessage({ type: 'success', text: 'Pengaturan berhasil disimpan!' });
+        
+        if (data.settings?.profile?.avatar) {
+          window.dispatchEvent(new CustomEvent('profileUpdated', {
+            detail: { avatarUrl: data.settings.profile.avatar }
+          }));
+        }
+      } else {
+        setSaveMessage({ type: 'error', text: 'Gagal menyimpan pengaturan. Silakan coba lagi.' });
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setSaveMessage({ type: 'error', text: 'Terjadi kesalahan jaringan.' });
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setSaveMessage(null), 3500);
+    }
+  };
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Reset messages
     setPasswordChangeMessage('');
     setPasswordChangeError('');
     
-    // Validation
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-      setPasswordChangeError('All password fields are required');
+      setPasswordChangeError('Semua kolom password wajib diisi');
       return;
     }
     
     if (passwordData.newPassword.length < 6) {
-      setPasswordChangeError('New password must be at least 6 characters long');
+      setPasswordChangeError('Password baru minimal harus 6 karakter');
       return;
     }
     
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordChangeError('New passwords do not match');
+      setPasswordChangeError('Konfirmasi password tidak cocok');
       return;
     }
     
@@ -413,6 +286,7 @@ export default function Settings() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword
@@ -422,20 +296,19 @@ export default function Settings() {
       const data = await response.json();
       
       if (response.ok) {
-        setPasswordChangeMessage('Password changed successfully!');
+        setPasswordChangeMessage('Password berhasil diperbarui! Silakan gunakan password baru ini saat login.');
         setPasswordData({
           currentPassword: '',
           newPassword: '',
           confirmPassword: ''
         });
-        // Clear success message after 3 seconds
-        setTimeout(() => setPasswordChangeMessage(''), 3000);
+        setTimeout(() => setPasswordChangeMessage(''), 5000);
       } else {
-        setPasswordChangeError(data.error || 'Failed to change password');
+        setPasswordChangeError(data.error || 'Gagal mengubah password');
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      setPasswordChangeError('An error occurred while changing password');
+      setPasswordChangeError('Terjadi kesalahan saat memproses password');
     } finally {
       setIsChangingPassword(false);
     }
@@ -445,12 +318,11 @@ export default function Settings() {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        setSaveMessage('Error: Image size must be less than 5MB');
-        setTimeout(() => setSaveMessage(''), 4000);
+        setSaveMessage({ type: 'error', text: 'Ukuran gambar maksimal 5MB' });
+        setTimeout(() => setSaveMessage(null), 4000);
         return;
       }
 
-      // Show temporary preview
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64Data = e.target?.result as string;
@@ -460,7 +332,6 @@ export default function Settings() {
       };
       reader.readAsDataURL(file);
 
-      // Upload file to /api/user/avatar
       try {
         const formData = new FormData();
         formData.append('avatar', file);
@@ -475,42 +346,74 @@ export default function Settings() {
           const data = await response.json();
           if (data.avatarUrl) {
             updateSettings('profile', 'avatar', data.avatarUrl);
-            setSaveMessage('Profile picture updated successfully!');
+            setSaveMessage({ type: 'success', text: 'Foto profil berhasil diperbarui!' });
             window.dispatchEvent(new CustomEvent('profileUpdated', {
               detail: { avatarUrl: data.avatarUrl }
             }));
           }
-        } else {
-          const errorData = await response.json();
-          setSaveMessage(`Error: ${errorData.error || 'Failed to upload image'}`);
         }
       } catch (err) {
         console.error('Error uploading avatar:', err);
-        setSaveMessage('Error uploading profile picture');
       } finally {
-        setTimeout(() => setSaveMessage(''), 4000);
+        setTimeout(() => setSaveMessage(null), 4000);
       }
     }
   };
 
+  const handleClearData = async () => {
+    try {
+      const response = await fetch('/api/user/clear-data', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/login';
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Gagal menghapus data.');
+      }
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      alert('Terjadi kesalahan saat menghapus data.');
+    }
+  };
+
+  const tabs = [
+    { id: 'profile', label: 'Profil & Akun', icon: User },
+    { id: 'security', label: 'Keamanan & Password', icon: Shield },
+    { id: 'preferences', label: 'Preferensi', icon: Bell },
+    { id: 'appearance', label: 'Tampilan', icon: Palette },
+    { id: 'system', label: 'Sistem & Data', icon: SettingsIcon },
+    ...(currentUser?.role === 'admin' ? [{ id: 'admin', label: 'Kelola Pengguna', icon: Users }] : []),
+  ];
+
+  // ----------------------------------------------------
+  // TAB RENDERING FUNCTIONS (MODERN GRAPHITE STUDIO DESIGN)
+  // ----------------------------------------------------
+
   const renderProfileTab = () => (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
       className="space-y-6"
     >
-      {/* Avatar Section */}
-      <div className="flex flex-col items-center space-y-4">
-        <div className="relative">
-          <Image
-            src={settings.profile.avatar || '/api/placeholder/150/150'}
-            alt="Profile"
-            width={128}
-            height={128}
-            className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 md:shadow-lg"
-            style={{ borderColor: 'var(--neuro-bg)' }}
-          />
-          <label className="absolute bottom-0 right-0 neuro-button-orange p-2 rounded-full cursor-pointer">
+      {/* Profile Card */}
+      <div className="p-6 rounded-2xl bg-[#181A20] border border-white/5 flex flex-col md:flex-row items-center md:items-start gap-6">
+        <div className="relative group">
+          <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden border-2 border-purple-500/40 p-0.5 bg-[#0B0C0E] shadow-xl">
+            <Image
+              src={settings.profile.avatar || '/api/placeholder/150/150'}
+              alt="Profile"
+              width={112}
+              height={112}
+              className="w-full h-full rounded-[14px] object-cover"
+            />
+          </div>
+          <label className="absolute -bottom-2 -right-2 p-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/50 cursor-pointer transition-transform group-hover:scale-110">
             <Camera className="h-4 w-4" />
             <input
               type="file"
@@ -520,39 +423,239 @@ export default function Settings() {
             />
           </label>
         </div>
-        <div className="text-center">
-          <h3 className="text-lg font-semibold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Profile Photo</h3>
-          <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>Click the camera icon to change your profile photo</p>
+
+        <div className="flex-1 text-center md:text-left space-y-2">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+            <h2 className="text-xl font-bold text-[#F5F5F5]">
+              {currentUser?.username || 'Creative User'}
+            </h2>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 border border-purple-500/30 text-purple-300 uppercase tracking-wider">
+              {currentUser?.role || 'User'}
+            </span>
+          </div>
+          <p className="text-xs text-[#9CA3AF] flex items-center justify-center md:justify-start gap-1.5">
+            <Mail className="w-3.5 h-3.5 text-[#6B7280]" />
+            {currentUser?.email || 'user@studio.io'}
+          </p>
+          <p className="text-[11px] text-[#6B7280] pt-1">
+            Klik ikon kamera pada foto profil untuk mengunggah avatar baru (Maks. 5MB).
+          </p>
         </div>
       </div>
 
+      {/* Account Info Details */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-4 rounded-xl bg-[#181A20] border border-white/5 space-y-1">
+          <span className="text-[11px] font-medium text-[#6B7280]">Username</span>
+          <div className="text-sm font-semibold text-[#F5F5F5]">{currentUser?.username || '-'}</div>
+        </div>
+        <div className="p-4 rounded-xl bg-[#181A20] border border-white/5 space-y-1">
+          <span className="text-[11px] font-medium text-[#6B7280]">Email Terdaftar</span>
+          <div className="text-sm font-semibold text-[#F5F5F5]">{currentUser?.email || '-'}</div>
+        </div>
+      </div>
 
+      {/* Quick Link to Change Password */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 to-[#181A20] border border-purple-500/20 flex items-center justify-between">
+        <div className="space-y-0.5">
+          <div className="text-sm font-bold text-[#F5F5F5] flex items-center gap-1.5">
+            <Lock className="w-4 h-4 text-purple-400" />
+            Kata Sandi & Keamanan
+          </div>
+          <p className="text-xs text-[#9CA3AF]">Ingin mengganti password akun Anda?</p>
+        </div>
+        <button
+          onClick={() => setActiveTab('security')}
+          className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+        >
+          Ganti Password
+        </button>
+      </div>
+    </motion.div>
+  );
+
+  const renderSecurityTab = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className="space-y-6"
+    >
+      {/* Change Password Card */}
+      <div className="p-6 md:p-8 rounded-2xl bg-[#181A20] border border-white/5 space-y-6">
+        <div className="space-y-1">
+          <h3 className="text-base font-bold text-[#F5F5F5] flex items-center gap-2">
+            <Key className="h-4 w-4 text-purple-400" />
+            Ganti Password Akun
+          </h3>
+          <p className="text-xs text-[#9CA3AF]">
+            Pastikan password baru minimal 6 karakter dan gunakan kombinasi yang aman.
+          </p>
+        </div>
+
+        {/* Alerts */}
+        <AnimatePresence>
+          {passwordChangeMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{passwordChangeMessage}</span>
+            </motion.div>
+          )}
+
+          {passwordChangeError && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{passwordChangeError}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <form onSubmit={handlePasswordChange} className="space-y-4 max-w-lg">
+          {/* Current Password */}
+          <div>
+            <label className="block text-xs font-semibold text-[#D4D4D8] mb-1.5">
+              Password Saat Ini
+            </label>
+            <div className="relative">
+              <input
+                type={showCurrentPassword ? 'text' : 'password'}
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                className="w-full pl-3.5 pr-10 py-2.5 bg-[#14161A] border border-white/10 rounded-xl text-sm text-[#F5F5F5] placeholder-[#6B7280] focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50"
+                placeholder="Masukkan password saat ini"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#F5F5F5] transition-colors"
+              >
+                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* New Password */}
+          <div>
+            <label className="block text-xs font-semibold text-[#D4D4D8] mb-1.5">
+              Password Baru
+            </label>
+            <div className="relative">
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                className="w-full pl-3.5 pr-10 py-2.5 bg-[#14161A] border border-white/10 rounded-xl text-sm text-[#F5F5F5] placeholder-[#6B7280] focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50"
+                placeholder="Minimal 6 karakter"
+                minLength={6}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#F5F5F5] transition-colors"
+              >
+                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label className="block text-xs font-semibold text-[#D4D4D8] mb-1.5">
+              Konfirmasi Password Baru
+            </label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                className="w-full pl-3.5 pr-10 py-2.5 bg-[#14161A] border border-white/10 rounded-xl text-sm text-[#F5F5F5] placeholder-[#6B7280] focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50"
+                placeholder="Ulangi password baru"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#F5F5F5] transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          <button 
+            type="submit"
+            disabled={isChangingPassword}
+            className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-900/30 transition-all disabled:opacity-50 flex items-center justify-center space-x-2 mt-2"
+          >
+            {isChangingPassword ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Memperbarui Password...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-3.5 h-3.5" />
+                <span>Perbarui Password</span>
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+
+      {/* Two-Factor & Sessions */}
+      <div className="p-6 rounded-2xl bg-[#181A20] border border-white/5 flex items-center justify-between">
+        <div className="space-y-1">
+          <div className="text-sm font-bold text-[#F5F5F5] flex items-center gap-2">
+            <Shield className="h-4 w-4 text-purple-400" />
+            Autentikasi Dua Faktor (2FA)
+          </div>
+          <p className="text-xs text-[#9CA3AF]">
+            Menambahkan lapisan keamanan ekstra untuk login ke workspace Anda.
+          </p>
+        </div>
+        <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold text-[#9CA3AF]">
+          Segera Hadir
+        </span>
+      </div>
     </motion.div>
   );
 
   const renderPreferencesTab = () => (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
+      transition={{ duration: 0.2 }}
+      className="space-y-6"
     >
-
-      {/* Notification Settings (hidden on mobile for cleaner UI) */}
-      <div className="hidden md:block">
-        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
-          <Bell className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
-          Notifications
+      {/* Notifications */}
+      <div className="p-6 rounded-2xl bg-[#181A20] border border-white/5 space-y-4">
+        <h3 className="text-base font-bold text-[#F5F5F5] flex items-center gap-2">
+          <Bell className="h-4 w-4 text-purple-400" />
+          Saluran Notifikasi
         </h3>
-        <div className="space-y-4">
+        
+        <div className="space-y-3">
           {[
-            { key: 'email', label: 'Email Notifications', description: 'Receive notifications via email' },
-            { key: 'push', label: 'Push Notifications', description: 'Receive push notifications in browser' },
-            { key: 'sms', label: 'SMS Notifications', description: 'Receive notifications via SMS' }
-          ].map(({ key, label, description }) => (
-            <div key={key} className="flex items-center justify-between p-4 neuro-card rounded-lg">
+            { key: 'email', label: 'Notifikasi Email', desc: 'Terima ringkasan invoice & task via email' },
+            { key: 'push', label: 'Push Browser', desc: 'Notifikasi langsung di tab browser realtime' },
+            { key: 'sms', label: 'SMS Alert', desc: 'Peringatan deadline kritis via pesan SMS' }
+          ].map(({ key, label, desc }) => (
+            <div key={key} className="flex items-center justify-between p-3.5 rounded-xl bg-[#14161A] border border-white/5">
               <div>
-                <p className="font-medium font-inter" style={{ color: 'var(--neuro-text-primary)' }}>{label}</p>
-                <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>{description}</p>
+                <p className="text-xs font-bold text-[#F5F5F5]">{label}</p>
+                <p className="text-[11px] text-[#6B7280]">{desc}</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -561,7 +664,7 @@ export default function Settings() {
                   onChange={(e) => updateNestedSettings('preferences', 'notifications', key, e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all" style={{ backgroundColor: 'var(--neuro-bg-secondary)' }}></div>
+                <div className="w-10 h-5.5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-purple-600"></div>
               </label>
             </div>
           ))}
@@ -569,38 +672,34 @@ export default function Settings() {
       </div>
 
       {/* Language & Timezone */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
-            Language
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-5 rounded-2xl bg-[#181A20] border border-white/5 space-y-2">
+          <label className="block text-xs font-semibold text-[#D4D4D8]">
+            Bahasa Tampilan
           </label>
           <select
             value={settings.preferences.language}
             onChange={(e) => updateSettings('preferences', 'language', e.target.value)}
-            className="neuro-select w-full"
+            className="w-full px-3.5 py-2.5 bg-[#14161A] border border-white/10 rounded-xl text-xs font-medium text-[#F5F5F5] focus:outline-none focus:border-purple-500"
           >
-            <option value="en">English</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="id">Indonesian</option>
+            <option value="id">Bahasa Indonesia</option>
+            <option value="en">English (US)</option>
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
-            Timezone
+        <div className="p-5 rounded-2xl bg-[#181A20] border border-white/5 space-y-2">
+          <label className="block text-xs font-semibold text-[#D4D4D8]">
+            Zona Waktu
           </label>
           <select
             value={settings.preferences.timezone}
             onChange={(e) => updateSettings('preferences', 'timezone', e.target.value)}
-            className="neuro-select w-full"
+            className="w-full px-3.5 py-2.5 bg-[#14161A] border border-white/10 rounded-xl text-xs font-medium text-[#F5F5F5] focus:outline-none focus:border-purple-500"
           >
-            <option value="America/New_York">Eastern Time (ET)</option>
-            <option value="America/Chicago">Central Time (CT)</option>
-            <option value="America/Denver">Mountain Time (MT)</option>
-            <option value="America/Los_Angeles">Pacific Time (PT)</option>
-            <option value="Asia/Jakarta">Western Indonesia Time (WIB)</option>
+            <option value="Asia/Jakarta">WIB (Jakarta - UTC+7)</option>
+            <option value="Asia/Makassar">WITA (Makassar - UTC+8)</option>
+            <option value="Asia/Jayapura">WIT (Jayapura - UTC+9)</option>
+            <option value="America/New_York">Eastern Time (ET - UTC-5)</option>
           </select>
         </div>
       </div>
@@ -609,206 +708,70 @@ export default function Settings() {
 
   const renderAppearanceTab = () => (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
       className="space-y-6"
     >
-      <div>
-        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
-          <Palette className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
-          Theme Selection
+      <div className="p-6 rounded-2xl bg-[#181A20] border border-white/5 space-y-4">
+        <h3 className="text-base font-bold text-[#F5F5F5] flex items-center gap-2">
+          <Palette className="h-4 w-4 text-purple-400" />
+          Pilihan Tema Studio
         </h3>
-        <div className="space-y-4">
-          <div className="p-4 neuro-card rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Default Theme</p>
-                <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>Dark, futuristic design with neumorphic elements</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  name="theme"
-                  value="default"
-                  checked={currentTheme === 'default'}
-                  onChange={(e) => setTheme(e.target.value as 'default' | 'clean')}
-                  className="sr-only peer"
-                />
-                <div className="w-5 h-5 rounded-full border-2 peer-checked:bg-orange-500 peer-checked:border-orange-500 transition-all duration-200" style={{ borderColor: currentTheme === 'default' ? 'var(--neuro-orange)' : 'var(--neuro-border)' }}></div>
-              </label>
-            </div>
-          </div>
-          
-          <div className="p-4 neuro-card rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Clean Theme</p>
-                <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>Modern, minimal design with light colors and subtle shadows</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  name="theme"
-                  value="clean"
-                  checked={currentTheme === 'clean'}
-                  onChange={(e) => setTheme(e.target.value as 'default' | 'clean')}
-                  className="sr-only peer"
-                />
-                <div className="w-5 h-5 rounded-full border-2 peer-checked:bg-orange-500 peer-checked:border-orange-500 transition-all duration-200" style={{ borderColor: currentTheme === 'clean' ? 'var(--neuro-orange)' : 'var(--neuro-border)' }}></div>
-              </label>
-            </div>
-          </div>
-          
-          <div className="mt-6 p-4 neuro-card rounded-lg" style={{ backgroundColor: currentTheme === 'clean' ? 'rgba(255, 244, 236, 0.5)' : 'rgba(139, 92, 246, 0.1)' }}>
-            <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>
-              <strong>Current Theme:</strong> {currentTheme === 'clean' ? 'Clean Theme' : 'Default Theme'}
-            </p>
-            <p className="text-xs font-inter mt-2" style={{ color: 'var(--neuro-text-muted)' }}>
-              Theme changes are applied instantly and saved automatically.
-            </p>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
 
-  const renderSecurityTab = () => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      <div>
-        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
-          <Key className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
-          Change Password
-        </h3>
-        
-        {/* Password Change Messages */}
-        {passwordChangeMessage && (
-          <div className="mb-4 p-4 neuro-card" style={{ backgroundColor: 'var(--neuro-success-bg)', borderColor: 'var(--neuro-success)' }}>
-            <p className="font-inter font-medium" style={{ color: 'var(--neuro-success)' }}>{passwordChangeMessage}</p>
-          </div>
-        )}
-
-        {passwordChangeError && (
-          <div className="mb-4 p-4 neuro-card" style={{ backgroundColor: 'var(--neuro-error-bg)', borderColor: 'var(--neuro-error)' }}>
-            <p className="font-inter font-medium" style={{ color: 'var(--neuro-error)' }}>{passwordChangeError}</p>
-          </div>
-        )}
-        
-        <form onSubmit={handlePasswordChange} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
-              Current Password
-            </label>
-            <div className="relative">
-              <input
-                type={showCurrentPassword ? 'text' : 'password'}
-                value={passwordData.currentPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                className="neuro-input w-full pr-12"
-                placeholder="Enter your current password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-3 transition-colors duration-200" 
-                style={{ color: 'var(--neuro-text-secondary)' }}
-                onMouseEnter={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-orange)'}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-text-secondary)'}
-              >
-                {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
-              New Password
-            </label>
-            <div className="relative">
-              <input
-                type={showNewPassword ? 'text' : 'password'}
-                value={passwordData.newPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                className="neuro-input w-full pr-12"
-                placeholder="Enter your new password (min. 6 characters)"
-                minLength={6}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-3 transition-colors duration-200" 
-                style={{ color: 'var(--neuro-text-secondary)' }}
-                onMouseEnter={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-orange)'}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-text-secondary)'}
-              >
-                {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
-              Confirm New Password
-            </label>
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={passwordData.confirmPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                className="neuro-input w-full pr-12"
-                placeholder="Confirm your new password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-3 transition-colors duration-200" 
-                style={{ color: 'var(--neuro-text-secondary)' }}
-                onMouseEnter={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-orange)'}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'var(--neuro-text-secondary)'}
-              >
-                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
-            </div>
-          </div>
-          <button 
-            type="submit"
-            disabled={isChangingPassword}
-            className={`neuro-button-orange font-inter ${
-              isChangingPassword
-                ? 'opacity-50 cursor-not-allowed'
-                : ''
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Dark Studio OS */}
+          <div 
+            onClick={() => setTheme('default')}
+            className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+              currentTheme === 'default'
+                ? 'bg-purple-600/10 border-purple-500/60 shadow-lg shadow-purple-900/20 ring-1 ring-purple-500/40'
+                : 'bg-[#14161A] border-white/5 hover:border-white/20'
             }`}
           >
-            {isChangingPassword ? (
-              <>
-                <div className="loading-spinner inline-block mr-2 w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--neuro-orange)', borderTopColor: 'transparent' }}></div>
-                Updating Password...
-              </>
-            ) : (
-              'Update Password'
-            )}
-          </button>
-        </form>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
-          <Shield className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
-          Two-Factor Authentication
-        </h3>
-        <div className="neuro-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Enable 2FA</p>
-              <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>Add an extra layer of security to your account</p>
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-bold text-sm text-[#F5F5F5]">Dark Studio OS</span>
+              {currentTheme === 'default' && <CheckCircle2 className="w-4 h-4 text-purple-400" />}
             </div>
-            <button className="neuro-button-orange font-inter">
-              Enable
-            </button>
+            <p className="text-xs text-[#9CA3AF]">
+              Tema pitch graphite dengan pendaran aksen ungu violet elegan. (Default)
+            </p>
+          </div>
+
+          {/* White Minimalist */}
+          <div 
+            onClick={() => setTheme('white-minimalist')}
+            className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+              currentTheme === 'white-minimalist'
+                ? 'bg-purple-600/10 border-purple-500/60 shadow-lg shadow-purple-900/20 ring-1 ring-purple-500/40'
+                : 'bg-[#14161A] border-white/5 hover:border-white/20'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-bold text-sm text-[#F5F5F5]">White Minimalist</span>
+              {currentTheme === 'white-minimalist' && <CheckCircle2 className="w-4 h-4 text-purple-400" />}
+            </div>
+            <p className="text-xs text-[#9CA3AF]">
+              Ultra-clean white workspace dengan tipografi kontras tinggi & border zinc lembut.
+            </p>
+          </div>
+
+          {/* Clean Minimal */}
+          <div 
+            onClick={() => setTheme('clean')}
+            className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+              currentTheme === 'clean'
+                ? 'bg-purple-600/10 border-purple-500/60 shadow-lg shadow-purple-900/20 ring-1 ring-purple-500/40'
+                : 'bg-[#14161A] border-white/5 hover:border-white/20'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-bold text-sm text-[#F5F5F5]">Clean Minimal</span>
+              {currentTheme === 'clean' && <CheckCircle2 className="w-4 h-4 text-purple-400" />}
+            </div>
+            <p className="text-xs text-[#9CA3AF]">
+              Desain minimalis dengan kontras halus dan bayangan lembut.
+            </p>
           </div>
         </div>
       </div>
@@ -817,275 +780,148 @@ export default function Settings() {
 
   const renderSystemTab = () => (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-8"
-    >
-      <div>
-        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
-          <Trash2 className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-error)' }} />
-          Bersihkan Data
-        </h3>
-        <div className="neuro-card p-6" style={{ backgroundColor: 'var(--neuro-error-bg)', borderColor: 'var(--neuro-error)' }}>
-          <div className="flex items-start space-x-4">
-            <div className="flex-shrink-0">
-              <Trash2 className="h-6 w-6" style={{ color: 'var(--neuro-error)' }} />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-medium font-inter mb-2" style={{ color: 'var(--neuro-error)' }}>Hapus Semua Data</h4>
-              <p className="text-sm font-inter mb-4" style={{ color: 'var(--neuro-error)' }}>
-                Tindakan ini akan menghapus semua data <strong>milik Anda</strong> dari database termasuk proyek, pengaturan, dan informasi profil. 
-                Data pengguna lain tidak akan terpengaruh. <strong>Tindakan ini tidak dapat dibatalkan.</strong>
-              </p>
-              <motion.button 
-                onClick={() => setDeleteDataModal(true)}
-                className="neuro-button font-inter flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200"
-                style={{ 
-                  backgroundColor: 'var(--neuro-error)', 
-                  color: 'white',
-                  border: '1px solid var(--neuro-error)'
-                }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Trash2 className="h-4 w-4" />
-                <span>Hapus Semua Data</span>
-              </motion.button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-    </motion.div>
-  );
-  
-  const renderAdminTab = () => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
       className="space-y-6"
     >
-      <div>
-        <h3 className="text-lg font-semibold font-inter mb-4 flex items-center" style={{ color: 'var(--neuro-text-primary)' }}>
-          <Users className="h-5 w-5 mr-2" style={{ color: 'var(--neuro-orange)' }} />
-          User Management
-        </h3>
-        
-        {/* Action Messages */}
-        {userActionMessage && (
-          <div className="mb-4 p-4 neuro-card" style={{ 
-            backgroundColor: userActionMessage.includes('Error') || userActionMessage.includes('Failed') 
-              ? 'var(--neuro-error-bg)' 
-              : 'var(--neuro-success-bg)', 
-            borderColor: userActionMessage.includes('Error') || userActionMessage.includes('Failed') 
-              ? 'var(--neuro-error)' 
-              : 'var(--neuro-success)' 
-          }}>
-            <p className="font-inter font-medium" style={{ 
-              color: userActionMessage.includes('Error') || userActionMessage.includes('Failed') 
-                ? 'var(--neuro-error)' 
-                : 'var(--neuro-success)' 
-            }}>
-              {userActionMessage}
+      {/* Danger Zone */}
+      <div className="p-6 rounded-2xl bg-red-950/20 border border-red-500/20 space-y-4">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
+            <Trash2 className="w-5 h-5" />
+          </div>
+          <div className="space-y-1 flex-1">
+            <h4 className="text-sm font-bold text-red-300">Pembersihan Data Pribadi</h4>
+            <p className="text-xs text-[#9CA3AF] leading-relaxed">
+              Tindakan ini akan menghapus seluruh data proyek, tugas, dan histori invoice milik akun Anda. Tindakan ini permanen dan tidak dapat dibatalkan.
             </p>
           </div>
-        )}
-        
-        {/* Users List */}
-        <div className="neuro-card p-6">
-          {isLoadingUsers ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--neuro-orange)' }}></div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {users.length === 0 ? (
-                <p className="text-center font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>
-                  No users found
-                </p>
-              ) : (
-                users.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-4 neuro-card rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--neuro-orange)' }}>
-                          <User className="h-5 w-5" style={{ color: 'white' }} />
-                        </div>
-                        <div>
-                          <p className="font-medium font-inter" style={{ color: 'var(--neuro-text-primary)' }}>
-                            {user.username}
-                          </p>
-                          <p className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>
-                            {user.email}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        {user.role === 'admin' && (
-                          <Crown className="h-4 w-4" style={{ color: 'var(--neuro-orange)' }} />
-                        )}
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium font-inter ${
-                          user.role === 'admin' 
-                            ? 'text-orange-600 bg-orange-100' 
-                            : 'text-blue-600 bg-blue-100'
-                        }`}>
-                          {user.role.toUpperCase()}
-                        </span>
-                      </div>
-                      
-                      <div className="text-sm font-inter" style={{ color: 'var(--neuro-text-secondary)' }}>
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => {
-                            setEditingUser(user);
-                            setShowEditModal(true);
-                          }}
-                          className="p-2 neuro-button-orange rounded-lg transition-all duration-200"
-                          title="Edit Role"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        
-                        <button
-                          onClick={() => handleDeleteUser(user)}
-                          className="p-2 rounded-lg transition-all duration-200"
-                          style={{ 
-                            backgroundColor: 'var(--neuro-error-bg)',
-                            color: 'var(--neuro-error)',
-                            border: '1px solid var(--neuro-error)'
-                          }}
-                          title="Delete User"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+        </div>
+
+        <div className="pt-2 flex justify-end">
+          <button
+            onClick={() => setDeleteDataModal(true)}
+            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-xl text-xs font-bold transition-all"
+          >
+            Hapus Semua Data Saya
+          </button>
         </div>
       </div>
-      
-      {/* Edit User Role Modal */}
-      {showEditModal && editingUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="neuro-card p-6 max-w-md w-full mx-4"
-          >
-            <h3 className="text-lg font-semibold font-inter mb-4" style={{ color: 'var(--neuro-text-primary)' }}>
-              Edit User Role
-            </h3>
-            
-            <div className="mb-4">
-              <p className="font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
-                User: <strong>{editingUser.username}</strong>
-              </p>
-              <p className="text-sm font-inter mb-4" style={{ color: 'var(--neuro-text-secondary)' }}>
-                {editingUser.email}
-              </p>
-              
-              <label className="block text-sm font-medium font-inter mb-2" style={{ color: 'var(--neuro-text-primary)' }}>
-                Role
-              </label>
-              <select
-                value={editingUser.role}
-                onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as 'user' | 'admin' })}
-                className="neuro-select w-full"
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            
-            <div className="flex items-center justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingUser(null);
-                }}
-                className="px-4 py-2 neuro-card rounded-lg font-inter transition-all duration-200"
-                style={{ color: 'var(--neuro-text-secondary)' }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleUpdateUserRole(editingUser.id, editingUser.role)}
-                className="px-4 py-2 neuro-button-orange rounded-lg font-inter"
-              >
-                Update Role
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </motion.div>
   );
 
-  const renderTabContent = () => {
-    if (isMobile) {
-      return (
-        <div className="space-y-8">
-          {renderProfileTab()}
-          {renderPreferencesTab()}
-          {renderAppearanceTab()}
-          {renderSecurityTab()}
-          {renderSystemTab()}
-        </div>
-      );
-    } else {
-      switch (activeTab) {
-        case 'profile':
-          return renderProfileTab();
-        case 'preferences':
-          return renderPreferencesTab();
-        case 'appearance':
-          return renderAppearanceTab();
-        case 'security':
-          return renderSecurityTab();
-        case 'system':
-          return renderSystemTab();
-        case 'admin':
-          return renderAdminTab();
-        default:
-          return renderProfileTab();
-      }
+  const renderAdminTab = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className="space-y-6"
+    >
+      <div className="p-6 rounded-2xl bg-[#181A20] border border-white/5 space-y-4">
+        <h3 className="text-base font-bold text-[#F5F5F5] flex items-center gap-2">
+          <Users className="h-4 w-4 text-purple-400" />
+          Daftar Pengguna Sistem
+        </h3>
+
+        {isLoadingUsers ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {users.map((u) => (
+              <div key={u.id} className="flex items-center justify-between p-3.5 rounded-xl bg-[#14161A] border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-xs font-bold text-purple-300">
+                    {u.username.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#F5F5F5]">{u.username}</div>
+                    <div className="text-[10px] text-[#6B7280]">{u.email}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                    u.role === 'admin' 
+                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' 
+                      : 'bg-white/5 text-[#9CA3AF] border border-white/5'
+                  }`}>
+                    {u.role.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+
+  const renderActiveTabContent = () => {
+    switch (activeTab) {
+      case 'profile':
+        return renderProfileTab();
+      case 'security':
+        return renderSecurityTab();
+      case 'preferences':
+        return renderPreferencesTab();
+      case 'appearance':
+        return renderAppearanceTab();
+      case 'system':
+        return renderSystemTab();
+      case 'admin':
+        return renderAdminTab();
+      default:
+        return renderProfileTab();
     }
   };
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--neuro-orange)' }}></div>
-        </div>
+      <div className="max-w-5xl mx-auto py-16 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-5xl mx-auto font-sans pb-12">
       {/* Header */}
-      <div className="mb-6 md:mb-8 px-1">
-        <h1 className="text-2xl md:text-3xl font-bold font-inter" style={{ color: 'var(--neuro-text-primary)' }}>Settings</h1>
-        <p className="font-inter mt-1 text-sm md:text-base" style={{ color: 'var(--neuro-text-secondary)' }}>Manage your account settings and preferences</p>
+      <div className="mb-6 px-1 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#F5F5F5] tracking-tight">Pengaturan</h1>
+          <p className="text-xs text-[#9CA3AF] mt-1">Kelola profil akun, keamanan, dan preferensi workspace Anda</p>
+        </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar */}
-        <div className={`lg:w-64 ${isMobile ? 'hidden' : ''}`}>
-          <nav className="space-y-2 overflow-x-auto md:overflow-visible -mx-1 px-1 md:mx-0 md:px-0 flex md:block gap-2">
+      {/* Mobile Tab Pills (Horizontal Scroll) */}
+      <div className="flex lg:hidden overflow-x-auto gap-2 pb-3 mb-4 no-scrollbar">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`whitespace-nowrap flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                isActive
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/40'
+                  : 'bg-[#181A20] text-[#9CA3AF] border border-white/5 hover:text-white'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5 mr-1.5" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Desktop Sidebar Navigation */}
+        <div className="hidden lg:block lg:w-60 shrink-0">
+          <nav className="space-y-1.5 p-2 rounded-2xl bg-[#14161A] border border-white/5">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -1093,49 +929,59 @@ export default function Settings() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-shrink-0 md:shrink w-auto md:w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-200 text-xs font-semibold ${
+                  className={`w-full flex items-center px-3.5 py-2.5 text-left rounded-xl transition-all duration-150 text-xs font-semibold ${
                     isActive
-                      ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30'
-                      : 'bg-[#171A21] text-slate-400 hover:text-slate-100 hover:bg-white/5 border border-white/5'
+                      ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30 shadow-md'
+                      : 'text-[#9CA3AF] hover:text-[#F5F5F5] hover:bg-white/5 border border-transparent'
                   }`}
                 >
-                  <Icon className={`h-4 w-4 mr-3 ${isActive ? 'text-purple-400' : 'text-slate-500'}`} />
-                  {tab.label}
+                  <Icon className={`h-4 w-4 mr-2.5 shrink-0 ${isActive ? 'text-purple-400' : 'text-[#6B7280]'}`} />
+                  <span>{tab.label}</span>
                 </button>
               );
             })}
+
+            <div className="pt-2 border-t border-white/5 mt-2">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center px-3.5 py-2.5 text-left rounded-xl transition-all duration-150 text-xs font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
+              >
+                <LogOut className="h-4 w-4 mr-2.5 text-red-400 shrink-0" />
+                <span>Logout</span>
+              </button>
+            </div>
           </nav>
         </div>
 
-        {/* Content */}
-        <div className="flex-1">
-          <div className="bg-[#171A21] border border-white/10 p-6 md:p-8 rounded-2xl shadow-xl">
-            {renderTabContent()}
-            
-            {/* Save Button */}
-            <div className="mt-6 md:mt-8 pt-6 border-t border-white/10">
-              <div className="flex items-center md:justify-between flex-col md:flex-row gap-3">
+        {/* Content Container */}
+        <div className="flex-1 min-w-0">
+          <div className="bg-[#14161A] border border-white/10 p-6 md:p-8 rounded-3xl shadow-xl space-y-6">
+            {renderActiveTabContent()}
+
+            {/* Bottom Save Action Bar */}
+            <div className="pt-5 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div>
                 {saveMessage && (
                   <motion.p
-                    initial={{ opacity: 0, x: -20 }}
+                    initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="text-xs font-medium w-full md:w-auto text-center md:text-left"
-                    style={{
-                      color: saveMessage.includes('Error') ? 'var(--neuro-error)' : 'var(--neuro-success)'
-                    }}
+                    className={`text-xs font-medium ${
+                      saveMessage.type === 'error' ? 'text-red-400' : 'text-emerald-400'
+                    }`}
                   >
-                    {saveMessage}
+                    {saveMessage.text}
                   </motion.p>
                 )}
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="w-full md:w-auto px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 md:ml-auto"
-                >
-                  <Save className="h-4 w-4" />
-                  <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
-                </button>
               </div>
+              
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-900/30 transition-all disabled:opacity-50 flex items-center justify-center space-x-2 sm:ml-auto"
+              >
+                <Save className="h-4 w-4" />
+                <span>{isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1150,19 +996,8 @@ export default function Settings() {
           setDeleteDataModal(false);
         }}
         title="Hapus Semua Data"
-        message="Apakah Anda yakin ingin menghapus semua data milik Anda? Tindakan ini akan menghapus semua proyek, pengaturan, dan informasi profil Anda dari database. Data pengguna lain tidak akan terpengaruh. Tindakan ini tidak dapat dibatalkan!"
+        message="Apakah Anda yakin ingin menghapus semua data proyek & histori invoice Anda? Tindakan ini tidak dapat dibatalkan!"
         confirmText="Hapus Semua Data"
-        cancelText="Batal"
-      />
-
-      {/* Delete User Confirmation Modal */}
-      <DeleteConfirmationModal
-        isOpen={showDeleteModal}
-        onClose={cancelDeleteUser}
-        onConfirm={confirmDeleteUser}
-        title="Hapus Pengguna"
-        message={`Apakah Anda yakin ingin menghapus pengguna "${userToDelete?.username}"? Tindakan ini akan menghapus semua data terkait pengguna termasuk proyek dan notifikasi. Tindakan ini tidak dapat dibatalkan!`}
-        confirmText="Hapus Pengguna"
         cancelText="Batal"
       />
     </div>

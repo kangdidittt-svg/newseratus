@@ -62,7 +62,7 @@ export const cleanTheme = {
       200: '#ffd1b3',
       300: '#ffb980',
       400: '#ff9a4d',
-      500: '#FF6B00', // Brand orange - MUST remain
+      500: '#FF6B00', // Brand orange
       600: '#e55f00',
       700: '#cc5400',
       800: '#b24800',
@@ -81,9 +81,9 @@ export const cleanTheme = {
       900: '#0f172a',
     },
     gray: {
-      50: '#f9fafb', // Very light neutral background
+      50: '#f9fafb',
       100: '#f3f4f6',
-      200: '#e5e7eb', // Light gray borders
+      200: '#e5e7eb',
       300: '#d1d5db',
       400: '#9ca3af',
       500: '#6b7280',
@@ -128,24 +128,17 @@ export const cleanTheme = {
       800: '#991b1b',
       900: '#7f1d1d',
     },
-    background: {
-      primary: '#ffffff', // White cards
-      secondary: '#f9fafb', // Very light neutral (#F9FAFB)
-      tertiary: '#f3f4f6',
-    },
-    text: {
-      primary: '#111827', // High contrast text
-      secondary: '#4b5563', // Clean contrast
-      tertiary: '#6b7280',
-      disabled: '#9ca3af',
-    },
-    border: {
-      light: '#e5e7eb', // Light gray borders (#E5E7EB)
-      medium: '#d1d5db',
-      dark: '#9ca3af',
-    },
-    hover: {
-      orangeTint: '#FFF4EC', // Soft orange tint for hover states
+    info: {
+      50: '#eff6ff',
+      100: '#dbeafe',
+      200: '#bfdbfe',
+      300: '#93c5fd',
+      400: '#60a5fa',
+      500: '#3b82f6',
+      600: '#2563eb',
+      700: '#1d4ed8',
+      800: '#1e40af',
+      900: '#1e3a8a',
     },
   },
   spacing: {
@@ -153,30 +146,29 @@ export const cleanTheme = {
     sm: '0.5rem',
     md: '0.75rem',
     lg: '1rem',
-    xl: '1.5rem',
-    '2xl': '2rem',
-    '3xl': '2.5rem',
-    '4xl': '3rem',
+    xl: '1.25rem',
+    '2xl': '1.5rem',
+    '3xl': '2rem',
   },
   radius: {
     none: '0',
-    sm: '0.375rem', // More subtle rounding
-    md: '0.5rem',
-    lg: '0.75rem',
-    xl: '1rem',
-    '2xl': '1.5rem',
+    sm: '0.25rem',
+    md: '0.375rem',
+    lg: '0.5rem',
+    xl: '0.75rem',
+    '2xl': '1rem',
     full: '9999px',
   },
   shadows: {
     none: 'none',
-    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', // Subtle shadows only
-    md: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-    lg: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    xl: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+    md: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+    lg: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+    xl: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
   },
   typography: {
     fontFamily: {
-      sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'],
+      sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
       mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
     },
     fontSize: {
@@ -201,4 +193,33 @@ export const cleanTheme = {
     normal: '200ms ease-in-out',
     slow: '300ms ease-in-out',
   },
+};
+
+export const whiteMinimalistTheme = {
+  colors: {
+    primary: {
+      50: '#f5f3ff',
+      100: '#ede9fe',
+      200: '#ddd6fe',
+      300: '#c4b5fd',
+      400: '#a78bfa',
+      500: '#8b5cf6',
+      600: '#7c3aed',
+      700: '#6d28d9',
+      800: '#5b21b6',
+      900: '#4c1d95',
+    },
+    background: '#f8f9fa',
+    surface: '#ffffff',
+    card: '#ffffff',
+    border: '#e4e4e7',
+    textPrimary: '#09090b',
+    textSecondary: '#71717a',
+    textMuted: '#a1a1aa',
+  },
+  spacing: cleanTheme.spacing,
+  radius: cleanTheme.radius,
+  shadows: cleanTheme.shadows,
+  typography: cleanTheme.typography,
+  transitions: cleanTheme.transitions,
 };

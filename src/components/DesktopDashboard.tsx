@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { StatCard } from './ui/StatCard';
 import { Sidebar } from './ui/Sidebar';
+import { usdToIdr } from '@/lib/utils';
 
 interface Project {
   id: number;
@@ -70,6 +71,7 @@ export const DesktopDashboard: React.FC = () => {
         <StatCard 
           title="Revenue" 
           value="$89,500" 
+          subtitle={`≈ ${usdToIdr(89500)}`}
           icon={<DollarSign size={24} />} 
           color="green" 
           change="+12% this month"
@@ -282,7 +284,7 @@ export const DesktopDashboard: React.FC = () => {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Budget</span>
-                        <span className="font-medium">${project.budget.toLocaleString()}</span>
+                        <span className="font-medium">${project.budget.toLocaleString()} <span className="text-xs text-gray-500 font-normal">({usdToIdr(project.budget)})</span></span>
                       </div>
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm" className="flex-1">

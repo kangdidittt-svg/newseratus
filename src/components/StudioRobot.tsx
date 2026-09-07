@@ -57,7 +57,7 @@ export default function StudioRobot({ isPermanentPanel = false, onNavigate }: St
         setAiResponse('⚡ Navigated to Invoices page & launched Invoice Creation Wizard!');
         break;
       case 'estimate':
-        setAiResponse('💰 AI Project Estimator: Estimated rate for custom branding & UI design is $45 - $65/hr based on active studio projects.');
+        setAiResponse('💰 AI Project Estimator: Estimated rate for custom branding & UI design is $45 - $65/hr (~Rp 720.000 - Rp 1.040.000/jam) based on active studio projects.');
         break;
       case 'summarize':
         setAiResponse(`📊 Studio Summary: You currently have ${summary?.activeProjectsCount || 0} active projects, ${summary?.pendingInvoicesCount || 0} pending invoices, and ${summary?.completedProjectsThisMonth || 0} completed milestones this month.`);

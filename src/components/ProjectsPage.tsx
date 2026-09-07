@@ -3,6 +3,7 @@ import { Search, Filter, Plus, Calendar, DollarSign, Users, FolderOpen, CheckCir
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { StatCard } from './ui/StatCard';
+import { usdToIdr } from '@/lib/utils';
 
 interface Project {
   id: number;
@@ -179,9 +180,10 @@ export const ProjectsPage: React.FC<{ isMobile: boolean }> = ({ isMobile }) => {
                     <Calendar size={16} className="mr-1" />
                     {project.dueDate}
                   </div>
-                  <div className="flex items-center text-gray-600">
-                    <DollarSign size={16} className="mr-1" />
-                    ${project.budget.toLocaleString()}
+                  <div className="flex items-center text-gray-600 gap-1">
+                    <DollarSign size={16} className="mr-1 shrink-0" />
+                    <span>${project.budget.toLocaleString()}</span>
+                    <span className="text-xs text-gray-500">({usdToIdr(project.budget)})</span>
                   </div>
                 </div>
               </CardContent>
@@ -224,6 +226,7 @@ export const ProjectsPage: React.FC<{ isMobile: boolean }> = ({ isMobile }) => {
         <StatCard 
           title="Total Budget" 
           value={`$${projects.reduce((sum, p) => sum + p.budget, 0).toLocaleString()}`} 
+          subtitle={`≈ ${usdToIdr(projects.reduce((sum, p) => sum + p.budget, 0))}`}
           icon={<DollarSign size={24} />} 
           color="purple" 
         />
@@ -299,7 +302,10 @@ export const ProjectsPage: React.FC<{ isMobile: boolean }> = ({ isMobile }) => {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-gray-600">{project.dueDate}</td>
-                    <td className="py-3 px-4 font-medium text-gray-900">${project.budget.toLocaleString()}</td>
+                    <td className="py-3 px-4 font-medium text-gray-900">
+                      <span>${project.budget.toLocaleString()}</span>
+                      <span className="text-xs text-gray-500 font-normal ml-1.5">({usdToIdr(project.budget)})</span>
+                    </td>
                     <td className="py-3 px-4">
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm">View</Button>

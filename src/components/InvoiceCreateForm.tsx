@@ -6,6 +6,7 @@ import { Plus, Check, ChevronRight, ChevronLeft, Download, FileText, Sparkles } 
 import { formatCurrency, calculateSubtotal, calculateTotal } from '@/lib/invoiceUtils';
 import InvoicePreviewCard from './InvoicePreviewCard';
 import InvoiceItemRow, { InvoiceItem } from './InvoiceItemRow';
+import { usdToIdr } from '@/lib/utils';
 
 interface Project {
   _id: string;
@@ -373,17 +374,23 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
                 </div>
 
                 <div className="p-4 rounded-xl bg-[#1E222B] border border-white/5 space-y-2 text-xs">
-                  <div className="flex justify-between text-slate-400">
+                  <div className="flex justify-between items-baseline text-slate-400">
                     <span>Subtotal:</span>
-                    <span className="font-mono text-slate-200">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-mono text-slate-200">
+                      ${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}{' '}
+                      <span className="text-[10px] text-slate-500 font-sans">({usdToIdr(subtotal)})</span>
+                    </span>
                   </div>
                   <div className="flex justify-between text-slate-400">
                     <span>Tax ({taxPercent}%):</span>
                     <span className="font-mono text-slate-200">${(subtotal * taxPercent / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-sm text-purple-400 pt-2 border-t border-white/5">
+                  <div className="flex justify-between items-baseline font-bold text-sm text-purple-400 pt-2 border-t border-white/5">
                     <span>Total Amount:</span>
-                    <span className="font-mono">${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    <div className="text-right">
+                      <span className="font-mono">${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                      <span className="text-[11px] text-slate-400 font-sans font-normal ml-2">({usdToIdr(total)})</span>
+                    </div>
                   </div>
                 </div>
               </div>

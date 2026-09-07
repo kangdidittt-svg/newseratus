@@ -180,11 +180,11 @@ Generated on: ${new Date().toLocaleDateString()}
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="px-4 py-2 rounded-lg neuro-select font-inter"
+            className="px-4 py-2 rounded-xl border font-inter text-xs font-medium outline-none transition-colors"
             style={{ 
-              background: 'var(--neuro-bg)',
+              background: 'var(--neuro-bg-secondary)',
               color: 'var(--neuro-text-primary)',
-              border: 'none'
+              borderColor: 'var(--neuro-border)'
             }}
           >
             <option value="current">Current Month</option>
@@ -194,12 +194,16 @@ Generated on: ${new Date().toLocaleDateString()}
           </select>
           <motion.button
             onClick={handleExportReport}
-            className="px-6 py-2 rounded-lg neuro-button hover:neuro-button-hover flex items-center space-x-2 font-inter font-medium transition-all duration-300"
-            style={{ color: 'var(--neuro-text-primary)' }}
+            className="px-5 py-2 rounded-xl flex items-center space-x-2 font-inter text-xs font-semibold transition-all duration-200 border cursor-pointer shadow-sm hover:opacity-90"
+            style={{ 
+              background: 'var(--neuro-bg-secondary)',
+              color: 'var(--neuro-text-primary)',
+              borderColor: 'var(--neuro-border)'
+            }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <Download className="h-4 w-4" style={{ color: 'var(--neuro-orange)' }} />
+            <Download className="h-4 w-4 text-purple-600 dark:text-purple-400" />
             <span>Export</span>
           </motion.button>
         </div>
@@ -397,7 +401,10 @@ Generated on: ${new Date().toLocaleDateString()}
             <ul className="text-sm space-y-2" style={{ color: 'var(--neuro-text-secondary)' }}>
               <li className="flex justify-between">
                 <span>Average hourly rate:</span>
-                <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>${stats?.averageHourlyRate}</span>
+                <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>
+                  ${stats?.averageHourlyRate || 0}{' '}
+                  <span className="text-xs font-normal text-slate-400">({usdToIdr(stats?.averageHourlyRate)})</span>
+                </span>
               </li>
               <li className="flex justify-between">
                 <span>Project completion rate:</span>
@@ -405,7 +412,12 @@ Generated on: ${new Date().toLocaleDateString()}
               </li>
               <li className="flex justify-between">
                 <span>Average project value:</span>
-                <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>${stats?.totalProjects ? Math.round(stats?.totalEarnings / stats?.totalProjects) : 0}</span>
+                <span className="font-medium" style={{ color: 'var(--neuro-text-primary)' }}>
+                  ${stats?.totalProjects ? Math.round(stats?.totalEarnings / stats?.totalProjects) : 0}{' '}
+                  <span className="text-xs font-normal text-slate-400">
+                    ({usdToIdr(stats?.totalProjects ? Math.round(stats?.totalEarnings / stats?.totalProjects) : 0)})
+                  </span>
+                </span>
               </li>
               
             </ul>

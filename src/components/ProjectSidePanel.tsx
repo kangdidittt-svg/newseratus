@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, DollarSign, Clock, User, ExternalLink, Tag } from 'lucide-react';
+import { usdToIdr } from '@/lib/utils';
 
 interface Project {
   _id?: string;
@@ -70,6 +71,9 @@ export default function ProjectSidePanel({ project, onClose }: ProjectSidePanelP
                 <div className="text-[10px] text-slate-400 uppercase font-semibold">Budget / Earned</div>
                 <div className="text-sm font-mono font-bold text-emerald-400 mt-0.5">
                   ${(project.totalEarned || project.budget || 0).toLocaleString()}
+                </div>
+                <div className="text-[10px] text-slate-400 font-sans mt-0.5">
+                  ≈ {usdToIdr(project.totalEarned || project.budget)}
                 </div>
               </div>
             </div>

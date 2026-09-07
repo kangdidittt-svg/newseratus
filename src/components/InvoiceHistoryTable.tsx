@@ -6,6 +6,7 @@ import { Eye, Edit, Check, X, Trash2, FileText, Download } from 'lucide-react';
 import InvoicePreviewCard, { InvoiceItem } from './InvoicePreviewCard';
 import InvoiceCreateForm from './InvoiceCreateForm';
 import InvoiceDownloadButton from './InvoiceDownloadButton';
+import { usdToIdr } from '@/lib/utils';
 
 interface Invoice {
   _id: string;
@@ -254,9 +255,12 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
                   <span className="text-[#6B7280]">Client:</span>
                   <span className="font-semibold text-[#F5F5F5]">{invoice.billedToName}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-baseline">
                   <span className="text-[#6B7280]">Total:</span>
-                  <span className="font-mono font-bold text-cyan-400">${invoice.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  <div className="text-right">
+                    <span className="font-mono font-bold text-cyan-400">${invoice.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    <span className="text-[10px] text-[#9CA3AF] font-sans ml-1.5 font-normal">({usdToIdr(invoice.total)})</span>
+                  </div>
                 </div>
               </div>
 
@@ -322,7 +326,10 @@ export default function InvoiceHistoryTable({ refreshTrigger }: InvoiceHistoryTa
                     <td className="px-5 py-3.5 font-mono text-purple-400 font-bold">#{invoice.invoiceNumber}</td>
                     <td className="px-5 py-3.5 font-semibold text-[#FAFAFA]">{invoice.projectTitle}</td>
                     <td className="px-5 py-3.5 text-[#A1A1AA]">{invoice.billedToName}</td>
-                    <td className="px-5 py-3.5 font-mono font-bold text-[#FAFAFA]">${invoice.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-3.5 font-mono font-bold text-[#FAFAFA]">
+                      <div>${invoice.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                      <div className="text-[10px] text-[#6B7280] font-normal font-sans">({usdToIdr(invoice.total)})</div>
+                    </td>
                     <td className="px-5 py-3.5 text-[#71717A]">{formatDate(invoice.createdAt)}</td>
                     <td className="px-5 py-3.5">
                       <span className="inline-flex items-center space-x-1.5 text-xs font-medium">

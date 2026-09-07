@@ -1,6 +1,7 @@
 'use client';
 
 import { Trash2 } from 'lucide-react';
+import { usdToIdr } from '@/lib/utils';
 
 export interface InvoiceItem {
   description: string;
@@ -100,7 +101,8 @@ export default function InvoiceItemRow({
         <div>
           <label className="block text-xs mb-1" style={{ color: 'var(--neuro-text-primary)' }}>Amount</label>
           <div className="px-3 py-2 text-sm rounded font-medium" style={{ backgroundColor: 'var(--neuro-bg-light)', color: 'var(--neuro-text-primary)' }}>
-            {item.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}
+            <div>{item.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</div>
+            <div className="text-[10px] text-slate-400 font-normal mt-0.5">≈ {usdToIdr(item.amount)}</div>
           </div>
         </div>
         {!readOnly && (

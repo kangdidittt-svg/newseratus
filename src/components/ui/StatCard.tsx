@@ -7,6 +7,7 @@ interface StatCardProps {
   color?: 'orange' | 'blue' | 'green' | 'purple' | 'red';
   change?: string;
   changeType?: 'increase' | 'decrease';
+  subtitle?: string;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({ 
@@ -15,7 +16,8 @@ export const StatCard: React.FC<StatCardProps> = ({
   icon, 
   color = 'purple',
   change,
-  changeType
+  changeType,
+  subtitle
 }) => {
   const colorClasses = {
     orange: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
@@ -36,6 +38,9 @@ export const StatCard: React.FC<StatCardProps> = ({
         <div className="flex-1">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</p>
           <p className="text-2xl font-black text-slate-100 mt-1 font-mono">{value}</p>
+          {subtitle && (
+            <p className="text-xs text-slate-400 font-mono mt-0.5">{subtitle}</p>
+          )}
           {change && (
             <p className={`text-xs mt-1 font-medium ${changeColorClasses[changeType!]}`}>
               {changeType === 'increase' ? '↗' : '↘'} {change}

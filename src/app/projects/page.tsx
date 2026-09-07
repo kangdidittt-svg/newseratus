@@ -375,6 +375,9 @@ export default function ProjectListPage() {
                       <span className="font-semibold" style={{ color: 'var(--neuro-orange)' }}>
                         ${project.budget.toLocaleString()}
                       </span>
+                      <span className="text-xs text-gray-500">
+                        ({usdToIdr(project.budget)})
+                      </span>
                     </div>
                     <ChevronRight className="h-5 w-5 text-gray-400" />
                   </div>

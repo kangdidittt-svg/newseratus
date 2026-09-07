@@ -10,6 +10,7 @@ import { useRealtimeDashboard } from '@/hooks/useRealtimeDashboard';
 import NotificationPopover from './NotificationPopover';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import { useRouter } from 'next/navigation';
+import { usdToIdr } from '@/lib/utils';
 
 interface Project {
   id: number;
@@ -69,12 +70,14 @@ export const MobileDashboard: React.FC = () => {
         <StatCard 
           title="Total Earnings" 
           value={`$${(stats?.totalEarnings ?? 0).toLocaleString()}`} 
+          subtitle={`≈ ${usdToIdr(stats?.totalEarnings)}`}
           icon={<DollarSign size={24} />} 
           color="green" 
         />
         <StatCard 
           title="Pending Payment" 
           value={`$${(stats?.totalPendingPayments ?? 0).toLocaleString()}`} 
+          subtitle={`≈ ${usdToIdr(stats?.totalPendingPayments)}`}
           icon={<DollarSign size={24} />} 
           color="purple" 
         />

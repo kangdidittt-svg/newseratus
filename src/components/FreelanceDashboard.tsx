@@ -23,6 +23,7 @@ import EdinburghClock from './EdinburghClock';
 // Removed RobotAssistant and SmartSummaryPanel per user request
 import { useRealtimeDashboard, triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
 import { triggerNotificationRefresh } from '../hooks/useNotificationRefresh';
+import { usdToIdr } from '@/lib/utils';
 
 interface FreelanceDashboardProps {
   onNavigate?: (tab: string) => void;
@@ -291,7 +292,7 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
           <div className="bg-[#121418] border border-white/5 p-4 rounded-2xl flex items-center justify-between">
             <div>
               <div className="text-xs text-[#9CA3AF] font-medium">Total Projects</div>
-              <div className="text-2xl font-bold font-mono text-[#F5F5F5] mt-1">{stats?.totalProjects || 92}</div>
+              <div className="text-2xl font-bold font-mono text-[#F5F5F5] mt-1">{stats?.totalProjects ?? 0}</div>
               <div className="text-[10px] text-[#6B7280] mt-1">All Projects</div>
             </div>
             <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-[#6B7280]">
@@ -303,7 +304,7 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
           <div className="bg-[#121418] border border-white/5 p-4 rounded-2xl flex items-center justify-between">
             <div>
               <div className="text-xs text-[#9CA3AF] font-medium">Active Projects</div>
-              <div className="text-2xl font-bold font-mono text-[#F5F5F5] mt-1">{stats?.activeProjects || 4}</div>
+              <div className="text-2xl font-bold font-mono text-[#F5F5F5] mt-1">{stats?.activeProjects ?? 0}</div>
               <div className="text-[10px] text-[#6B7280] mt-1">On Going</div>
             </div>
             <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-[#6B7280]">
@@ -315,8 +316,13 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
           <div className="bg-[#121418] border border-white/5 p-4 rounded-2xl flex items-center justify-between">
             <div>
               <div className="text-xs text-[#9CA3AF] font-medium">Total Earnings</div>
-              <div className="text-2xl font-bold font-mono text-[#FAFAFA] mt-1">
-                ${stats?.totalEarnings ? stats.totalEarnings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '12,450'}
+              <div className="flex items-baseline gap-1.5 mt-1 flex-wrap">
+                <span className="text-2xl font-bold font-mono text-[#FAFAFA]">
+                  ${(stats?.totalEarnings ?? 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </span>
+                <span className="text-xs text-[#9CA3AF] font-normal font-sans">
+                  ({usdToIdr(stats?.totalEarnings)})
+                </span>
               </div>
               <div className="text-[10px] text-[#6B7280] mt-1">Active & Finished Income</div>
             </div>
@@ -329,7 +335,14 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
           <div className="bg-[#121418] border border-white/5 p-4 rounded-2xl flex items-center justify-between">
             <div>
               <div className="text-xs text-[#9CA3AF] font-medium">Pending Payments</div>
-              <div className="text-2xl font-bold font-mono text-[#F5F5F5] mt-1">${stats?.totalPendingPayments?.toFixed(0) || '3'}</div>
+              <div className="flex items-baseline gap-1.5 mt-1 flex-wrap">
+                <span className="text-2xl font-bold font-mono text-[#F5F5F5]">
+                  ${(stats?.totalPendingPayments ?? 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </span>
+                <span className="text-xs text-[#9CA3AF] font-normal font-sans">
+                  ({usdToIdr(stats?.totalPendingPayments)})
+                </span>
+              </div>
               <div className="text-[10px] text-[#6B7280] mt-1">Invoice Pending</div>
             </div>
             <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-[#6B7280]">
@@ -379,7 +392,7 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-[#F5F5F5]">Invoice #INV-202607-001</div>
-                    <div className="text-[10px] text-[#6B7280]">Mr Sohail • $330.00</div>
+                    <div className="text-[10px] text-[#6B7280]">Mr Sohail • $330.00 ({usdToIdr(330)})</div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -446,7 +459,10 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
 
                         <div>
                           <div className="text-[9px] text-[#6B7280]">Budget</div>
-                          <div className="font-mono font-bold text-[#F5F5F5]">${project.budget || 20}</div>
+                          <div className="font-mono font-bold text-[#F5F5F5] flex items-center gap-1.5">
+                            <span>${(project.budget || 0).toLocaleString()}</span>
+                            <span className="text-[10px] text-[#6B7280] font-normal font-sans">({usdToIdr(project.budget)})</span>
+                          </div>
                         </div>
 
                         <div>
@@ -486,7 +502,10 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
 
                       <div>
                         <div className="text-[9px] text-[#6B7280]">Budget</div>
-                        <div className="font-mono font-bold text-[#F5F5F5]">$20</div>
+                        <div className="font-mono font-bold text-[#F5F5F5] flex items-center gap-1">
+                          <span>$20</span>
+                          <span className="text-[10px] text-[#6B7280] font-normal font-sans">({usdToIdr(20)})</span>
+                        </div>
                       </div>
 
                       <div>
@@ -523,7 +542,10 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
 
                       <div>
                         <div className="text-[9px] text-[#6B7280]">Budget</div>
-                        <div className="font-mono font-bold text-[#F5F5F5]">$200</div>
+                        <div className="font-mono font-bold text-[#F5F5F5] flex items-center gap-1">
+                          <span>$200</span>
+                          <span className="text-[10px] text-[#6B7280] font-normal font-sans">({usdToIdr(200)})</span>
+                        </div>
                       </div>
 
                       <div>
@@ -560,7 +582,10 @@ export default function FreelanceDashboard({ onNavigate, refreshTrigger }: Freel
 
                       <div>
                         <div className="text-[9px] text-[#6B7280]">Budget</div>
-                        <div className="font-mono font-bold text-[#F5F5F5]">$30</div>
+                        <div className="font-mono font-bold text-[#F5F5F5] flex items-center gap-1">
+                          <span>$30</span>
+                          <span className="text-[10px] text-[#6B7280] font-normal font-sans">({usdToIdr(30)})</span>
+                        </div>
                       </div>
 
                       <div>

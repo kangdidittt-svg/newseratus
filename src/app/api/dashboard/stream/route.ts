@@ -31,19 +31,20 @@ async function getDashboardStats(userId: string) {
   
   // Calculate stats
   const totalProjects = projects.length;
-  const activeProjects = projects.filter(p => ['ongoing', 'active', 'in progress'].includes(p.status as string)).length;
+  const activeProjects = projects.filter(p => !['completed', 'cancelled'].includes(p.status as string)).length;
   const completedProjects = projects.filter(p => p.status === 'completed').length;
   const onHoldProjects = projects.filter(p => ['on-hold', 'paused'].includes(p.status as string)).length;
+  const pendingProjectsCount = projects.filter(p => p.status === 'pending').length;
   
   const totalEarnings = projects
     .filter(p => p.status === 'completed')
-    .reduce((sum, p) => sum + (p.budget || 0), 0);
+    .reduce((sum, p) => sum + (p.totalEarned && p.totalEarned > 0 ? p.totalEarned : (p.budget || 0)), 0);
   
   const totalHours = projects.reduce((sum, p) => sum + (p.hoursWorked || 0), 0);
   const averageHourlyRate = totalHours > 0 ? totalEarnings / totalHours : 0;
   
   const totalPendingPayments = projects
-    .filter(p => p.status === 'completed' && !p.paid)
+    .filter(p => !['completed', 'cancelled'].includes(p.status as string))
     .reduce((sum, p) => sum + (p.budget || 0), 0);
   
   // Get recent projects (last 5)
@@ -67,6 +68,7 @@ async function getDashboardStats(userId: string) {
       activeProjects,
       completedProjects,
       onHoldProjects,
+      pendingProjectsCount,
       totalEarnings,
       totalHours,
       averageHourlyRate,

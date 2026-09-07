@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import { triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
 import { triggerNotificationRefresh } from '../hooks/useNotificationRefresh';
 import SuccessPopup from './SuccessPopup';
+import { usdToIdr } from '@/lib/utils';
 
 interface AddProjectCompactProps {
   onProjectAdded?: () => void;
@@ -246,6 +247,11 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
               min="0"
               step="0.01"
             />
+            {formData.budget && Number(formData.budget) > 0 ? (
+              <p className="text-[10px] text-purple-400 mt-1 font-mono">
+                ≈ {usdToIdr(Number(formData.budget))}
+              </p>
+            ) : null}
           </div>
           <div>
             <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Deadline</label>

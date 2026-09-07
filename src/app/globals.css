@@ -475,11 +475,16 @@ html.theme-white-minimalist {
 .theme-white-minimalist .bg-\[\#22252C\],
 .theme-white-minimalist .bg-slate-900,
 .theme-white-minimalist .bg-zinc-900,
-.theme-white-minimalist .neuro-card {
+.theme-white-minimalist .neuro-card,
+.theme-white-minimalist .neuro-button {
   background-color: #FFFFFF !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.02) !important;
   color: #09090B !important;
+}
+
+.theme-white-minimalist .neuro-button:hover {
+  background-color: #F4F4F5 !important;
 }
 
 /* 3. Sub-surfaces, Inner Card Rows & Badges */

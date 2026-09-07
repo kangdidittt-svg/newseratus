@@ -67,24 +67,24 @@
 }
 
 .neuro-button {
-  background: #1A1D22;
-  border: 1px solid rgba(255,255,255,0.05);
+  background: var(--neuro-bg-secondary, #1A1D22);
+  border: 1px solid var(--neuro-border, rgba(255,255,255,0.05));
   border-radius: var(--neuro-radius-md);
   box-shadow: none;
   color: var(--neuro-text-primary);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
   outline: none;
 }
 
 .neuro-button:hover {
-  background: #22252C;
+  background: var(--hover, #22252C);
   box-shadow: none;
   transform: none;
 }
 
 .neuro-button:active {
-  background: #14161A;
+  background: var(--neuro-bg-light, #14161A);
   box-shadow: none;
   transform: none;
 }

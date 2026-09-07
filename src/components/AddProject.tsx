@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import { triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
 import { triggerNotificationRefresh } from '../hooks/useNotificationRefresh';
 import SuccessPopup from './SuccessPopup';
+import { usdToIdr } from '@/lib/utils';
 
 interface AddProjectProps {
   onProjectAdded?: () => void;
@@ -266,6 +267,11 @@ export default function AddProject({ onProjectAdded }: AddProjectProps) {
                 min="0"
                 step="0.01"
               />
+              {formData.budget && Number(formData.budget) > 0 ? (
+                <p className="text-xs text-purple-400 mt-1.5 font-mono">
+                  Estimasi: {usdToIdr(formData.budget)}
+                </p>
+              ) : null}
             </div>
             <div>
               <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--neuro-text-primary)' }}>Deadline</label>

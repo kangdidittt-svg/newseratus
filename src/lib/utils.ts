@@ -14,3 +14,12 @@ export function usdToIdr(usd?: number | string | null): string {
     maximumFractionDigits: 0
   }).format(amount * USD_TO_IDR_RATE);
 }
+
+export function normalizeClientName(name: string): string {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}

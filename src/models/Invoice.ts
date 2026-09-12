@@ -11,6 +11,7 @@ export interface IInvoiceItem {
 export interface IInvoice extends Document {
   invoiceNumber: string;
   projectId: mongoose.Types.ObjectId;
+  clientId?: mongoose.Types.ObjectId;
   projectTitle: string;
   billedToName: string;
   items: IInvoiceItem[];
@@ -65,6 +66,11 @@ const InvoiceSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Project',
       required: [true, 'Project ID is required']
+    },
+    clientId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Client',
+      index: true
     },
     projectTitle: {
       type: String,

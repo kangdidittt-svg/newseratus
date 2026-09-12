@@ -10,6 +10,7 @@ export interface InvoiceItem {
 
 export interface CreateInvoiceData {
   projectId: string;
+  clientId?: string;
   projectTitle: string;
   billedToName: string;
   items: InvoiceItem[];

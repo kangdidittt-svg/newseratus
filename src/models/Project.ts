@@ -4,6 +4,7 @@ export interface IProject extends Document {
   title: string;
   description?: string;
   client: string;
+  clientId?: mongoose.Types.ObjectId;
   status: 'ongoing' | 'completed';
   priority: 'low' | 'medium' | 'high';
   category: string;
@@ -41,6 +42,11 @@ const ProjectSchema: Schema = new Schema(
       required: [true, 'Client name is required'],
       trim: true,
       maxlength: [100, 'Client name cannot exceed 100 characters']
+    },
+    clientId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Client',
+      index: true
     },
     status: {
       type: String,

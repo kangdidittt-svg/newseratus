@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Project from '@/models/Project';
+import Client, { normalizeClientName } from '@/models/Client';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 import mongoose from 'mongoose';
 
@@ -68,6 +69,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
+      .populate('clientId', 'name email phone company')
       .lean();
 
     // Get total count for pagination
@@ -109,16 +111,52 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       projectData.priority = String(projectData.priority).toLowerCase();
     }
     
-    // Validate required fields
-    if (!projectData.title || !projectData.client || !projectData.category) {
+    const userObjectId = new mongoose.Types.ObjectId(request.user?.userId);
+
+    // Resolve client ID and client name
+    let resolvedClientId = projectData.clientId || projectData.client_id;
+    let resolvedClientName = (projectData.client || '').trim();
+
+    if (resolvedClientId && mongoose.Types.ObjectId.isValid(resolvedClientId)) {
+      const clientDoc = await Client.findOne({ _id: resolvedClientId, userId: userObjectId });
+      if (clientDoc) {
+        resolvedClientName = clientDoc.name;
+        resolvedClientId = clientDoc._id;
+      } else {
+        return NextResponse.json({ error: 'Selected client not found or not owned by user' }, { status: 404 });
+      }
+    } else if (resolvedClientName) {
+      const normalized = normalizeClientName(resolvedClientName);
+      let clientDoc = await Client.findOne({ userId: userObjectId, nameNormalized: normalized });
+      if (!clientDoc) {
+        clientDoc = new Client({
+          name: resolvedClientName,
+          nameNormalized: normalized,
+          userId: userObjectId
+        });
+        await clientDoc.save();
+      }
+      resolvedClientId = clientDoc._id;
+      resolvedClientName = clientDoc.name;
+    } else {
       return NextResponse.json(
-        { error: 'Title, client, and category are required' },
+        { error: 'Client is required' },
+        { status: 400 }
+      );
+    }
+
+    projectData.clientId = resolvedClientId;
+    projectData.client = resolvedClientName;
+
+    // Validate required fields
+    if (!projectData.title || !projectData.category) {
+      return NextResponse.json(
+        { error: 'Title and category are required' },
         { status: 400 }
       );
     }
 
     // Create project
-    const userObjectId = new mongoose.Types.ObjectId(request.user?.userId);
     const project = new Project({
       ...projectData,
       userId: userObjectId

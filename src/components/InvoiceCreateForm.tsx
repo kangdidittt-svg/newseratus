@@ -13,6 +13,7 @@ interface Project {
   title: string;
   description?: string;
   client: string;
+  clientId?: string | { _id: string; name: string };
   budget?: number;
   hourlyRate?: number;
   hoursWorked?: number;
@@ -29,6 +30,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [billedToName, setBilledToName] = useState('');
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [taxPercent, setTaxPercent] = useState(0);
   const [subtotal, setSubtotal] = useState(0);
@@ -92,12 +94,17 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
   useEffect(() => {
     if (selectedProjects.length === 0) {
       setItems([]);
+      setSelectedClientId(null);
       return;
     }
     if (selectedProjects.length === 1) {
       const project = projects.find(p => p._id === selectedProjects[0]);
       if (project) {
         setBilledToName(project.client);
+        const resolvedId = typeof project.clientId === 'object' && project.clientId !== null
+          ? (project.clientId as any)._id
+          : project.clientId;
+        setSelectedClientId(resolvedId || null);
         setItems(generateItemsForProject(project));
       }
     } else {
@@ -108,6 +115,11 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
       setItems(combined);
       const uniqueClients = Array.from(new Set(all.map(p => p.client).filter(Boolean)));
       setBilledToName(uniqueClients.length === 1 ? uniqueClients[0] || '' : 'Multiple Clients');
+      const firstProj = all[0];
+      const resolvedId = firstProj && typeof firstProj.clientId === 'object' && firstProj.clientId !== null
+        ? (firstProj.clientId as any)._id
+        : firstProj?.clientId;
+      setSelectedClientId(resolvedId || null);
     }
   }, [selectedProjects, projects]);
 
@@ -152,6 +164,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
       const endpoint = isBatch ? '/api/invoices/combined' : '/api/invoices';
       const payload = isBatch ? {
         primaryProjectId: selectedProjects[0],
+        clientId: selectedClientId || undefined,
         billedToName,
         items,
         taxPercent,
@@ -159,6 +172,7 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
         total
       } : {
         projectId: selectedProjects[0],
+        clientId: selectedClientId || undefined,
         billedToName,
         items,
         taxPercent,
@@ -279,7 +293,14 @@ export default function InvoiceCreateForm({ onInvoiceCreated }: InvoiceCreateFor
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Billed To Name</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-300">Client / Billed To</label>
+                  {selectedProjects.length > 0 && billedToName && (
+                    <span className="text-[10px] text-purple-400 font-medium flex items-center space-x-1">
+                      <span>✓ Auto-inherited from project</span>
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
                   value={billedToName}

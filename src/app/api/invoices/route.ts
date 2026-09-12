@@ -33,6 +33,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
+      .populate('clientId', 'name email phone company')
       .lean();
 
     // Get total count for pagination
@@ -104,6 +105,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     
     const createInvoiceData = {
       projectId: projectObjectId.toString(),
+      clientId: invoiceData.clientId || (project.clientId ? project.clientId.toString() : undefined),
       projectTitle: project.title,
       billedToName: invoiceData.billedToName.trim(),
       items: invoiceData.items.map((item: InvoiceItemData) => ({
@@ -143,6 +145,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
           _id: invoice._id,
           invoiceNumber: invoice.invoiceNumber,
           projectId: invoice.projectId,
+          clientId: invoice.clientId,
           projectTitle: invoice.projectTitle,
           billedToName: invoice.billedToName,
           items: invoice.items,

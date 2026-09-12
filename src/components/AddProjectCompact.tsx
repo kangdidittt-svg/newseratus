@@ -1,22 +1,48 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { triggerDashboardRefresh } from '../hooks/useRealtimeDashboard';
 import { triggerNotificationRefresh } from '../hooks/useNotificationRefresh';
 import SuccessPopup from './SuccessPopup';
+import SmartSelect, { SmartSelectItem } from './ui/SmartSelect';
+import CreateClientModal from './CreateClientModal';
 import { usdToIdr } from '@/lib/utils';
+import { normalizeClientName } from '@/lib/clientUtils';
 
 interface AddProjectCompactProps {
   onProjectAdded?: () => void;
   onFormDataChange?: (isDirty: boolean) => void;
 }
 
+interface ClientItem {
+  _id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  notes?: string;
+  projectCount?: number;
+  invoiceCount?: number;
+}
+
+const DEFAULT_CATEGORIES: SmartSelectItem[] = [
+  { id: 'web-development', label: 'Web Dev', icon: '🌐' },
+  { id: 'mobile-app', label: 'Mobile App', icon: '📱' },
+  { id: 'design', label: 'Design', icon: '🎨' },
+  { id: 'branding', label: 'Branding', icon: '✨' },
+  { id: 'video', label: 'Video', icon: '🎬' },
+  { id: 'social-media', label: 'Social Media', icon: '📱' },
+  { id: 'consulting', label: 'Consulting', icon: '💼' },
+  { id: 'other', label: 'Other', icon: '📋' }
+];
+
 export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: AddProjectCompactProps) {
   const [formData, setFormData] = useState({
     title: '',
     client: '',
+    clientId: '',
     description: '',
     budget: '',
     deadline: '',
@@ -24,6 +50,15 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
     priority: 'medium',
     category: 'web-development'
   });
+
+  const [clients, setClients] = useState<ClientItem[]>([]);
+  const [loadingClients, setLoadingClients] = useState(true);
+  const [categories, setCategories] = useState<SmartSelectItem[]>(DEFAULT_CATEGORIES);
+
+  // Client modal state
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [initialClientName, setInitialClientName] = useState('');
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -31,14 +66,46 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
   const [isLoadingPopup, setIsLoadingPopup] = useState(false);
   const [successData, setSuccessData] = useState({ title: '', message: '' });
 
+  // Fetch clients on mount
+  const fetchClients = useCallback(async () => {
+    try {
+      setLoadingClients(true);
+      const res = await fetch('/api/clients', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setClients(data.clients || []);
+      }
+    } catch (err) {
+      console.error('Error loading clients:', err);
+    } finally {
+      setLoadingClients(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
+
+  // Transform clients to SmartSelect items
+  const clientSelectItems = useMemo<SmartSelectItem[]>(() => {
+    return clients.map(client => ({
+      id: client._id,
+      label: client.name,
+      subLabel: `${client.projectCount || 0} ${client.projectCount === 1 ? 'project' : 'projects'} · ${client.invoiceCount || 0} ${client.invoiceCount === 1 ? 'invoice' : 'invoices'}`,
+      icon: <span className="text-sm">👤</span>,
+      metadata: client
+    }));
+  }, [clients]);
+
   // Check if form has any data (is dirty)
   const isFormDirty = useCallback(() => {
     return formData.title.trim() !== '' || 
            formData.client.trim() !== '' || 
+           formData.clientId.trim() !== '' || 
            formData.description.trim() !== '' || 
            formData.budget.trim() !== '' || 
            formData.deadline.trim() !== '';
-  }, [formData.title, formData.client, formData.description, formData.budget, formData.deadline]);
+  }, [formData.title, formData.client, formData.clientId, formData.description, formData.budget, formData.deadline]);
 
   // Notify parent component when form data changes
   useEffect(() => {
@@ -55,8 +122,78 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
     }));
   };
 
+  // Handle client selection from SmartSelect
+  const handleClientSelect = (selectedId: string, item?: SmartSelectItem) => {
+    setFormData(prev => ({
+      ...prev,
+      clientId: selectedId,
+      client: item ? item.label : ''
+    }));
+  };
+
+  // Open modal when user wants to create client from typed query
+  const handleCreateClientFromQuery = (query: string) => {
+    setInitialClientName(query);
+    setIsClientModalOpen(true);
+  };
+
+  // Open modal from plus button beside selector
+  const handlePlusButtonClick = () => {
+    setInitialClientName('');
+    setIsClientModalOpen(true);
+  };
+
+  // When a new client is created in modal, auto-select it in the form
+  const handleClientCreated = (newClient: ClientItem) => {
+    setClients(prev => {
+      const exists = prev.some(c => c._id === newClient._id);
+      if (exists) return prev;
+      return [newClient, ...prev];
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      clientId: newClient._id,
+      client: newClient.name
+    }));
+  };
+
+  // Handle Category selection
+  const handleCategorySelect = (selectedId: string, item?: SmartSelectItem) => {
+    setFormData(prev => ({
+      ...prev,
+      category: item ? item.id : selectedId
+    }));
+  };
+
+  // Handle creating a new Category from typed query
+  const handleCreateCategory = (newCategoryName: string) => {
+    const slug = newCategoryName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const newItem: SmartSelectItem = {
+      id: slug || newCategoryName,
+      label: newCategoryName,
+      icon: '📁'
+    };
+
+    setCategories(prev => {
+      if (prev.some(c => c.label.toLowerCase() === newCategoryName.toLowerCase())) return prev;
+      return [...prev, newItem];
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      category: newItem.id
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.client.trim() && !formData.clientId.trim()) {
+      setError('Please select or create a client');
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
     
@@ -97,26 +234,23 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
               clientName: formData.client
             })
           });
-          // Trigger immediate notification refresh
           await triggerNotificationRefresh();
         } catch (notificationError) {
           console.error('Error creating notification:', notificationError);
         }
         
-        // Simulate processing time untuk efek loading yang lebih realistis
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Trigger notification refresh again after loading
+        await new Promise(resolve => setTimeout(resolve, 1200));
         await triggerNotificationRefresh();
         
-        // Stop loading dan show success
+        // Refresh clients list in background so project count updates
+        fetchClients();
+
         setIsLoadingPopup(false);
         setSuccessData({
           title: 'Project Berhasil Dibuat! 🎉',
           message: `Project "${formData.title}" untuk client ${formData.client} telah berhasil ditambahkan`
         });
         
-        // Trigger dashboard refresh setelah delay
         setTimeout(() => {
           triggerDashboardRefresh('project-created');
         }, 1000);
@@ -125,6 +259,7 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
         setFormData({
           title: '',
           client: '',
+          clientId: '',
           description: '',
           budget: '',
           deadline: '',
@@ -209,16 +344,23 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
           />
         </div>
 
-        {/* Client */}
+        {/* Client (Smart Select + Create) */}
         <div>
           <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Client *</label>
-          <input
-            type="text"
-            required
-            value={formData.client}
-            onChange={(e) => handleInputChange('client', e.target.value)}
-            className="w-full px-3 py-2 text-xs rounded-xl bg-[#1A1D22] border border-white/10 text-slate-100 placeholder-slate-500 outline-none focus:border-purple-500 transition-all"
-            placeholder="Enter client name"
+          <SmartSelect
+            items={clientSelectItems}
+            value={formData.clientId || formData.client}
+            onChange={handleClientSelect}
+            placeholder="Search or select client..."
+            headerTitle="CLIENTS"
+            itemTypeLabel="client"
+            loading={loadingClients}
+            showPlusButton={true}
+            plusButtonTitle="Create New Client"
+            onPlusClick={handlePlusButtonClick}
+            onCreateNew={handleCreateClientFromQuery}
+            createItemLabel={(query) => `+ Create "${query}" as new client`}
+            normalizeText={normalizeClientName}
           />
         </div>
 
@@ -268,18 +410,17 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Category</label>
-            <select
+            <SmartSelect
+              items={categories}
               value={formData.category}
-              onChange={(e) => handleInputChange('category', e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl bg-[#1A1D22] border border-white/10 text-slate-100 outline-none focus:border-purple-500 transition-all"
-              required
-            >
-              <option value="web-development">🌐 Web Dev</option>
-              <option value="mobile-app">📱 Mobile</option>
-              <option value="design">🎨 Design</option>
-              <option value="consulting">💼 Consulting</option>
-              <option value="other">📋 Other</option>
-            </select>
+              onChange={handleCategorySelect}
+              placeholder="Select category..."
+              headerTitle="CATEGORIES"
+              itemTypeLabel="category"
+              showPlusButton={false}
+              onCreateNew={handleCreateCategory}
+              createItemLabel={(query) => `+ Create "${query}"`}
+            />
           </div>
           <div>
             <label className="block text-xs font-medium text-[#A1A1AA] mb-1">Priority</label>
@@ -315,7 +456,7 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-md"
           >
             {isSubmitting ? (
               <>
@@ -332,6 +473,15 @@ export default function AddProjectCompact({ onProjectAdded, onFormDataChange }: 
         </div>
       </form>
       
+      {/* Create New Client Modal */}
+      <CreateClientModal
+        isOpen={isClientModalOpen}
+        initialName={initialClientName}
+        onClose={() => setIsClientModalOpen(false)}
+        onClientCreated={handleClientCreated}
+        existingClients={clients}
+      />
+
       {/* Success Popup */}
       <SuccessPopup
         isVisible={showSuccessPopup}

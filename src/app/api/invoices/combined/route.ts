@@ -47,6 +47,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
 
     const createInvoiceData: CreateInvoiceData = {
       projectId: projectObjectId.toString(),
+      clientId: primaryProject.clientId ? primaryProject.clientId.toString() : undefined,
       projectTitle: 'Multiple Projects',
       billedToName,
       items: items.map((item) => ({
